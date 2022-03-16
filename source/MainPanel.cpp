@@ -252,13 +252,20 @@ bool MainPanel::Click(int x, int y, int clicks)
 	if(!canClick)
 		return true;
 	// Only allow drags that start when clicking was possible.
-	canDrag = true;
 
 	dragSource = Point(x, y);
 	dragPoint = dragSource;
 
 	SDL_Keymod mod = SDL_GetModState();
 	hasShift = (mod & KMOD_SHIFT);
+	hasControl = (mod & KNOD_CTRL);
+	hasLAlt = (mod & KMOD_LALT);
+	
+	if (!hasControl && !(Preferences::Get(".: Alt") ? !hasLAlt : hasLAlt)){
+		canDrag = true;
+	}
+	if (hasLAlt)
+		canDrag = false;
 
 	engine.Click(dragSource, dragSource, hasShift);
 
@@ -269,6 +276,9 @@ bool MainPanel::Click(int x, int y, int clicks)
 
 bool MainPanel::RClick(int x, int y)
 {
+	SDL_Keymod mod = SDL_GetModState();
+	hasControl = (mod & KMOD_CTRL);
+	hasLAlt = (mod & KMOD_LALT);
 	engine.RClick(Point(x, y));
 
 	return true;
@@ -298,6 +308,11 @@ bool MainPanel::Release(int x, int y)
 
 		isDragging = false;
 	}
+	
+	if(player.FlagshipPtr()->IsMouseFiring()){
+		player.FlagshipPtr()->SetMouseFiring(false);}
+	if(player.FlagshipPtr()->IsMouseThrusting()){
+		player.FlagshipPtr()->SetMouseThrusting(false);}
 
 	return true;
 }
