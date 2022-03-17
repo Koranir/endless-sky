@@ -1040,8 +1040,8 @@ void Engine::Draw() const
 	double ammoPad = .5 * (ammoBox.Width() - AMMO_WIDTH);
 	const Sprite *selectedSprite = SpriteSet::Get("ui/ammo selected");
 	const Sprite *unselectedSprite = SpriteSet::Get("ui/ammo unselected");
-	const Sprite *mouseMovement = SpriteSet::Get("icon/mousecontrols");
-	const Sprite *mouseMovementLight = SpriteSet::Get("icon/mousecontrolslight");
+	const Sprite *mouseMovement = SpriteSet::Get("ui/mousecontrols");
+	const Sprite *mouseMovementLight = SpriteSet::Get("ui/mousecontrolslight");
 	Color selectedColor = *colors.Get("bright");
 	Color unselectedColor = *colors.Get("dim");
 
