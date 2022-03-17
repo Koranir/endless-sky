@@ -295,6 +295,17 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			{
 				isFastForward = !isFastForward;
 			}
+			else if(event.type == SDL_KEYDOWN && !event.key.repeat
+					&& (Command(event.key.keysym.sym).Has(Command::MOUSEMOVEMENT)))
+			{
+				Preferences::Set("Mouse movement", !Preferences::Get("Mouse movement"));
+				if (Preferences::Get("Mouse movement")){
+					Messages::Add("Mouse controls Enabled", Messages::Importance::Highest);
+				}
+				else{
+					Messages::Add("Mouse controls Disabled", Messages::Importance::Highest);
+				}
+			}
 		}
 		SDL_Keymod mod = SDL_GetModState();
 		Font::ShowUnderlines(mod & KMOD_ALT);
