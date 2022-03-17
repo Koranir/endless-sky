@@ -3491,15 +3491,6 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player, Command &activeCommand
 			&& !(autoPilot | activeCommands).Has(Command::LAND | Command::JUMP | Command::BOARD)
 			&& (!target || target->GetGovernment()->IsEnemy()))
 		AutoFire(ship, firingCommands, false);
-	if (ship.IsMouseFiring()){
-		int index = 0;
-			for(const Hardpoint &hardpoint : ship.Weapons())
-			{
-				if(hardpoint.IsReady() && !hardpoint.GetOutfit()->Icon())
-					firingCommands.SetFire(index);
-				++index;
-			}
-	}
 	if(activeCommands)
 	{
 		if(activeCommands.Has(Command::FORWARD))
