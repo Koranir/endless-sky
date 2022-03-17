@@ -441,6 +441,7 @@ private:
 	void CreateSparks(std::vector<Visual> &visuals, const std::string &name, double amount);
 	void CreateSparks(std::vector<Visual> &visuals, const Effect *effect, double amount);
 
+	double Rad2Deg = 57.2958;
 
 private:
 	/* Protected member variables of the Body class:
