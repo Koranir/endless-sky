@@ -259,7 +259,7 @@ void Command::Load(const DataNode &node)
 			{"ammo", Command::AMMO},
 			{"wait", Command::WAIT},
 			{"stop", Command::STOP},
-			{"shift", Command::SHIFT}
+			{"shift", Command::SHIFT},
 			{"mouse", Command::MOUSEMOVEMENT}
 		};
 
