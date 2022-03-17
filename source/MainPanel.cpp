@@ -258,16 +258,16 @@ bool MainPanel::Click(int x, int y, int clicks)
 
 	SDL_Keymod mod = SDL_GetModState();
 	hasShift = (mod & KMOD_SHIFT);
-	hasControl = (mod & KNOD_CTRL);
+	hasControl = (mod & KMOD_CTRL);
 	hasLAlt = (mod & KMOD_LALT);
 	
-	if (!hasControl && !(Preferences::Get(".: Alt") ? !hasLAlt : hasLAlt)){
+	if (!hasControl && !(Preferences::Has(".: Alt") ? !hasLAlt : hasLAlt)){
 		canDrag = true;
 	}
 	if (hasLAlt)
 		canDrag = false;
 
-	engine.Click(dragSource, dragSource, hasShift);
+	engine.Click(dragSource, dragSource, hasShift, hasLAlt);
 
 	return true;
 }
