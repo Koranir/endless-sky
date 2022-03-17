@@ -1833,7 +1833,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 					}
 				double HelpMePlease = fabs((angle.Degrees() + 180)-(tempAngle + 180));
 				double PleaseHelpMe = (HelpMePlease < 360 - HelpMePlease) ? (HelpMePlease) : (360 - HelpMePlease);
-				double mouseMultiplier = pow((1 + (PleaseHelpMe/180)),6);
+				double mouseMultiplier = 1 + (PleaseHelpMe/180);
 				// Check if we are able to turn.
 				double cost = attributes.Get("turning energy");
 				if(energy < cost * mouseMultiplier)
