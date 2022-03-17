@@ -267,7 +267,7 @@ bool MainPanel::Click(int x, int y, int clicks)
 	if (hasLAlt)
 		canDrag = false;
 
-	engine.Click(dragSource, dragSource, hasShift, hasLAlt);
+	engine.Click(dragSource, dragSource, hasShift, hasControl, hasLAlt);
 
 	return true;
 }
@@ -279,7 +279,7 @@ bool MainPanel::RClick(int x, int y)
 	SDL_Keymod mod = SDL_GetModState();
 	hasControl = (mod & KMOD_CTRL);
 	hasLAlt = (mod & KMOD_LALT);
-	engine.RClick(Point(x, y));
+	engine.RClick(Point(x, y), hasControl, hasLAlt);
 
 	return true;
 }
@@ -304,7 +304,7 @@ bool MainPanel::Release(int x, int y)
 	{
 		dragPoint = Point(x, y);
 		if(dragPoint.Distance(dragSource) > 5.)
-			engine.Click(dragSource, dragPoint, hasShift);
+			engine.Click(dragSource, dragPoint, hasShift, hasControl, hasLAlt);
 
 		isDragging = false;
 	}
