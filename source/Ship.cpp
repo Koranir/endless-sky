@@ -37,6 +37,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "StellarObject.h"
 #include "System.h"
 #include "TextReplacements.h"
+#include "UI.h"
 #include "Visual.h"
 
 #include <algorithm>
@@ -1824,7 +1825,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 		else if (Ship::IsSpecial() && Ship::IsYours() && Preferences::Has("Mouse movement"))
 			{
 				double tempAngle = (Rad2Deg*(atan(-UI::GetMouse().Y()/UI::GetMouse().X())));
-					if (UI::GetMouse.().X() < 0){
+					if (UI::GetMouse().X() < 0){
 						tempAngle = -90 - tempAngle;
 					}
 					else {
@@ -1883,7 +1884,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				}
 
 			}
-		double thrustCommand = commands.Has(Command::FORWARD) - commands.Has(Command::BACK) | Ship::isMouseThrusting;
+		double thrustCommand = (commands.Has(Command::FORWARD) - commands.Has(Command::BACK)) | Ship::isMouseThrusting;
 		double thrust = 0.;
 		if(thrustCommand)
 		{
