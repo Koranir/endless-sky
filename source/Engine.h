@@ -228,6 +228,7 @@ private:
 	bool doClick = false;
 	bool hasShift = false;
 	bool hasControl = false;
+	bool hasLAlt = false;
 	bool isRightClick = false;
 	bool isRadarClick = false;
 	Point clickPoint;
