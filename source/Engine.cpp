@@ -1051,6 +1051,7 @@ void Engine::Draw() const
 	Point boxOff(AMMO_WIDTH - .5 * selectedSprite->Width(), .5 * ICON_SIZE);
 	Point textOff(AMMO_WIDTH - .5 * ICON_SIZE, .5 * (ICON_SIZE - font.Height()));
 	Point iconOff(.5 * ICON_SIZE, .5 * ICON_SIZE);
+	Point otherIconOFF((.5 * ICON_SIZE)+80, .5 * ICON_SIZE);
 	for(const pair<const Outfit *, int> &it : ammo)
 	{
 		pos.Y() -= ICON_SIZE;
@@ -1078,7 +1079,7 @@ void Engine::Draw() const
 	}
 	
 	//Add an icon to indicate mouse controls
-	if (Preferences::Get("Mouse movement")){
+	if (Preferences::Has("Mouse movement")){
 		SpriteShader::Draw(mouseMovementLight, pos + otherIconOFF);
 	}
 	else {
@@ -1129,8 +1130,8 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasCo
 	else
 		isRadarClick = false;
 	
-	if(Preferences::Get("Mouse movement") && (Preferences::Get(".: Alt") ? !hasLAlt : hasLAlt)){
-		if (Preferences::Get(".: [LMB/RMB]")){player.FlagshipPtr()->SetMouseFiring(true);}
+	if(Preferences::Has("Mouse movement") && (Preferences::Has(".: Alt") ? !hasLAlt : hasLAlt)){
+		if (Preferences::Has(".: [LMB/RMB]")){player.FlagshipPtr()->SetMouseFiring(true);}
 		else {player.FlagshipPtr()->SetMouseThrusting(true);}
 	}
 	else
@@ -1154,8 +1155,8 @@ void Engine::RClick(const Point &point, bool hasControl, bool HasLAlt)
 	this->hasLAlt = hasLAlt;
 	isRightClick = true;
 	
-	if(Preferences::Get("Mouse movement") && (Preferences::Get(".: Alt") ? !hasLAlt : hasLAlt)){
-		if (!Preferences::Get(".: [LMB/RMB]")){player.FlagshipPtr()->SetMouseFiring(true);}
+	if(Preferences::Has("Mouse movement") && (Preferences::Has(".: Alt") ? !hasLAlt : hasLAlt)){
+		if (!Preferences::Has(".: [LMB/RMB]")){player.FlagshipPtr()->SetMouseFiring(true);}
 		else {player.FlagshipPtr()->SetMouseThrusting(true);}
 	}
 	else
