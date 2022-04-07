@@ -2275,6 +2275,7 @@ void Ship::DoGeneration()
 	}
 
 	// Don't allow any levels to drop below zero.
+	shields = max(0., shields);
 	energy = max(0., energy);
 	fuel = max(0., fuel);
 	heat = max(0., heat);
@@ -3196,7 +3197,7 @@ double Ship::HeatDissipation() const
 // Get the maximum heat level, in heat units (not temperature).
 double Ship::MaximumHeat() const
 {
-	return MAXIMUM_TEMPERATURE * (cargo.Used() + attributes.Mass());
+	return MAXIMUM_TEMPERATURE * (cargo.Used() + attributes.Mass() + attributes.Get("heat capacity"));
 }
 
 
