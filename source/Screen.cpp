@@ -24,6 +24,11 @@ namespace {
 	int USER_ZOOM = 100;
 	int EFFECTIVE_ZOOM = 100;
 	bool HIGH_DPI = false;
+	Point baseOffset = Point();
+	Point smoothOffset = Point();
+	Point trueOffset = Point();
+	Point frozenOffset = Point();
+	Point finalOffset = Point();
 }
 
 
@@ -71,6 +76,52 @@ void Screen::SetZoom(int percent)
 	HEIGHT = RAW_HEIGHT * 100 / EFFECTIVE_ZOOM;
 }
 
+
+
+void Screen::SetSmoothOffset(Point offset)
+{
+	smoothOffset = offset;
+}
+
+void Screen::SetFrozenOffset(Point offset)
+{
+	frozenOffset = offset;
+}
+
+Point Screen::FrozenOffset()
+{
+	return frozenOffset;
+}
+
+void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos)
+{
+	//Point OldOffset = CAMERA_OFFSET;
+	baseOffset = centerVelocity*-0.05*HEIGHT;
+	if (motionOffset.Distance(baseOffset) > RAW_HEIGHT/2)
+		smoothOffset = smoothOffset.Lerp(baseOffset, 0.2);
+	else
+		smoothOffset = smoothOffset.Lerp(baseOffset, 0.016);
+	trueOffset = baseOffset - smoothOffset;
+	if (locked)
+	{
+		finalOffset = frozenOffset - center;
+	}
+	else
+	{
+		CAMERA_OFFSET = trueOffset.Lerp(frozenOffset - center, lockBlend);
+		CAMERA_OFFSET = CAMERA_OFFSET.Lerp(targetPos, 0.5);
+	}
+}
+
+Point Screen::CameraOffset()
+{
+	return finalOffset;
+}
+
+Point Screen::TrueOffset()
+{
+	return trueOffset;
+}
 
 
 // Specify that this is a high-DPI window.

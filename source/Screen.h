@@ -30,6 +30,16 @@ public:
 	static int Zoom();
 	static void SetZoom(int percent);
 
+	//Screen Offsets
+	//Sets camera offsets
+	void Screen::SetSmoothOffset(Point offset)
+	void Screen::SetFrozenOffset(Point offset)
+	Point Screen::FrozenOffset()
+
+	void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos)
+	Point Screen::CameraOffset()
+	Point Screen::TrueOffset()
+
 	// Specify that this is a high-DPI window.
 	static void SetHighDPI(bool isHighDPI = true);
 	// This is true if the screen is high DPI, or if the zoom is above 100%.
