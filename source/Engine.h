@@ -183,7 +183,7 @@ private:
 	// Viewport position and velocity.
 	Point center;
 	Point centerVelocity;
-	bool lockedCamera;
+	bool lockedCamera = false;
 	// Other information to display.
 	Information info;
 	std::vector<Target> targets;
@@ -213,6 +213,7 @@ private:
 	int alarmTime = 0;
 	float blendLockedCamera = 0.;
 	Point lockedCameraPos = Point();
+	Point focusedTarget = Point();
 	double flash = 0.;
 	bool doFlash = false;
 	bool doEnter = false;

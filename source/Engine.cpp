@@ -1369,9 +1369,11 @@ void Engine::CalculateStep()
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
 		MoveShip(it);
-	// If the flagship just began jumping, play the appropriate sound.
+	// If the flagship just began jumping, play the appropriate sound and lock the camera.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
+		Screen::SetFrozenOffset(center + Screen::CameraOffset());
+		blendLockedCamera = 1.f;
 		bool isJumping = flagship->IsUsingJumpDrive();
 		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
@@ -1383,6 +1385,7 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
+		Screen::SetFrozenOffset(flagship->GetTargetStellar()->Position());
 		// Wormhole travel: mark the wormhole "planet" as visited.
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
@@ -1397,8 +1400,44 @@ void Engine::CalculateStep()
 	}
 	Prune(ships);
 
+	Point oldfocusedTarget = focusedTarget;
+	focusedTarget = Point();
+	if(flagship->GetTargetShip() != nullptr)
+	{
+		focusedTarget = flagship->GetTargetShip()->Position() - center;
+		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
+			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+	}
+	else if(flagship->IsLanding())
+	{
+		focusedTarget = flagship->GetTargetStellar()->Position() - center;
+		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
+			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
+	}
+	else if(flagship->GetTargetAsteroid() != nullptr)
+	{
+		focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
+			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+	}
+	else
+	{
+		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
+			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+	}
+
+	if(!flagship->CannotAct())
+	{
+		if(blendLockedCamera > 0.)
+			blendLockedCamera *= 0.98;
+	}
+
 	//Calculate camera offsets
-	Screen::SetCameraOffset(center, centerVelocity, 0, 0.f, Point());
+	Screen::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
