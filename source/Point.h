@@ -70,7 +70,7 @@ public:
 	Point Unit() const;
 
 	//Linearly interpolate between the caller to the target by float distance.
-	Point Lerp()) const;
+	Point Lerp(const Point &target, const float &distance) const;
 
 	double Distance(const Point &point) const;
 	double DistanceSquared(const Point &point) const;

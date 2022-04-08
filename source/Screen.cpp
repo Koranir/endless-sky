@@ -96,8 +96,8 @@ Point Screen::FrozenOffset()
 void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos)
 {
 	//Point OldOffset = CAMERA_OFFSET;
-	baseOffset = centerVelocity*-0.05*HEIGHT;
-	if (motionOffset.Distance(baseOffset) > RAW_HEIGHT/2)
+	baseOffset = centerVelocity*-0.1*HEIGHT;
+	if (smoothOffset.Distance(baseOffset) > RAW_HEIGHT/2)
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.2);
 	else
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.016);
@@ -108,8 +108,8 @@ void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, fl
 	}
 	else
 	{
-		CAMERA_OFFSET = trueOffset.Lerp(frozenOffset - center, lockBlend);
-		CAMERA_OFFSET = CAMERA_OFFSET.Lerp(targetPos, 0.5);
+		finalOffset = trueOffset.Lerp(frozenOffset - center, lockBlend);
+		finalOffset = finalOffset.Lerp(targetPos, 0.5);
 	}
 }
 

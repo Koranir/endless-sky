@@ -32,13 +32,13 @@ public:
 
 	//Screen Offsets
 	//Sets camera offsets
-	void Screen::SetSmoothOffset(Point offset)
-	void Screen::SetFrozenOffset(Point offset)
-	Point Screen::FrozenOffset()
+	static void SetSmoothOffset(Point offset);
+	static void SetFrozenOffset(Point offset);
+	static Point FrozenOffset();
 
-	void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos)
-	Point Screen::CameraOffset()
-	Point Screen::TrueOffset()
+	static void SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos);
+	static Point CameraOffset();
+	static Point TrueOffset();
 
 	// Specify that this is a high-DPI window.
 	static void SetHighDPI(bool isHighDPI = true);

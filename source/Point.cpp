@@ -278,10 +278,10 @@ Point Point::Unit() const
 
 
 
-Point Point::Lerp(const Point &target, const float &distance)
+Point Point::Lerp(const Point &target, const float &distance) const
 {
 	return Point(
-	x + (distance * (x - target.x)),
+	x + (distance * (target.x - x)),
 	y + (distance * (target.y - y)));
 }
 

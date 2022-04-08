@@ -221,8 +221,8 @@ Engine::Engine(PlayerInfo &player)
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
-	draw[calcTickTock].SetCenter(center);
-	radar[calcTickTock].SetCenter(center);
+	draw[calcTickTock].SetCenter(center + Screen::CameraOffset());
+	radar[calcTickTock].SetCenter(center + Screen::CameraOffset());
 	const Ship *flagship = player.Flagship();
 	for(const StellarObject &object : player.GetSystem()->Objects())
 		if(object.HasSprite())
@@ -502,7 +502,7 @@ void Engine::Step(bool isActive)
 	testContext = nullptr;
 
 	wasActive = isActive;
-	Audio::Update(center);
+	Audio::Update(center + Screen::CameraOffset());
 
 	// Smoothly zoom in and out.
 	if(isActive)
@@ -618,7 +618,7 @@ void Engine::Step(bool isActive)
 			if(isEnemy || it->IsYours() || it->GetPersonality().IsEscort())
 			{
 				double width = min(it->Width(), it->Height());
-				statuses.emplace_back(it->Position() - center, it->Shields(), it->Hull(),
+				statuses.emplace_back(it->Position() - center - Screen::CameraOffset(), it->Shields(), it->Hull(),
 					min(it->Hull(), it->DisabledHull()), max(20., width * .5), isEnemy);
 			}
 		}
@@ -632,7 +632,7 @@ void Engine::Step(bool isActive)
 			if(!object.HasSprite() || !object.HasValidPlanet() || !object.GetPlanet()->IsAccessible(flagship.get()))
 				continue;
 
-			Point pos = object.Position() - center;
+			Point pos = object.Position() - center - Screen::CameraOffset();
 			if(pos.Length() - object.Radius() < 600. / zoom)
 				labels.emplace_back(pos, object, currentSystem, zoom);
 		}
@@ -735,7 +735,7 @@ void Engine::Step(bool isActive)
 			targetAsteroid->GetFrame(step));
 		info.SetString("target name", Format::Capitalize(targetAsteroid->Name()) + " Asteroid");
 
-		targetVector = targetAsteroid->Position() - center;
+		targetVector = targetAsteroid->Position() - center - Screen::CameraOffset();
 
 		if(flagship->Attributes().Get("tactical scan power"))
 		{
@@ -806,7 +806,7 @@ void Engine::Step(bool isActive)
 		&& (flagship->CargoScanFraction() || flagship->OutfitScanFraction()))
 	{
 		double width = max(target->Width(), target->Height());
-		Point pos = target->Position() - center;
+		Point pos = target->Position() - center + Screen::CameraOffset();
 		statuses.emplace_back(pos, flagship->OutfitScanFraction(), flagship->CargoScanFraction(),
 			0, 10. + max(20., width * .5), 2, Angle(pos).Degrees() + 180.);
 	}
@@ -905,7 +905,7 @@ list<ShipEvent> &Engine::Events()
 // Draw a frame.
 void Engine::Draw() const
 {
-	GameData::Background().Draw(center, centerVelocity, zoom);
+	GameData::Background().Draw(center + Screen::CameraOffset(), centerVelocity, zoom);
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
 
@@ -945,7 +945,7 @@ void Engine::Draw() const
 		Point size(highlightSprite->Width(), highlightSprite->Height());
 		const Color &color = *colors.Get("flagship highlight");
 		// The flagship is always in the dead center of the screen.
-		OutlineShader::Draw(highlightSprite, Point(), size, color, highlightUnit, highlightFrame);
+		OutlineShader::Draw(highlightSprite, (Point() - Screen::CameraOffset())*zoom, size, color, highlightUnit, highlightFrame);
 	}
 
 	if(flash)
@@ -993,7 +993,7 @@ void Engine::Draw() const
 		PointerShader::Bind();
 		for(int i = 0; i < target.count; ++i)
 		{
-			PointerShader::Add(target.center * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
+			PointerShader::Add((target.center - Screen::CameraOffset()) * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
 				Radar::GetColor(target.type));
 			a += da;
 		}
@@ -1397,6 +1397,9 @@ void Engine::CalculateStep()
 	}
 	Prune(ships);
 
+	//Calculate camera offsets
+	Screen::SetCameraOffset(center, centerVelocity, 0, 0.f, Point());
+
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
 	asteroids.Step(newVisuals, newFlotsam, step);
@@ -1473,9 +1476,9 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
-	draw[calcTickTock].SetCenter(newCenter, newCenterVelocity);
-	batchDraw[calcTickTock].SetCenter(newCenter);
-	radar[calcTickTock].SetCenter(newCenter);
+	draw[calcTickTock].SetCenter(newCenter + Screen::CameraOffset(), newCenterVelocity);
+	batchDraw[calcTickTock].SetCenter(newCenter + Screen::CameraOffset());
+	radar[calcTickTock].SetCenter(newCenter + Screen::CameraOffset());
 
 	// Populate the radar.
 	FillRadar();
@@ -1491,7 +1494,7 @@ void Engine::CalculateStep()
 				draw[calcTickTock].Add(object);
 		}
 	// Draw the asteroids and minables.
-	asteroids.Draw(draw[calcTickTock], newCenter, zoom);
+	asteroids.Draw(draw[calcTickTock], newCenter + Screen::CameraOffset(), zoom);
 	// Draw the flotsam.
 	for(const shared_ptr<Flotsam> &it : flotsam)
 		draw[calcTickTock].Add(*it);
