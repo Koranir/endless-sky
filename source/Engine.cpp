@@ -1374,6 +1374,7 @@ void Engine::CalculateStep()
 	{
 		Screen::SetFrozenOffset(center + Screen::CameraOffset());
 		blendLockedCamera = 1.f;
+		lockedCamera = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
 		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
@@ -1385,13 +1386,16 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
-		Screen::SetFrozenOffset(flagship->GetTargetStellar()->Position());
+		Screen::SetFrozenOffset(flagship->GetTargetPoint());
 		// Wormhole travel: mark the wormhole "planet" as visited.
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
-					player.Visit(*it.GetPlanet());
+						{
+							player.Visit(*it.GetPlanet());
+							Screen::SetFrozenOffset(Point());
+						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
@@ -1430,14 +1434,14 @@ void Engine::CalculateStep()
 		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
 	}
 
-	if(!flagship->CannotAct())
+	if(!flagship->IsHyperspacing())
 	{
 		if(blendLockedCamera > 0.)
 			blendLockedCamera *= 0.98;
 	}
 
 	//Calculate camera offsets
-	Screen::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+	Screen::SetCameraOffset(center, centerVelocity, true, blendLockedCamera, focusedTarget);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.

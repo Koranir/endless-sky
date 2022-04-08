@@ -404,6 +404,7 @@ public:
 	std::shared_ptr<Ship> GetShipToAssist() const;
 	const StellarObject *GetTargetStellar() const;
 	const System *GetTargetSystem() const;
+	const Point GetTargetPoint() const;
 	// Mining target.
 	std::shared_ptr<Minable> GetTargetAsteroid() const;
 	std::shared_ptr<Flotsam> GetTargetFlotsam() const;
@@ -559,6 +560,7 @@ private:
 	bool isUsingJumpDrive = false;
 	double hyperspaceFuelCost = 0.;
 	Point hyperspaceOffset;
+	Point exitTarget;
 
 	double jumpRange = 0.;
 

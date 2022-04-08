@@ -1631,6 +1631,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 			// traveling in, so that when you decelerate there will not be a
 			// sudden shift in direction at the end.
 			velocity = velocity.Length() * angle.Unit();
+			exitTarget = target;
 		}
 		if(!isUsingJumpDrive)
 		{
@@ -2039,6 +2040,13 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				for(int i = 0; i < it.second; ++i)
 					visuals.emplace_back(*it.first, pos, effectVelocity, angle);
 		}
+}
+
+
+
+const Point Ship::GetTargetPoint() const
+{
+	return exitTarget;
 }
 
 
