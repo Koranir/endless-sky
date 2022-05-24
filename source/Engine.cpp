@@ -1386,7 +1386,11 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
-		Screen::SetFrozenOffset(flagship->GetTargetPoint());
+		if(flagship->IsUsingJumpDrive())
+		{
+			blendLockedCamera = 0.;
+			Screen::SetSmoothOffset(Point());
+		}
 		// Wormhole travel: mark the wormhole "planet" as visited.
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
@@ -1394,19 +1398,20 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
-							Screen::SetFrozenOffset(Point());
+							Screen::SetFrozenOffset(it.Position());
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
+		lockedCamera = false;
 	}
 	Prune(ships);
 
 	Point oldfocusedTarget = focusedTarget;
 	focusedTarget = Point();
-	if(flagship->GetTargetShip() != nullptr)
+	if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
 	{
 		focusedTarget = flagship->GetTargetShip()->Position() - center;
 		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
@@ -1441,7 +1446,10 @@ void Engine::CalculateStep()
 	}
 
 	//Calculate camera offsets
-	Screen::SetCameraOffset(center, centerVelocity, true, blendLockedCamera, focusedTarget);
+	Screen::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+
+	//Messages::Add((flagship->GetTargetShip() != nullptr)?("Targeting Ship"):("Not targeting ship"), Messages::Importance::Low);
+	Messages::Add((flagship->IsLanding())?("Landing"):("Not targeting ship"), Messages::Importance::Low);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.

@@ -97,9 +97,9 @@ void Screen::SetCameraOffset(Point center, Point centerVelocity, bool locked, fl
 {
 	//Point OldOffset = CAMERA_OFFSET;
 	baseOffset = centerVelocity*-0.1*HEIGHT;
-	if (smoothOffset.Distance(baseOffset) > RAW_HEIGHT/2)
+	/*if (smoothOffset.Distance(baseOffset) > RAW_HEIGHT/2)
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.2);
-	else
+	else*/
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.016);
 	trueOffset = baseOffset - smoothOffset;
 	if (locked)
