@@ -211,10 +211,13 @@ private:
 	CollisionSet shipCollisions;
 
 	int alarmTime = 0;
-	float blendLockedCamera = 0.;
+	double blendLockedCamera = 0.;
 	Point lockedCameraPos = Point();
 	Point focusedTarget = Point();
+	double zoomMod = 0.;
+	double zoomModTarget = 0.;
 	double flash = 0.;
+
 	bool doFlash = false;
 	bool doEnter = false;
 	bool hadHostiles = false;

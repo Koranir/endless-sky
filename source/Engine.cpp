@@ -13,6 +13,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Engine.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "CategoryTypes.h"
 #include "CoreStartData.h"
 #include "DamageDealt.h"
@@ -221,8 +222,8 @@ Engine::Engine(PlayerInfo &player)
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
-	draw[calcTickTock].SetCenter(center + Screen::CameraOffset());
-	radar[calcTickTock].SetCenter(center + Screen::CameraOffset());
+	draw[calcTickTock].SetCenter(center + Camera::CameraOffset());
+	radar[calcTickTock].SetCenter(center + Camera::CameraOffset());
 	const Ship *flagship = player.Flagship();
 	for(const StellarObject &object : player.GetSystem()->Objects())
 		if(object.HasSprite())
@@ -502,12 +503,12 @@ void Engine::Step(bool isActive)
 	testContext = nullptr;
 
 	wasActive = isActive;
-	Audio::Update(center + Screen::CameraOffset());
+	Audio::Update(center + Camera::CameraOffset());
 
 	// Smoothly zoom in and out.
 	if(isActive)
 	{
-		double zoomTarget = Preferences::ViewZoom();
+		double zoomTarget = Preferences::ViewZoom() + zoomMod;
 		if(zoom != zoomTarget)
 		{
 			static const double ZOOM_SPEED = .05;
@@ -618,7 +619,7 @@ void Engine::Step(bool isActive)
 			if(isEnemy || it->IsYours() || it->GetPersonality().IsEscort())
 			{
 				double width = min(it->Width(), it->Height());
-				statuses.emplace_back(it->Position() - center - Screen::CameraOffset(), it->Shields(), it->Hull(),
+				statuses.emplace_back(it->Position() - center - Camera::CameraOffset(), it->Shields(), it->Hull(),
 					min(it->Hull(), it->DisabledHull()), max(20., width * .5), isEnemy);
 			}
 		}
@@ -632,7 +633,7 @@ void Engine::Step(bool isActive)
 			if(!object.HasSprite() || !object.HasValidPlanet() || !object.GetPlanet()->IsAccessible(flagship.get()))
 				continue;
 
-			Point pos = object.Position() - center - Screen::CameraOffset();
+			Point pos = object.Position() - center - Camera::CameraOffset();
 			if(pos.Length() - object.Radius() < 600. / zoom)
 				labels.emplace_back(pos, object, currentSystem, zoom);
 		}
@@ -735,7 +736,7 @@ void Engine::Step(bool isActive)
 			targetAsteroid->GetFrame(step));
 		info.SetString("target name", Format::Capitalize(targetAsteroid->Name()) + " Asteroid");
 
-		targetVector = targetAsteroid->Position() - center - Screen::CameraOffset();
+		targetVector = targetAsteroid->Position() - center - Camera::CameraOffset();
 
 		if(flagship->Attributes().Get("tactical scan power"))
 		{
@@ -806,7 +807,7 @@ void Engine::Step(bool isActive)
 		&& (flagship->CargoScanFraction() || flagship->OutfitScanFraction()))
 	{
 		double width = max(target->Width(), target->Height());
-		Point pos = target->Position() - center + Screen::CameraOffset();
+		Point pos = target->Position() - center - Camera::CameraOffset();
 		statuses.emplace_back(pos, flagship->OutfitScanFraction(), flagship->CargoScanFraction(),
 			0, 10. + max(20., width * .5), 2, Angle(pos).Degrees() + 180.);
 	}
@@ -905,7 +906,7 @@ list<ShipEvent> &Engine::Events()
 // Draw a frame.
 void Engine::Draw() const
 {
-	GameData::Background().Draw(center + Screen::CameraOffset(), centerVelocity, zoom);
+	GameData::Background().Draw(center + Camera::CameraOffset(), centerVelocity, zoom);
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
 
@@ -945,7 +946,7 @@ void Engine::Draw() const
 		Point size(highlightSprite->Width(), highlightSprite->Height());
 		const Color &color = *colors.Get("flagship highlight");
 		// The flagship is always in the dead center of the screen.
-		OutlineShader::Draw(highlightSprite, (Point() - Screen::CameraOffset())*zoom, size, color, highlightUnit, highlightFrame);
+		OutlineShader::Draw(highlightSprite, (Point() - Camera::CameraOffset())*zoom, size, color, highlightUnit, highlightFrame);
 	}
 
 	if(flash)
@@ -993,7 +994,7 @@ void Engine::Draw() const
 		PointerShader::Bind();
 		for(int i = 0; i < target.count; ++i)
 		{
-			PointerShader::Add((target.center - Screen::CameraOffset()) * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
+			PointerShader::Add((target.center - Camera::CameraOffset()) * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
 				Radar::GetColor(target.type));
 			a += da;
 		}
@@ -1372,10 +1373,14 @@ void Engine::CalculateStep()
 	// If the flagship just began jumping, play the appropriate sound and lock the camera.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
-		Screen::SetFrozenOffset(center + Screen::CameraOffset());
+		Camera::SetStaticCamera(center + Camera::CameraOffset());
 		blendLockedCamera = 1.f;
 		lockedCamera = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
+		if (isJumping)
+			zoomModTarget = 0.9;
+		else
+			zoomModTarget = 0.99;
 		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
 			Audio::Play(Audio::Get(isJumping ? "jump drive" : "hyperdrive"));
@@ -1386,11 +1391,15 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
+		Camera::SetStaticCamera(Point());
 		if(flagship->IsUsingJumpDrive())
 		{
 			blendLockedCamera = 0.;
-			Screen::SetSmoothOffset(Point());
+			Camera::SetSmoothOffset(Point());
+			zoomModTarget = 0.;
 		}
+		else
+			zoomModTarget = 0.;
 		// Wormhole travel: mark the wormhole "planet" as visited.
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
@@ -1398,7 +1407,7 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
-							Screen::SetFrozenOffset(it.Position());
+							Camera::SetStaticCamera(it.Position());
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
@@ -1414,42 +1423,32 @@ void Engine::CalculateStep()
 	if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
 	{
 		focusedTarget = flagship->GetTargetShip()->Position() - center;
-		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
-			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
-		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
-	}
-	else if(flagship->IsLanding())
-	{
-		focusedTarget = flagship->GetTargetStellar()->Position() - center;
-		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
-			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
-		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 	}
 	else if(flagship->GetTargetAsteroid() != nullptr)
 	{
 		focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
-		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
-			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
-		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
 	}
-	else
+	else if(flagship->GetTargetStellar())
 	{
-		if (focusedTarget.Length() > Screen::RawHeight()/2.1)
-			focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
-		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+		focusedTarget = flagship->GetTargetStellar()->Position() - center;
 	}
+	if (focusedTarget.Length() > Screen::RawHeight()/2.1)
+		focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
+	focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+	focusedTarget *= 1 - zoomMod;
 
 	if(!flagship->IsHyperspacing())
 	{
 		if(blendLockedCamera > 0.)
 			blendLockedCamera *= 0.98;
 	}
+	zoomMod = zoomMod + (0.9 * (zoomModTarget - zoomMod));
 
 	//Calculate camera offsets
-	Screen::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 
 	//Messages::Add((flagship->GetTargetShip() != nullptr)?("Targeting Ship"):("Not targeting ship"), Messages::Importance::Low);
-	Messages::Add((flagship->IsLanding())?("Landing"):("Not targeting ship"), Messages::Importance::Low);
+	//Messages::Add((flagship->IsLanding())?("Landing"):("Not targeting ship"), Messages::Importance::Low);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
@@ -1527,9 +1526,9 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
-	draw[calcTickTock].SetCenter(newCenter + Screen::CameraOffset(), newCenterVelocity);
-	batchDraw[calcTickTock].SetCenter(newCenter + Screen::CameraOffset());
-	radar[calcTickTock].SetCenter(newCenter + Screen::CameraOffset());
+	draw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset(), newCenterVelocity);
+	batchDraw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
+	radar[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
 
 	// Populate the radar.
 	FillRadar();
@@ -1545,7 +1544,7 @@ void Engine::CalculateStep()
 				draw[calcTickTock].Add(object);
 		}
 	// Draw the asteroids and minables.
-	asteroids.Draw(draw[calcTickTock], newCenter + Screen::CameraOffset(), zoom);
+	asteroids.Draw(draw[calcTickTock], newCenter + Camera::CameraOffset(), zoom);
 	// Draw the flotsam.
 	for(const shared_ptr<Flotsam> &it : flotsam)
 		draw[calcTickTock].Add(*it);

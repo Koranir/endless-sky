@@ -30,16 +30,6 @@ public:
 	static int Zoom();
 	static void SetZoom(int percent);
 
-	//Screen Offsets
-	//Sets camera offsets
-	static void SetSmoothOffset(Point offset);
-	static void SetFrozenOffset(Point offset);
-	static Point FrozenOffset();
-
-	static void SetCameraOffset(Point center, Point centerVelocity, bool locked, float lockBlend, Point targetPos);
-	static Point CameraOffset();
-	static Point TrueOffset();
-
 	// Specify that this is a high-DPI window.
 	static void SetHighDPI(bool isHighDPI = true);
 	// This is true if the screen is high DPI, or if the zoom is above 100%.
