@@ -1400,15 +1400,20 @@ void Engine::CalculateStep()
 		}
 		else
 			zoomModTarget = 0.;
-		// Wormhole travel: mark the wormhole "planet" as visited.
-		if(!wasHyperspacing)
-			for(const auto &it : playerSystem->Objects())
+		for(const auto &it : playerSystem->Objects())
+		{
+			if(!wasHyperspacing)
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
 							Camera::SetStaticCamera(it.Position());
 						}
+			if(it.HasValidPlanet() && (flagship->GetTargetStellar() != nullptr))
+				if((it.GetPlanet() == flagship->GetTargetStellar()->GetPlanet()))
+					Camera::SetStaticCamera(flagship->GetTargetStellar()->Position());
+		}
+		// Wormhole travel: mark the wormhole "planet" as visited. ^
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
@@ -1428,13 +1433,13 @@ void Engine::CalculateStep()
 	{
 		focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
 	}
-	else if(flagship->GetTargetStellar())
+	else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
 	{
 		focusedTarget = flagship->GetTargetStellar()->Position() - center;
 	}
-	if (focusedTarget.Length() > Screen::RawHeight()/2.1)
-		focusedTarget *= ((Screen::RawHeight()/2.1) / focusedTarget.Length());
-	focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.2);
+	if (focusedTarget.Length() > Screen::RawHeight()/2)
+		focusedTarget *= ((Screen::RawHeight()/2) / focusedTarget.Length());
+	focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 	focusedTarget *= 1 - zoomMod;
 
 	if(!flagship->IsHyperspacing())

@@ -47,11 +47,11 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 {
 	center2 = center;
 	//Point OldOffset = CAMERA_OFFSET;
-	baseOffset = centerVelocity*-0.1*Screen::Height();
-	/*if (smoothOffset.Distance(baseOffset) > RAW_HEIGHT)
+	baseOffset = centerVelocity*-0.08*Screen::Height();
+	if (smoothOffset.Distance(baseOffset) > max(Screen::Height(), Screen::Width())*1.2)
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.16);
-	else*/
-		smoothOffset = smoothOffset.Lerp(baseOffset, 0.016);
+	else
+		smoothOffset = smoothOffset.Lerp(baseOffset, 0.02);
 	trueOffset = baseOffset - smoothOffset;
 	if (locked)
 	{
