@@ -1391,7 +1391,7 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
-		Camera::SetStaticCamera(Point());
+		Camera::SetStaticCamera(flagship->GetTargetPoint());
 		if(flagship->IsUsingJumpDrive())
 		{
 			blendLockedCamera = 0.;
@@ -1400,20 +1400,15 @@ void Engine::CalculateStep()
 		}
 		else
 			zoomModTarget = 0.;
-		for(const auto &it : playerSystem->Objects())
-		{
-			if(!wasHyperspacing)
+		// Wormhole travel: mark the wormhole "planet" as visited. ^
+		if(!wasHyperspacing)
+			for(const auto &it : playerSystem->Objects())
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
 							Camera::SetStaticCamera(it.Position());
 						}
-			if(it.HasValidPlanet() && (flagship->GetTargetStellar() != nullptr))
-				if((it.GetPlanet() == flagship->GetTargetStellar()->GetPlanet()))
-					Camera::SetStaticCamera(flagship->GetTargetStellar()->Position());
-		}
-		// Wormhole travel: mark the wormhole "planet" as visited. ^
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
