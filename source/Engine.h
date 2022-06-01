@@ -216,8 +216,9 @@ private:
 	Point lockedCameraPos = Point();
 	Point focusedTarget = Point();
 	double zoomMod = 0.;
-	double zoomModTarget = 0.;
+	bool firstHalf = false;
 	double flash = 0.;
+	float isSelecting = 0.f;
 
 	bool doFlash = false;
 	bool doEnter = false;

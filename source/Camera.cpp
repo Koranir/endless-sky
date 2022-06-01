@@ -55,7 +55,7 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 	trueOffset = baseOffset - smoothOffset;
 	if (locked)
 	{
-		finalOffset = frozenOffset - center;
+		finalOffset = (frozenOffset.Lerp(center, lockBlend) - center);
 	}
 	else
 	{

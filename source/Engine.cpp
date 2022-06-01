@@ -31,6 +31,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Government.h"
 #include "Hazard.h"
 #include "Interface.h"
+#include "LineShader.h"
 #include "MapPanel.h"
 #include "Mask.h"
 #include "Messages.h"
@@ -508,7 +509,7 @@ void Engine::Step(bool isActive)
 	// Smoothly zoom in and out.
 	if(isActive)
 	{
-		double zoomTarget = Preferences::ViewZoom() + zoomMod;
+		double zoomTarget = Preferences::ViewZoom();
 		if(zoom != zoomTarget)
 		{
 			static const double ZOOM_SPEED = .05;
@@ -523,7 +524,15 @@ void Engine::Step(bool isActive)
 			else if(zoom > zoomTarget)
 				zoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
+		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
+		if(zoomMod > 0.01)
+		{
+			zoom = zoomTargetTarget;
+		}
 	}
+
+	if (activeCommands.Has(Command::NEAREST | Command::TARGET))
+		isSelecting = 2.f;
 
 	// Draw a highlight to distinguish the flagship from other ships.
 	if(flagship && !flagship->IsDestroyed() && Preferences::Has("Highlight player's flagship"))
@@ -911,6 +920,8 @@ void Engine::Draw() const
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
 
+	const Ship *flagship = player.Flagship();
+
 	// Draw any active planet labels.
 	for(const PlanetLabel &label : labels)
 		label.Draw();
@@ -918,27 +929,28 @@ void Engine::Draw() const
 	draw[drawTickTock].Draw();
 	batchDraw[drawTickTock].Draw();
 
+	static const Color colorPalette[8] = {
+		*colors.Get("overlay friendly shields"),
+		*colors.Get("overlay hostile shields"),
+		*colors.Get("overlay outfit scan"),
+		*colors.Get("overlay friendly hull"),
+		*colors.Get("overlay hostile hull"),
+		*colors.Get("overlay cargo scan"),
+		*colors.Get("overlay friendly disabled"),
+		*colors.Get("overlay hostile disabled")
+	};
+
 	for(const auto &it : statuses)
 	{
-		static const Color color[8] = {
-			*colors.Get("overlay friendly shields"),
-			*colors.Get("overlay hostile shields"),
-			*colors.Get("overlay outfit scan"),
-			*colors.Get("overlay friendly hull"),
-			*colors.Get("overlay hostile hull"),
-			*colors.Get("overlay cargo scan"),
-			*colors.Get("overlay friendly disabled"),
-			*colors.Get("overlay hostile disabled")
-		};
 		Point pos = it.position * zoom;
 		double radius = it.radius * zoom;
 		if(it.outer > 0.)
-			RingShader::Draw(pos, radius + 3., 1.5f, it.outer, color[it.type], 0.f, it.angle);
+			RingShader::Draw(pos, radius + 3., 1.5f, it.outer, colorPalette[it.type], 0.f, it.angle);
 		double dashes = (it.type >= 2) ? 0. : 20. * min(1., zoom);
 		if(it.inner > 0.)
-			RingShader::Draw(pos, radius, 1.5f, it.inner, color[3 + it.type], dashes, it.angle);
+			RingShader::Draw(pos, radius, 1.5f, it.inner, colorPalette[3 + it.type], dashes, it.angle);
 		if(it.disabled > 0.)
-			RingShader::Draw(pos, radius, 1.5f, it.disabled, color[6 + it.type], dashes, it.angle);
+			RingShader::Draw(pos, radius, 1.5f, it.disabled, colorPalette[6 + it.type], dashes, it.angle);
 	}
 
 	// Draw the flagship highlight, if any.
@@ -952,6 +964,32 @@ void Engine::Draw() const
 
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
+
+	if (isSelecting > 0.f)
+	{
+		for(const shared_ptr<Ship> &it : ships)
+		{
+			const Ship target = *it;
+
+			if (!(flagship == &target))
+			{
+				//Cycles through all the ships i the system and draws lines to them based on their government
+				//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
+				bool isTarget = (flagship->GetTargetShip() == it);
+				Point to = target.Position() - center;
+				Point from = flagship->Position() - center;
+				Point unit = (to - from).Unit();
+				from += flagship->Radius() * unit;
+				to -= target.Radius() * unit;
+				const Color &isEnemy = target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]);
+				LineShader::Draw(from - Camera::CameraOffset(),
+									to - Camera::CameraOffset(),
+									isTarget?(6.f):(1.2f),
+									isEnemy.Transparent(min(isSelecting, 1.f)));
+			}
+		}
+	}
+
 
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
@@ -1369,18 +1407,31 @@ void Engine::CalculateStep()
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
+	{
 		MoveShip(it);
+		const Ship &target = *it;
+
+		//Cycles through all the ships i the system and draws lines to them based on their government
+		//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
+		bool isTarget = (flagship->GetTargetShip() == it);
+		if (isTarget)
+			Messages::Add("Didit", Messages::Importance::Low);
+		Point to = target.Position();
+		Point from = flagship->Position();
+		//Point unit = (to - from).Unit();
+		//from += flagship->Radius() * unit;
+		//to -= target.Radius() * unit;
+		//LineShader::Draw(from, to, isTarget?(1.2f):(0.6f), Color(1.f, 0.8f));
+		LineShader::Draw(from, to, 10.f, Color(1.f, 1.f));
+	}
 	// If the flagship just began jumping, play the appropriate sound and lock the camera.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
 		Camera::SetStaticCamera(center + Camera::CameraOffset());
-		blendLockedCamera = 1.f;
+		blendLockedCamera = 0.05;
 		lockedCamera = true;
+		firstHalf = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
-		if (isJumping)
-			zoomModTarget = 0.9;
-		else
-			zoomModTarget = 0.99;
 		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
 			Audio::Play(Audio::Get(isJumping ? "jump drive" : "hyperdrive"));
@@ -1392,14 +1443,13 @@ void Engine::CalculateStep()
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
 		Camera::SetStaticCamera(flagship->GetTargetPoint());
+		firstHalf = false;
+		blendLockedCamera = 1.;
 		if(flagship->IsUsingJumpDrive())
 		{
 			blendLockedCamera = 0.;
 			Camera::SetSmoothOffset(Point());
-			zoomModTarget = 0.;
 		}
-		else
-			zoomModTarget = 0.;
 		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
@@ -1422,7 +1472,8 @@ void Engine::CalculateStep()
 	focusedTarget = Point();
 	if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
 	{
-		focusedTarget = flagship->GetTargetShip()->Position() - center;
+		const Ship &target = *flagship->GetTargetShip();
+		focusedTarget = target.Position() - center;
 	}
 	else if(flagship->GetTargetAsteroid() != nullptr)
 	{
@@ -1440,10 +1491,15 @@ void Engine::CalculateStep()
 	if(!flagship->IsHyperspacing())
 	{
 		if(blendLockedCamera > 0.)
-			blendLockedCamera *= 0.98;
+			blendLockedCamera *= 0.99;
 	}
-	zoomMod = zoomMod + (0.9 * (zoomModTarget - zoomMod));
-
+	if (firstHalf)
+		zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
+	if (flagship->Zoom() < 1.)
+		zoomMod = 1.47	 * (1. - flagship->Zoom());
+	if (isSelecting > 0.f)
+		isSelecting -= 0.66f;
+	zoomMod = zoomMod - (0.18 * zoomMod);
 	//Calculate camera offsets
 	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 
@@ -1861,9 +1917,12 @@ void Engine::HandleKeyboardInputs()
 	static const Command manueveringCommands = Command::AFTERBURNER | Command::BACK |
 		Command::FORWARD | Command::LEFT | Command::RIGHT;
 
+	// Certain commands are part of a 'targeting' group
+	static const Command targetingCommands = Command::NEAREST | Command::TARGET;
+
 	// Transfer all commands that need to be active as long as the corresponding key is pressed.
 	activeCommands |= keyHeld.And(Command::PRIMARY | Command::SECONDARY | Command::SCAN |
-		manueveringCommands | Command::SHIFT);
+		manueveringCommands | targetingCommands | Command::SHIFT);
 
 	// Issuing LAND again within the cooldown period signals a change of landing target.
 	constexpr int landCooldown = 60;

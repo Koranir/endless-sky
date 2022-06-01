@@ -15,7 +15,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "Point.h"
 
-
+class Ship;
 
 // Class that holds and sets offsets for the camera.
 class Camera {
@@ -41,6 +41,12 @@ public:
 	static Point TrueOffset();
 	//returns the offset relative to the origin
 	static Point CameraPos();
+	//returns the zoom modifier
+	static double ZoomMod();
+	//Sets the xoom modifier
+	static void SetZoomMod();
+	//Zoom Update Function
+	static void UpdateZoomMod(const Ship &flagship);
 };
 
 

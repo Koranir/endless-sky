@@ -2706,6 +2706,13 @@ bool Ship::IsHyperspacing() const
 
 
 
+double Ship::HyperCount() const
+{
+	return (static_cast<double>(hyperspaceCount))/100.;
+}
+
+
+
 // Check if this ship is hyperspacing, specifically via a jump drive.
 bool Ship::IsUsingJumpDrive() const
 {
