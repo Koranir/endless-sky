@@ -531,9 +531,6 @@ void Engine::Step(bool isActive)
 		}
 	}
 
-	if (activeCommands.Has(Command::NEAREST | Command::TARGET))
-		isSelecting = 2.f;
-
 	// Draw a highlight to distinguish the flagship from other ships.
 	if(flagship && !flagship->IsDestroyed() && Preferences::Has("Highlight player's flagship"))
 	{
@@ -965,27 +962,29 @@ void Engine::Draw() const
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
 
-	if (isSelecting > 0.f)
+	if (isSelecting > 0.)
 	{
 		for(const shared_ptr<Ship> &it : ships)
 		{
 			const Ship target = *it;
 
-			if (!(flagship == &target))
+			if ((it != player.FlagshipPtr()) && (target.GetSystem() == flagship->GetSystem()))
 			{
 				//Cycles through all the ships i the system and draws lines to them based on their government
 				//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
+				double fsize = min(flagship->Width(), flagship->Height());
+				double tsize = min(target.Width(), target.Height());
 				bool isTarget = (flagship->GetTargetShip() == it);
-				Point to = target.Position() - center;
-				Point from = flagship->Position() - center;
+				Point to = target.Position() - center - Camera::CameraOffset();
+				Point from = flagship->Position() - center - Camera::CameraOffset();
 				Point unit = (to - from).Unit();
-				from += flagship->Radius() * unit;
-				to -= target.Radius() * unit;
+				from -= fsize * zoom * unit;
+				to += tsize * zoom * unit;
 				const Color &isEnemy = target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]);
-				LineShader::Draw(from - Camera::CameraOffset(),
-									to - Camera::CameraOffset(),
+				LineShader::Draw(from,
+									to,
 									isTarget?(6.f):(1.2f),
-									isEnemy.Transparent(min(isSelecting, 1.f)));
+									isEnemy.Transparent(static_cast<float>(isSelecting)));
 			}
 		}
 	}
@@ -1407,23 +1406,7 @@ void Engine::CalculateStep()
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
-	{
 		MoveShip(it);
-		const Ship &target = *it;
-
-		//Cycles through all the ships i the system and draws lines to them based on their government
-		//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
-		bool isTarget = (flagship->GetTargetShip() == it);
-		if (isTarget)
-			Messages::Add("Didit", Messages::Importance::Low);
-		Point to = target.Position();
-		Point from = flagship->Position();
-		//Point unit = (to - from).Unit();
-		//from += flagship->Radius() * unit;
-		//to -= target.Radius() * unit;
-		//LineShader::Draw(from, to, isTarget?(1.2f):(0.6f), Color(1.f, 0.8f));
-		LineShader::Draw(from, to, 10.f, Color(1.f, 1.f));
-	}
 	// If the flagship just began jumping, play the appropriate sound and lock the camera.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
@@ -1497,8 +1480,7 @@ void Engine::CalculateStep()
 		zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
 	if (flagship->Zoom() < 1.)
 		zoomMod = 1.47	 * (1. - flagship->Zoom());
-	if (isSelecting > 0.f)
-		isSelecting -= 0.66f;
+	isSelecting -= 0.066;
 	zoomMod = zoomMod - (0.18 * zoomMod);
 	//Calculate camera offsets
 	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
@@ -1917,18 +1899,19 @@ void Engine::HandleKeyboardInputs()
 	static const Command manueveringCommands = Command::AFTERBURNER | Command::BACK |
 		Command::FORWARD | Command::LEFT | Command::RIGHT;
 
-	// Certain commands are part of a 'targeting' group
-	static const Command targetingCommands = Command::NEAREST | Command::TARGET;
-
 	// Transfer all commands that need to be active as long as the corresponding key is pressed.
 	activeCommands |= keyHeld.And(Command::PRIMARY | Command::SECONDARY | Command::SCAN |
-		manueveringCommands | targetingCommands | Command::SHIFT);
+		manueveringCommands | Command::SHIFT);
 
 	// Issuing LAND again within the cooldown period signals a change of landing target.
 	constexpr int landCooldown = 60;
 	++landKeyInterval;
 	if(oldHeld.Has(Command::LAND))
 		landKeyInterval = 0;
+
+	//Holding TARGET keeps the lines graph thing open
+	if(keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST))
+		isSelecting = 2.0;
 
 	// If all previously-held maneuvering keys have been released,
 	// restore any autopilot commands still being requested.

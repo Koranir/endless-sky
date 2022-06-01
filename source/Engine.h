@@ -218,7 +218,7 @@ private:
 	double zoomMod = 0.;
 	bool firstHalf = false;
 	double flash = 0.;
-	float isSelecting = 0.f;
+	double isSelecting = 0.;
 
 	bool doFlash = false;
 	bool doEnter = false;
