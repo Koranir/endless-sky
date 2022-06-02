@@ -645,6 +645,7 @@ void Engine::Step(bool isActive)
 		}
 	}
 
+
 	if(flagship && flagship->IsOverheated())
 		Messages::Add("Your ship has overheated.", Messages::Importance::Highest);
 
@@ -962,7 +963,7 @@ void Engine::Draw() const
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
 
-	if (isSelecting > 0.)
+	if (isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
 	{
 		for(const shared_ptr<Ship> &it : ships)
 		{
@@ -972,23 +973,22 @@ void Engine::Draw() const
 			{
 				//Cycles through all the ships i the system and draws lines to them based on their government
 				//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
-				double fsize = min(flagship->Width(), flagship->Height());
-				double tsize = min(target.Width(), target.Height());
+				//double fsize = min(flagship->Width(), flagship->Height());
+				//double tsize = min(target.Width(), target.Height());
 				bool isTarget = (flagship->GetTargetShip() == it);
 				Point to = target.Position() - center - Camera::CameraOffset();
 				Point from = flagship->Position() - center - Camera::CameraOffset();
-				Point unit = (to - from).Unit();
-				from -= fsize * zoom * unit;
-				to += tsize * zoom * unit;
-				const Color &isEnemy = target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]);
-				LineShader::Draw(from,
-									to,
-									isTarget?(6.f):(1.2f),
+				//Point unit = (to - from).Unit();
+				//from += fsize * unit * 0.5;
+				//to -= tsize * unit * 0.5;
+				const Color &isEnemy = target.IsYours()?(colorPalette[0]):(target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
+				LineShader::Draw(from * zoom,
+									to * zoom,
+									isTarget?(2.f):(0.8f),
 									isEnemy.Transparent(static_cast<float>(isSelecting)));
 			}
 		}
 	}
-
 
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
@@ -1480,7 +1480,7 @@ void Engine::CalculateStep()
 		zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
 	if (flagship->Zoom() < 1.)
 		zoomMod = 1.47	 * (1. - flagship->Zoom());
-	isSelecting -= 0.066;
+	isSelecting -= 0.033;
 	zoomMod = zoomMod - (0.18 * zoomMod);
 	//Calculate camera offsets
 	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
@@ -1909,10 +1909,6 @@ void Engine::HandleKeyboardInputs()
 	if(oldHeld.Has(Command::LAND))
 		landKeyInterval = 0;
 
-	//Holding TARGET keeps the lines graph thing open
-	if(keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST))
-		isSelecting = 2.0;
-
 	// If all previously-held maneuvering keys have been released,
 	// restore any autopilot commands still being requested.
 	if(!keyHeld.Has(manueveringCommands) && oldHeld.Has(manueveringCommands))
@@ -1942,6 +1938,18 @@ void Engine::HandleKeyboardInputs()
 	// Translate shift+JUMP to FLEET_JUMP.
 	else if(keyHeld.Has(Command::JUMP) && keyHeld.Has(Command::SHIFT))
 		activeCommands |= Command::FLEET_JUMP;
+
+		//Holding TARGET keeps the lines graph thing open
+	if(keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST))
+	{
+		if (isSelecting < 2.0)
+		{
+			activeCommands.Clear(Command::TARGET);
+			activeCommands.Clear(Command::NEAREST);
+		}
+		isSelecting = 3.0;
+
+	}
 }
 
 

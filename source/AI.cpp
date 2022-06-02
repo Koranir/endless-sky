@@ -3285,6 +3285,7 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player, Command &activeCommand
 	else if(activeCommands.Has(Command::TARGET))
 	{
 		// Find the "next" ship to target. Holding `Shift` will cycle through escorts.
+
 		shared_ptr<const Ship> target = ship.GetTargetShip();
 		// Whether the next eligible ship should be targeted.
 		bool selectNext = !target || !target->IsTargetable();
