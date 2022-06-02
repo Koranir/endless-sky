@@ -1442,6 +1442,7 @@ void Engine::CalculateStep()
 						{
 							player.Visit(*it.GetPlanet());
 							Camera::SetStaticCamera(it.Position());
+							Camera::SetSmoothOffset(Point());
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
