@@ -965,27 +965,28 @@ void Engine::Draw() const
 
 	if (isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
 	{
+		Point offset = Camera::CameraOffset();//Avoid race
+		uint32_t ESPChance = static_cast<uint32_t>(sqrt(flagship->Attributes().Get("tactical scan power")) * 10.);
 		for(const shared_ptr<Ship> &it : ships)
 		{
 			const Ship target = *it;
+			bool isTarget = (flagship->GetTargetShip() == it);
 
-			if ((it != player.FlagshipPtr()) && (target.GetSystem() == flagship->GetSystem()))
+			if ((it != player.FlagshipPtr()) && (target.GetSystem() == flagship->GetSystem()) /*&& ((ESPChance > Random::Int(1000)) | isTarget)*/)
 			{
-				//Cycles through all the ships i the system and draws lines to them based on their government
-				//const Color &color = *GameData::Colors().Get(target.GetGovernment()->IsEnemy()?("overlay hostile hull"):("overlay friendly hull"));
-				//double fsize = min(flagship->Width(), flagship->Height());
-				//double tsize = min(target.Width(), target.Height());
-				bool isTarget = (flagship->GetTargetShip() == it);
-				Point to = target.Position() - center - Camera::CameraOffset();
-				Point from = flagship->Position() - center - Camera::CameraOffset();
-				//Point unit = (to - from).Unit();
-				//from += fsize * unit * 0.5;
-				//to -= tsize * unit * 0.5;
+				//Cycles through all the ships in the system and draws lines to them based on their government
+				double fsize = min(flagship->Width(), flagship->Height());
+				double tsize = min(target.Width(), target.Height());
+				Point to = target.Position() - center;
+				Point from = Point();
+				Point unit = (to).Unit();
+				from += fsize * unit * 0.5;
+				to -= tsize * unit * 0.5;
 				const Color &isEnemy = target.IsYours()?(colorPalette[0]):(target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
-				LineShader::Draw(from * zoom,
-									to * zoom,
+				LineShader::Draw((from - offset) * zoom,
+									(to - offset) * zoom,
 									isTarget?(2.f):(0.8f),
-									isEnemy.Transparent(static_cast<float>(isSelecting)));
+									isEnemy.Transparent(static_cast<float>(isSelecting) * max(static_cast<float>(ESPChance > Random::Int(1000)), 0.6f)));
 			}
 		}
 	}
@@ -1482,11 +1483,6 @@ void Engine::CalculateStep()
 		zoomMod = 1.47	 * (1. - flagship->Zoom());
 	isSelecting -= 0.033;
 	zoomMod = zoomMod - (0.18 * zoomMod);
-	//Calculate camera offsets
-	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
-
-	//Messages::Add((flagship->GetTargetShip() != nullptr)?("Targeting Ship"):("Not targeting ship"), Messages::Importance::Low);
-	//Messages::Add((flagship->IsLanding())?("Landing"):("Not targeting ship"), Messages::Importance::Low);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
@@ -1564,6 +1560,10 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
+
+	//Calculate camera offsets
+	Camera::SetCameraOffset(newCenter, newCenterVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+
 	draw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset(), newCenterVelocity);
 	batchDraw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
 	radar[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
