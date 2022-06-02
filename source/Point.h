@@ -69,6 +69,9 @@ public:
 	double LengthSquared() const;
 	Point Unit() const;
 
+	//Linearly interpolate between the caller to the target by distance.
+	Point Lerp(const Point &target, const double &distance) const;
+
 	double Distance(const Point &point) const;
 	double DistanceSquared(const Point &point) const;
 

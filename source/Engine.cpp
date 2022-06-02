@@ -13,6 +13,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Engine.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "CategoryTypes.h"
 #include "CoreStartData.h"
 #include "DamageDealt.h"
@@ -30,6 +31,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Government.h"
 #include "Hazard.h"
 #include "Interface.h"
+#include "LineShader.h"
 #include "MapPanel.h"
 #include "Mask.h"
 #include "Messages.h"
@@ -221,8 +223,8 @@ Engine::Engine(PlayerInfo &player)
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
-	draw[calcTickTock].SetCenter(center);
-	radar[calcTickTock].SetCenter(center);
+	draw[calcTickTock].SetCenter(center + Camera::CameraOffset());
+	radar[calcTickTock].SetCenter(center + Camera::CameraOffset());
 	const Ship *flagship = player.Flagship();
 	for(const StellarObject &object : player.GetSystem()->Objects())
 		if(object.HasSprite())
@@ -502,7 +504,7 @@ void Engine::Step(bool isActive)
 	testContext = nullptr;
 
 	wasActive = isActive;
-	Audio::Update(center);
+	Audio::Update(center + Camera::CameraOffset());
 
 	// Smoothly zoom in and out.
 	if(isActive)
@@ -521,6 +523,11 @@ void Engine::Step(bool isActive)
 				zoom = min(zoomTarget, zoom * (1. + zoomRatio));
 			else if(zoom > zoomTarget)
 				zoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
+		}
+		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
+		if(zoomMod > 0.01)
+		{
+			zoom = zoomTargetTarget;
 		}
 	}
 
@@ -618,7 +625,7 @@ void Engine::Step(bool isActive)
 			if(isEnemy || it->IsYours() || it->GetPersonality().IsEscort())
 			{
 				double width = min(it->Width(), it->Height());
-				statuses.emplace_back(it->Position() - center, it->Shields(), it->Hull(),
+				statuses.emplace_back(it->Position() - center - Camera::CameraOffset(), it->Shields(), it->Hull(),
 					min(it->Hull(), it->DisabledHull()), max(20., width * .5), isEnemy);
 			}
 		}
@@ -632,11 +639,12 @@ void Engine::Step(bool isActive)
 			if(!object.HasSprite() || !object.HasValidPlanet() || !object.GetPlanet()->IsAccessible(flagship.get()))
 				continue;
 
-			Point pos = object.Position() - center;
+			Point pos = object.Position() - center - Camera::CameraOffset();
 			if(pos.Length() - object.Radius() < 600. / zoom)
 				labels.emplace_back(pos, object, currentSystem, zoom);
 		}
 	}
+
 
 	if(flagship && flagship->IsOverheated())
 		Messages::Add("Your ship has overheated.", Messages::Importance::Highest);
@@ -735,7 +743,7 @@ void Engine::Step(bool isActive)
 			targetAsteroid->GetFrame(step));
 		info.SetString("target name", Format::Capitalize(targetAsteroid->Name()) + " Asteroid");
 
-		targetVector = targetAsteroid->Position() - center;
+		targetVector = targetAsteroid->Position() - center - Camera::CameraOffset();
 
 		if(flagship->Attributes().Get("tactical scan power"))
 		{
@@ -806,7 +814,7 @@ void Engine::Step(bool isActive)
 		&& (flagship->CargoScanFraction() || flagship->OutfitScanFraction()))
 	{
 		double width = max(target->Width(), target->Height());
-		Point pos = target->Position() - center;
+		Point pos = target->Position() - center - Camera::CameraOffset();
 		statuses.emplace_back(pos, flagship->OutfitScanFraction(), flagship->CargoScanFraction(),
 			0, 10. + max(20., width * .5), 2, Angle(pos).Degrees() + 180.);
 	}
@@ -906,9 +914,11 @@ list<ShipEvent> &Engine::Events()
 // Draw a frame.
 void Engine::Draw() const
 {
-	GameData::Background().Draw(center, centerVelocity, zoom);
+	GameData::Background().Draw(center + Camera::CameraOffset(), centerVelocity, zoom);
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
+
+	const Ship *flagship = player.Flagship();
 
 	// Draw any active planet labels.
 	for(const PlanetLabel &label : labels)
@@ -917,27 +927,28 @@ void Engine::Draw() const
 	draw[drawTickTock].Draw();
 	batchDraw[drawTickTock].Draw();
 
+	static const Color colorPalette[8] = {
+		*colors.Get("overlay friendly shields"),
+		*colors.Get("overlay hostile shields"),
+		*colors.Get("overlay outfit scan"),
+		*colors.Get("overlay friendly hull"),
+		*colors.Get("overlay hostile hull"),
+		*colors.Get("overlay cargo scan"),
+		*colors.Get("overlay friendly disabled"),
+		*colors.Get("overlay hostile disabled")
+	};
+
 	for(const auto &it : statuses)
 	{
-		static const Color color[8] = {
-			*colors.Get("overlay friendly shields"),
-			*colors.Get("overlay hostile shields"),
-			*colors.Get("overlay outfit scan"),
-			*colors.Get("overlay friendly hull"),
-			*colors.Get("overlay hostile hull"),
-			*colors.Get("overlay cargo scan"),
-			*colors.Get("overlay friendly disabled"),
-			*colors.Get("overlay hostile disabled")
-		};
 		Point pos = it.position * zoom;
 		double radius = it.radius * zoom;
 		if(it.outer > 0.)
-			RingShader::Draw(pos, radius + 3., 1.5f, it.outer, color[it.type], 0.f, it.angle);
+			RingShader::Draw(pos, radius + 3., 1.5f, it.outer, colorPalette[it.type], 0.f, it.angle);
 		double dashes = (it.type >= 2) ? 0. : 20. * min(1., zoom);
 		if(it.inner > 0.)
-			RingShader::Draw(pos, radius, 1.5f, it.inner, color[3 + it.type], dashes, it.angle);
+			RingShader::Draw(pos, radius, 1.5f, it.inner, colorPalette[3 + it.type], dashes, it.angle);
 		if(it.disabled > 0.)
-			RingShader::Draw(pos, radius, 1.5f, it.disabled, color[6 + it.type], dashes, it.angle);
+			RingShader::Draw(pos, radius, 1.5f, it.disabled, colorPalette[6 + it.type], dashes, it.angle);
 	}
 
 	// Draw the flagship highlight, if any.
@@ -946,11 +957,39 @@ void Engine::Draw() const
 		Point size(highlightSprite->Width(), highlightSprite->Height());
 		const Color &color = *colors.Get("flagship highlight");
 		// The flagship is always in the dead center of the screen.
-		OutlineShader::Draw(highlightSprite, Point(), size, color, highlightUnit, highlightFrame);
+		OutlineShader::Draw(highlightSprite, (Point() - Camera::CameraOffset())*zoom, size, color, highlightUnit, highlightFrame);
 	}
 
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
+
+	if (isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
+	{
+		Point offset = Camera::CameraOffset();//Avoid race
+		uint32_t ESPChance = static_cast<uint32_t>(sqrt(flagship->Attributes().Get("tactical scan power")) * 10.);
+		for(const shared_ptr<Ship> &it : ships)
+		{
+			const Ship target = *it;
+			bool isTarget = (flagship->GetTargetShip() == it);
+
+			if ((it != player.FlagshipPtr()) && (target.GetSystem() == flagship->GetSystem()) /*&& ((ESPChance > Random::Int(1000)) | isTarget)*/)
+			{
+				//Cycles through all the ships in the system and draws lines to them based on their government
+				double fsize = min(flagship->Width(), flagship->Height());
+				double tsize = min(target.Width(), target.Height());
+				Point to = target.Position() - center;
+				Point from = Point();
+				Point unit = (to).Unit();
+				from += fsize * unit * 0.5;
+				to -= tsize * unit * 0.5;
+				const Color &isEnemy = target.IsYours()?(colorPalette[0]):(target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
+				LineShader::Draw((from - offset) * zoom,
+									(to - offset) * zoom,
+									isTarget?(2.f):(0.8f),
+									isEnemy.Transparent(static_cast<float>(isSelecting) * max(static_cast<float>(ESPChance > Random::Int(1000)), 0.6f)));
+			}
+		}
+	}
 
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
@@ -994,7 +1033,7 @@ void Engine::Draw() const
 		PointerShader::Bind();
 		for(int i = 0; i < target.count; ++i)
 		{
-			PointerShader::Add(target.center * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
+			PointerShader::Add((target.center - Camera::CameraOffset()) * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
 				Radar::GetColor(target.type));
 			a += da;
 		}
@@ -1369,9 +1408,13 @@ void Engine::CalculateStep()
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
 		MoveShip(it);
-	// If the flagship just began jumping, play the appropriate sound.
+	// If the flagship just began jumping, play the appropriate sound and lock the camera.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
+		Camera::SetStaticCamera(center + Camera::CameraOffset());
+		blendLockedCamera = 0.05;
+		lockedCamera = true;
+		firstHalf = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
 		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
@@ -1383,19 +1426,64 @@ void Engine::CalculateStep()
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
-		// Wormhole travel: mark the wormhole "planet" as visited.
+		Camera::SetStaticCamera(flagship->GetTargetPoint());
+		firstHalf = false;
+		blendLockedCamera = 1.;
+		if(flagship->IsUsingJumpDrive())
+		{
+			blendLockedCamera = 0.;
+			Camera::SetSmoothOffset(Point());
+		}
+		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
-					player.Visit(*it.GetPlanet());
+						{
+							player.Visit(*it.GetPlanet());
+							Camera::SetStaticCamera(it.Position());
+							Camera::SetSmoothOffset(Point());
+						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
+		lockedCamera = false;
 	}
 	Prune(ships);
+
+	Point oldfocusedTarget = focusedTarget;
+	focusedTarget = Point();
+	if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+	{
+		const Ship &target = *flagship->GetTargetShip();
+		focusedTarget = target.Position() - center;
+	}
+	else if(flagship->GetTargetAsteroid() != nullptr)
+	{
+		focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+	}
+	else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
+	{
+		focusedTarget = flagship->GetTargetStellar()->Position() - center;
+	}
+	if (focusedTarget.Length() > Screen::RawHeight()/2)
+		focusedTarget *= ((Screen::RawHeight()/2) / focusedTarget.Length());
+	focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
+	focusedTarget *= 1 - zoomMod;
+
+	if(!flagship->IsHyperspacing())
+	{
+		if(blendLockedCamera > 0.)
+			blendLockedCamera *= 0.99;
+	}
+	if (firstHalf)
+		zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
+	if (flagship->Zoom() < 1.)
+		zoomMod = 1.47	 * (1. - flagship->Zoom());
+	isSelecting -= 0.033;
+	zoomMod = zoomMod - (0.18 * zoomMod);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
@@ -1473,9 +1561,13 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
-	draw[calcTickTock].SetCenter(newCenter, newCenterVelocity);
-	batchDraw[calcTickTock].SetCenter(newCenter);
-	radar[calcTickTock].SetCenter(newCenter);
+
+	//Calculate camera offsets
+	Camera::SetCameraOffset(newCenter, newCenterVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+
+	draw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset(), newCenterVelocity);
+	batchDraw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
+	radar[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
 
 	// Populate the radar.
 	FillRadar();
@@ -1491,7 +1583,7 @@ void Engine::CalculateStep()
 				draw[calcTickTock].Add(object);
 		}
 	// Draw the asteroids and minables.
-	asteroids.Draw(draw[calcTickTock], newCenter, zoom);
+	asteroids.Draw(draw[calcTickTock], newCenter + Camera::CameraOffset(), zoom);
 	// Draw the flotsam.
 	for(const shared_ptr<Flotsam> &it : flotsam)
 		draw[calcTickTock].Add(*it);
@@ -1847,6 +1939,18 @@ void Engine::HandleKeyboardInputs()
 	// Translate shift+JUMP to FLEET_JUMP.
 	else if(keyHeld.Has(Command::JUMP) && keyHeld.Has(Command::SHIFT))
 		activeCommands |= Command::FLEET_JUMP;
+
+		//Holding TARGET keeps the lines graph thing open
+	if(keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST))
+	{
+		if (isSelecting < 2.0)
+		{
+			activeCommands.Clear(Command::TARGET);
+			activeCommands.Clear(Command::NEAREST);
+		}
+		isSelecting = 3.0;
+
+	}
 }
 
 

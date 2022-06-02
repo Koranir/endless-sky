@@ -73,6 +73,7 @@ void Screen::SetZoom(int percent)
 
 
 
+
 // Specify that this is a high-DPI window.
 void Screen::SetHighDPI(bool isHighDPI)
 {

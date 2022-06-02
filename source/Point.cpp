@@ -278,6 +278,15 @@ Point Point::Unit() const
 
 
 
+Point Point::Lerp(const Point &target, const double &distance) const
+{
+	return Point(
+	x + (distance * (target.x - x)),
+	y + (distance * (target.y - y)));
+}
+
+
+
 double Point::Distance(const Point &point) const
 {
 	return (*this - point).Length();
