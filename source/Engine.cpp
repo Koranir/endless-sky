@@ -963,26 +963,25 @@ void Engine::Draw() const
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
 
-	if (isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
+	if (flagship && isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
 	{
 		Point offset = Camera::CameraOffset();//Avoid race
 		uint32_t ESPChance = static_cast<uint32_t>(sqrt(flagship->Attributes().Get("tactical scan power")) * 10.);
 		for(const shared_ptr<Ship> &it : ships)
 		{
-			const Ship target = *it;
 			bool isTarget = (flagship->GetTargetShip() == it);
 
-			if ((it != player.FlagshipPtr()) && (target.GetSystem() == flagship->GetSystem()) /*&& ((ESPChance > Random::Int(1000)) | isTarget)*/)
+			if ((it != player.FlagshipPtr()) && (it->GetSystem() == flagship->GetSystem()) && (it->Health() > 0.))
 			{
 				//Cycles through all the ships in the system and draws lines to them based on their government
 				double fsize = min(flagship->Width(), flagship->Height());
-				double tsize = min(target.Width(), target.Height());
-				Point to = target.Position() - center;
+				double tsize = min(it->Width(), it->Height());
+				Point to = it->Position() - center;
 				Point from = Point();
 				Point unit = (to).Unit();
 				from += fsize * unit * 0.5;
 				to -= tsize * unit * 0.5;
-				const Color &isEnemy = target.IsYours()?(colorPalette[0]):(target.GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
+				const Color &isEnemy = it->IsYours()?(colorPalette[0]):(it->GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
 				LineShader::Draw((from - offset) * zoom,
 									(to - offset) * zoom,
 									isTarget?(2.f):(0.8f),
@@ -1455,36 +1454,41 @@ void Engine::CalculateStep()
 
 	Point oldfocusedTarget = focusedTarget;
 	focusedTarget = Point();
-	if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+	if(flagship)
 	{
-		const Ship &target = *flagship->GetTargetShip();
-		focusedTarget = target.Position() - center;
-	}
-	else if(flagship->GetTargetAsteroid() != nullptr)
-	{
-		focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
-	}
-	else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
-	{
-		focusedTarget = flagship->GetTargetStellar()->Position() - center;
-	}
-	if (focusedTarget.Length() > Screen::RawHeight()/2)
-		focusedTarget *= ((Screen::RawHeight()/2) / focusedTarget.Length());
-	focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
-	focusedTarget *= 1 - zoomMod;
+		if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+		{
+			const Ship &target = *flagship->GetTargetShip();
+			focusedTarget = target.Position() - center;
+		}
+		else if(flagship->GetTargetAsteroid() != nullptr)
+		{
+			focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+		}
+		else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
+		{
+			focusedTarget = flagship->GetTargetStellar()->Position() - center;
+		}
+		if (focusedTarget.Length() > Screen::RawHeight()/2)
+			focusedTarget *= ((Screen::RawHeight()/2) / focusedTarget.Length());
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
+		focusedTarget *= 1 - zoomMod;
 
-	if(!flagship->IsHyperspacing())
-	{
-		if(blendLockedCamera > 0.)
-			blendLockedCamera *= 0.99;
+		if(!flagship->IsHyperspacing())
+		{
+			if(blendLockedCamera > 0.)
+				blendLockedCamera *= 0.99;
+		}
+		if (firstHalf)
+			zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
+		if (flagship->Zoom() < 1.)
+			zoomMod = 1.47	 * (1. - flagship->Zoom());
+		isSelecting -= 0.033;
+		zoomMod = zoomMod - (0.18 * zoomMod);
 	}
-	if (firstHalf)
-		zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
-	if (flagship->Zoom() < 1.)
-		zoomMod = 1.47	 * (1. - flagship->Zoom());
-	isSelecting -= 0.033;
-	zoomMod = zoomMod - (0.18 * zoomMod);
 
+	//Calculate camera offsets
+	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
 	asteroids.Step(newVisuals, newFlotsam, step);
@@ -1561,9 +1565,6 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
-
-	//Calculate camera offsets
-	Camera::SetCameraOffset(newCenter, newCenterVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 
 	draw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset(), newCenterVelocity);
 	batchDraw[calcTickTock].SetCenter(newCenter + Camera::CameraOffset());
@@ -1941,7 +1942,7 @@ void Engine::HandleKeyboardInputs()
 		activeCommands |= Command::FLEET_JUMP;
 
 		//Holding TARGET keeps the lines graph thing open
-	if(keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST))
+	if((keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST)) && flagship->Attributes().Get("tactical scan power"))
 	{
 		if (isSelecting < 2.0)
 		{
