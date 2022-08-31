@@ -26,8 +26,6 @@ namespace {
 	Point finalOffset = Point();
 }
 
-
-
 void Camera::SetSmoothOffset(Point offset)
 {
 	smoothOffset = offset;
@@ -53,14 +51,15 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 	else
 		smoothOffset = smoothOffset.Lerp(baseOffset, 0.02);
 	trueOffset = baseOffset - smoothOffset;
+	double x = trueOffset.Length()/Screen::RawHeight();
+		trueOffset = trueOffset.Unit() * x*x*(3-(2*x)) * Screen::RawHeight();
 	if (locked)
 	{
 		finalOffset = (frozenOffset.Lerp(center, lockBlend) - center);
+		smoothOffset = finalOffset;
 	}
 	else
 	{
-		if (trueOffset.Length() > Screen::RawHeight())
-			trueOffset = trueOffset.Unit() * Screen::RawHeight();
 		finalOffset = trueOffset.Lerp(frozenOffset - center, lockBlend);
 		finalOffset = finalOffset.Lerp(targetPos, 0.5);
 	}
