@@ -18,9 +18,9 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 using namespace std;
 
 namespace {
-	Point center2, cameraPos, interpolatedPos, staticPos = Point();
+	Point center2, cameraPos, interpolatedPos, staticPos, balanceVel = Point();
 	Point cameraVelocity = Point();
-	double SMOOTHNESS = 0.02; //Very Smooth.
+	double SMOOTHNESS = 0.0275; //Very Smooth.
 	//double DRAG = 0.01;
 }
 
@@ -41,11 +41,13 @@ Point Camera::StaticPoint()
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
+	SMOOTHNESS = 0.01;
 	center2 = center;
 	cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
-	//cameraVelocity += ((center-cameraPos)*SMOOTHNESS);
 	//cameraVelocity *= DRAG;
-	cameraPos += cameraVelocity;
+	cameraPos += (cameraVelocity + (center-cameraPos)*SMOOTHNESS)*100/Screen::Zoom();
+	//double x = (cameraPos-center).Length()/Screen::RawHeight();
+	//	cameraPos = center2 + (cameraPos-center2).Unit() * x*x*(3-(2*x)) * Screen::RawHeight();
 	if (locked)
 	{
 		cameraPos = staticPos.Lerp(center2, lockBlend);
@@ -54,5 +56,5 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 
 Point Camera::CameraOffset()
 {
-	return center2 - cameraPos;
+	return cameraPos-center2;
 }

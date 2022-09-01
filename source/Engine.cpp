@@ -963,6 +963,8 @@ void Engine::Draw() const
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
 
+
+	//Tactical Display a.k.a. ESP
 	if (flagship && isSelecting > 0. && flagship->Attributes().Get("tactical scan power"))
 	{
 		Point offset = Camera::CameraOffset();//Avoid race
@@ -984,11 +986,19 @@ void Engine::Draw() const
 				const Color &isEnemy = it->IsYours()?(colorPalette[0]):(it->GetGovernment()->IsEnemy()?(colorPalette[1]):(colorPalette[2]));
 				LineShader::Draw((from - offset) * zoom,
 									(to - offset) * zoom,
-									isTarget?(2.f):(0.8f),
+									isTarget?(3.5f):(1.4f),
 									isEnemy.Transparent(static_cast<float>(isSelecting) * max(static_cast<float>(ESPChance > Random::Int(1000)), 0.6f)));
 			}
 		}
 	}
+
+	LineShader::Draw(Point(), Point(100,0),3.5f, colorPalette[5]);
+	LineShader::Draw(Point(), Point(50,10),3.5f, colorPalette[5]);
+	LineShader::Draw(Point(), Point(10,20),3.5f, colorPalette[5]);
+
+	LineShader::Draw(Point(0,100)*zoom, Point(100,100)*zoom,3.5f, colorPalette[5]);
+	LineShader::Draw(Point(0,110)*zoom, Point(50,110)*zoom,3.5f, colorPalette[5]);
+	LineShader::Draw(Point(0,120)*zoom, Point(10,120)*zoom,3.5f, colorPalette[5]);
 
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
