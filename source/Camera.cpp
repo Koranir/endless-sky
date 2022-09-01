@@ -18,64 +18,41 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 using namespace std;
 
 namespace {
-	Point center2 = Point();
-	Point baseOffset = Point();
-	Point smoothOffset = Point();
-	Point trueOffset = Point();
-	Point frozenOffset = Point();
-	Point finalOffset = Point();
+	Point center2, cameraPos, interpolatedPos, staticPos = Point();
+	Point cameraVelocity = Point();
+	double SMOOTHNESS = 0.02; //Very Smooth.
+	//double DRAG = 0.01;
 }
 
 void Camera::SetSmoothOffset(Point offset)
 {
-	smoothOffset = offset;
+	cameraPos = center2+offset;
 }
 
 void Camera::SetStaticCamera(Point offset)
 {
-	frozenOffset = offset;
+	staticPos = offset;
 }
 
 Point Camera::StaticPoint()
 {
-	return frozenOffset;
+	return staticPos;
 }
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
 	center2 = center;
-	//Point OldOffset = CAMERA_OFFSET;
-	baseOffset = centerVelocity*-0.08*Screen::Height();
-	if (smoothOffset.Distance(baseOffset) > max(Screen::Height(), Screen::Width())*1.2)
-		smoothOffset = smoothOffset.Lerp(baseOffset, 0.16);
-	else
-		smoothOffset = smoothOffset.Lerp(baseOffset, 0.02);
-	trueOffset = baseOffset - smoothOffset;
-	double x = trueOffset.Length()/Screen::RawHeight();
-		trueOffset = trueOffset.Unit() * x*x*(3-(2*x)) * Screen::RawHeight();
+	cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	//cameraVelocity += ((center-cameraPos)*SMOOTHNESS);
+	//cameraVelocity *= DRAG;
+	cameraPos += cameraVelocity;
 	if (locked)
 	{
-		finalOffset = (frozenOffset.Lerp(center, lockBlend) - center);
-		smoothOffset = finalOffset;
-	}
-	else
-	{
-		finalOffset = trueOffset.Lerp(frozenOffset - center, lockBlend);
-		finalOffset = finalOffset.Lerp(targetPos, 0.5);
+		cameraPos = staticPos.Lerp(center2, lockBlend);
 	}
 }
 
 Point Camera::CameraOffset()
 {
-	return finalOffset;
-}
-
-Point Camera::TrueOffset()
-{
-	return trueOffset;
-}
-
-Point Camera::CameraPos()
-{
-	return center2 + finalOffset;
+	return center2 - cameraPos;
 }
