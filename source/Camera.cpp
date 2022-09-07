@@ -14,19 +14,15 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Screen.h"
 
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
 namespace {
 	Point center2, cameraPos, interpolatedPos, staticPos, balanceVel = Point();
 	Point cameraVelocity = Point();
-	double SMOOTHNESS = 0.0275; //Very Smooth.
-	//double DRAG = 0.01;
-}
-
-void Camera::SetSmoothOffset(Point offset)
-{
-	cameraPos = center2+offset;
+//	double distToMin = 0.;
+	double SMOOTHNESS = 0.02; //Very Smooth.
 }
 
 void Camera::SetStaticCamera(Point offset)
@@ -41,20 +37,38 @@ Point Camera::StaticPoint()
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
-	SMOOTHNESS = 0.01;
+	/*distToMin = (center-cameraPos).Length()/min(Screen::Height(), Screen::Width());
+
+	double x = max(min(distToMin,1.0), 0.0);
+	//ouble smoothstep = x*x*(3-(2*x));
+	SMOOTHNESS = 0.016;
 	center2 = center;
-	cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
-	//cameraVelocity *= DRAG;
-	cameraPos += (cameraVelocity + (center-cameraPos)*SMOOTHNESS)*100/Screen::Zoom();
-	//double x = (cameraPos-center).Length()/Screen::RawHeight();
-	//	cameraPos = center2 + (cameraPos-center2).Unit() * x*x*(3-(2*x)) * Screen::RawHeight();
+	//cameraVelocity += (center-cameraPos)*SMOOTHNESS;
+	cameraVelocity += centerVelocity.Unit()*(log(x+0.1)+1)*(center-cameraPos)*SMOOTHNESS;
+	//cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	//cameraVelocity *= 1+smoothstep;
+	cameraPos += (cameraVelocity)*100/Screen::Zoom();
 	if (locked)
 	{
 		cameraPos = staticPos.Lerp(center2, lockBlend);
-	}
+	}*/
+
+	center2 = center;
+	Point facing = centerVelocity-cameraVelocity;
+	if (facing.Unit().Dot(cameraVelocity.Unit()) < 0.)
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	else
+		cameraVelocity += (center-cameraPos)*SMOOTHNESS;
+	cameraPos += (cameraVelocity)*100/Screen::Zoom();
+	cameraPos = cameraPos.Lerp(center, SMOOTHNESS);
 }
 
 Point Camera::CameraOffset()
 {
 	return cameraPos-center2;
+}
+
+void Camera::SetCameraPosition(Point position)
+{
+	cameraPos = position;
 }

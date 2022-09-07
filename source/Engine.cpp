@@ -992,13 +992,7 @@ void Engine::Draw() const
 		}
 	}
 
-	LineShader::Draw(Point(), Point(100,0),3.5f, colorPalette[5]);
-	LineShader::Draw(Point(), Point(50,10),3.5f, colorPalette[5]);
-	LineShader::Draw(Point(), Point(10,20),3.5f, colorPalette[5]);
-
-	LineShader::Draw(Point(0,100)*zoom, Point(100,100)*zoom,3.5f, colorPalette[5]);
-	LineShader::Draw(Point(0,110)*zoom, Point(50,110)*zoom,3.5f, colorPalette[5]);
-	LineShader::Draw(Point(0,120)*zoom, Point(10,120)*zoom,3.5f, colorPalette[5]);
+	//Camera::debugLineWorldSpace(Point(), Point(0, 200), 3.5f, colorPalette[5]);
 
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
@@ -1441,7 +1435,6 @@ void Engine::CalculateStep()
 		if(flagship->IsUsingJumpDrive())
 		{
 			blendLockedCamera = 0.;
-			Camera::SetSmoothOffset(Point());
 		}
 		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
@@ -1450,8 +1443,6 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
-							Camera::SetStaticCamera(it.Position());
-							Camera::SetSmoothOffset(Point());
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
@@ -1466,6 +1457,13 @@ void Engine::CalculateStep()
 	focusedTarget = Point();
 	if(flagship)
 	{
+		const StellarObject *object = player.GetStellarObject();
+		if(object)
+		{
+			Camera::SetCameraPosition(object->Position());
+		}
+
+
 		if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
 		{
 			const Ship &target = *flagship->GetTargetShip();
@@ -1484,15 +1482,15 @@ void Engine::CalculateStep()
 		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 		focusedTarget *= 1 - zoomMod;
 
-		if(!flagship->IsHyperspacing())
+		if(!flagship->IsHyperspacing() && (!flagship->Commands().Has(Command::LAND)) )
 		{
 			if(blendLockedCamera > 0.)
 				blendLockedCamera *= 0.99;
 		}
 		if (firstHalf)
-			zoomMod = 1.47 * (flagship->HyperCount() * flagship->HyperCount());
+			zoomMod = 1.8 * (flagship->HyperCount() * flagship->HyperCount());
 		if (flagship->Zoom() < 1.)
-			zoomMod = 1.47	 * (1. - flagship->Zoom());
+			zoomMod = 1.	 * (1. - flagship->Zoom());
 		isSelecting -= 0.033;
 		zoomMod = zoomMod - (0.18 * zoomMod);
 	}
