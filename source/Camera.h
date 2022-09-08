@@ -39,6 +39,8 @@ public:
 	static Point CameraPos();
 	//Set Camera Position
 	static void SetCameraPosition(Point position);
+	//Set Camera Velocity
+	static void SetCameraVelocity(Point velocity);
 	//returns the zoom modifier
 	static double ZoomMod();
 	//Sets the xoom modifier

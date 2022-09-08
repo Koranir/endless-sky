@@ -55,6 +55,11 @@ bool Point::operator!() const noexcept
 	return (!x & !y);
 }
 
+bool Point::operator!=(const Point &point) const
+{
+	return !((x==point.x)&&(y==point.y));
+}
+
 
 
 Point Point::operator+(const Point &point) const

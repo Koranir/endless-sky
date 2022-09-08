@@ -19,8 +19,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 using namespace std;
 
 namespace {
-	Point center2, cameraPos, interpolatedPos, staticPos, balanceVel = Point();
-	Point cameraVelocity = Point();
+	Point center2, cameraPos, cameraPos2, cameraPos3, interpolatedPos, staticPos, balanceVel = Point();
+	Point cameraVelocity, cameraVelocity2, cameraVelocity3 = Point();
 //	double distToMin = 0.;
 	double SMOOTHNESS = 0.02; //Very Smooth.
 }
@@ -55,12 +55,26 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 
 	center2 = center;
 	Point facing = centerVelocity-cameraVelocity;
-	if (facing.Unit().Dot(cameraVelocity.Unit()) < 0.)
-		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	if (facing.Unit().Dot(cameraVelocity.Unit()) > 0.)
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.1, SMOOTHNESS);
 	else
-		cameraVelocity += (center-cameraPos)*SMOOTHNESS;
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
 	cameraPos += (cameraVelocity)*100/Screen::Zoom();
-	cameraPos = cameraPos.Lerp(center, SMOOTHNESS);
+	cameraPos = cameraPos.Lerp(center, SMOOTHNESS*5);
+	if (cameraVelocity2 != cameraVelocity3)
+	{
+		cameraVelocity3 = cameraVelocity2;
+		cameraVelocity = cameraVelocity2;
+	}
+	if (cameraPos2 != cameraPos3)
+	{
+		cameraPos3 = cameraPos2;
+		cameraPos = cameraPos2;
+	}
+	/*if (locked)
+	{
+		cameraPos = staticPos.Lerp(center2, lockBlend);
+	}*/
 }
 
 Point Camera::CameraOffset()
@@ -70,5 +84,10 @@ Point Camera::CameraOffset()
 
 void Camera::SetCameraPosition(Point position)
 {
-	cameraPos = position;
+	cameraPos2 = position;
+}
+
+void Camera::SetCameraVelocity(Point velocity)
+{
+	cameraVelocity2 = velocity;
 }

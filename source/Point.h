@@ -54,6 +54,9 @@ public:
 	Point operator*(const Point &other) const;
 	Point &operator*=(const Point &other);
 
+	//Yeah but I need them #37!
+	bool operator!=(const Point &point) const;
+
 	double &X();
 	const double &X() const noexcept;
 	double &Y();

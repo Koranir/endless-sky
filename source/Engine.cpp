@@ -1415,7 +1415,7 @@ void Engine::CalculateStep()
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
 		Camera::SetStaticCamera(center + Camera::CameraOffset());
-		blendLockedCamera = 0.05;
+		blendLockedCamera = 0.1;
 		lockedCamera = true;
 		firstHalf = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
@@ -1434,7 +1434,14 @@ void Engine::CalculateStep()
 		blendLockedCamera = 1.;
 		if(flagship->IsUsingJumpDrive())
 		{
+			Camera::SetCameraPosition(flagship->Position());
+			Camera::SetCameraVelocity(Point());
 			blendLockedCamera = 0.;
+		}
+		else
+		{
+			Camera::SetCameraPosition(flagship->Position()+(flagship->Velocity()*10));
+			Camera::SetCameraVelocity(flagship->Velocity()*0.9);
 		}
 		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
@@ -1443,6 +1450,8 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
+							Camera::SetCameraPosition(flagship->Position();
+							Camera::SetCameraVelocity(Point());
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
