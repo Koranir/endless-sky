@@ -85,6 +85,8 @@
 		<Unit filename="source/BoardingPanel.h" />
 		<Unit filename="source/Body.cpp" />
 		<Unit filename="source/Body.h" />
+		<Unit filename="source/Camera.cpp" />
+		<Unit filename="source/Camera.h" />
 		<Unit filename="source/CaptureOdds.cpp" />
 		<Unit filename="source/CaptureOdds.h" />
 		<Unit filename="source/CargoHold.cpp" />
@@ -132,11 +134,11 @@
 		<Unit filename="source/Effect.h" />
 		<Unit filename="source/Engine.cpp" />
 		<Unit filename="source/Engine.h" />
-		<Unit filename="source/EscortDisplay.cpp" />
-		<Unit filename="source/EscortDisplay.h" />
 		<Unit filename="source/EsUuid.cpp" />
 		<Unit filename="source/EsUuid.h" />
 		<Unit filename="source/ExclusiveItem.h" />
+		<Unit filename="source/EscortDisplay.cpp" />
+		<Unit filename="source/EscortDisplay.h" />
 		<Unit filename="source/File.cpp" />
 		<Unit filename="source/File.h" />
 		<Unit filename="source/Files.cpp" />
@@ -351,12 +353,12 @@
 		<Unit filename="source/Weather.cpp" />
 		<Unit filename="source/Weather.h" />
 		<Unit filename="source/WeightedList.h" />
+		<Unit filename="source/comparators/ByGivenOrder.h" />
+		<Unit filename="source/comparators/ByName.h" />
 		<Unit filename="source/opengl.cpp" />
 		<Unit filename="source/opengl.h" />
 		<Unit filename="source/pi.h" />
 		<Unit filename="source/shift.h" />
-		<Unit filename="source/comparators/ByGivenOrder.h" />
-		<Unit filename="source/comparators/ByName.h" />
 		<Unit filename="source/text/DisplayText.cpp" />
 		<Unit filename="source/text/DisplayText.h" />
 		<Unit filename="source/text/Font.cpp" />

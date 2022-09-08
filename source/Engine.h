@@ -188,6 +188,7 @@ private:
 	// Viewport position and velocity.
 	Point center;
 	Point centerVelocity;
+	bool lockedCamera = false;
 	// Other information to display.
 	Information info;
 	std::vector<Target> targets;
@@ -215,7 +216,14 @@ private:
 	CollisionSet shipCollisions;
 
 	int alarmTime = 0;
+	double blendLockedCamera = 0.;
+	Point lockedCameraPos = Point();
+	Point focusedTarget = Point();
+	double zoomMod = 0.;
+	bool firstHalf = false;
 	double flash = 0.;
+	double isSelecting = 0.;
+
 	bool doFlash = false;
 	bool doEnter = false;
 	bool hadHostiles = false;

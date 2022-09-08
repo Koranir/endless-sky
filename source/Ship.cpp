@@ -1590,7 +1590,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 		// or more particles per ship per turn at the peak of the jump.
 		if(isUsingJumpDrive && !forget)
 		{
-			double sparkAmount = hyperspaceCount * Width() * Height() * .000006;
+			double sparkAmount = hyperspaceCount * hyperspaceCount * Width() * Height() * .000006;
 			const map<const Effect *, int> &jumpEffects = attributes.JumpEffects();
 			if(jumpEffects.empty())
 				CreateSparks(visuals, "jump drive", sparkAmount);
@@ -1663,6 +1663,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 			// traveling in, so that when you decelerate there will not be a
 			// sudden shift in direction at the end.
 			velocity = velocity.Length() * angle.Unit();
+			exitTarget = target;
 		}
 		if(!isUsingJumpDrive)
 		{
@@ -2071,6 +2072,13 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				for(int i = 0; i < it.second; ++i)
 					visuals.emplace_back(*it.first, pos, effectVelocity, angle);
 		}
+}
+
+
+
+const Point Ship::GetTargetPoint() const
+{
+	return exitTarget;
 }
 
 
@@ -2778,6 +2786,13 @@ bool Ship::IsEnteringHyperspace() const
 bool Ship::IsHyperspacing() const
 {
 	return hyperspaceCount != 0;
+}
+
+
+
+double Ship::HyperCount() const
+{
+	return (static_cast<double>(hyperspaceCount))/100.;
 }
 
 

@@ -58,6 +58,11 @@ bool Point::operator!() const noexcept
 	return (!x & !y);
 }
 
+bool Point::operator!=(const Point &point) const
+{
+	return !((x==point.x)&&(y==point.y));
+}
+
 
 
 Point Point::operator+(const Point &point) const
@@ -277,6 +282,15 @@ Point Point::Unit() const
 	b = 1. / sqrt(b);
 	return Point(x * b, y * b);
 #endif
+}
+
+
+
+Point Point::Lerp(const Point &target, const double &distance) const
+{
+	return Point(
+	x + (distance * (target.x - x)),
+	y + (distance * (target.y - y)));
 }
 
 
