@@ -6,7 +6,10 @@
 #
 # Endless Sky is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <https://www.gnu.org/licenses/>.
 
 phrase "band"
 	word
@@ -918,7 +921,7 @@ phrase "friendly civilian"
 		"Why was the pirate warlord happy after taking Pherkad? Because it gave him Solace!"
 		"What's worse than snakes on a ship? Serpens 'round a system!"
 		"What's the most common name on Vinci? Leonardo!"
-		"What did they change Uranus's name to? Urass!"
+		"What did they change Uranus' name to? Urass!"
 		"Why doesn't the system of Kursa need a telescope? Because it's a Farseer!"
 		"Why was the pirate warlord disappointed after taking the system of Kochab? Because it was only a Mere victory!"
 		"Why wasn't anybody concerned when the system of Kaus Australis lost one of its legs? Because it was already a Hopper!"
@@ -2556,7 +2559,7 @@ phrase "friendly pirate"
 		" horrendous "
 		" atrocious "
 		" horrid "
-		""
+		" "
 	word
 		"bad blue"
 		"booster"

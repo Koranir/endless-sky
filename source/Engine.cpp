@@ -7,7 +7,10 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 
 Endless Sky is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "Engine.h"
@@ -19,7 +22,6 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "DamageDealt.h"
 #include "DamageProfile.h"
 #include "Effect.h"
-#include "Files.h"
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
@@ -31,6 +33,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Government.h"
 #include "Hazard.h"
 #include "Interface.h"
+#include "Logger.h"
 #include "LineShader.h"
 #include "MapPanel.h"
 #include "Mask.h"
@@ -151,7 +154,7 @@ namespace {
 			return false;
 
 		// Ships that don't share a language with the player shouldn't send hails.
-		if(!gov->Language().empty() && !player.GetCondition("language: " + gov->Language()))
+		if(!gov->Language().empty() && !player.Conditions().Get("language: " + gov->Language()))
 			return false;
 
 		return true;
@@ -174,7 +177,8 @@ namespace {
 		Messages::Add(tag + message, Messages::Importance::High);
 	}
 
-	void DrawFlareSprites(const Ship &ship, DrawList &draw, const vector<Ship::EnginePoint> &enginePoints, const vector<pair<Body, int>> &flareSprites, uint8_t side)
+	void DrawFlareSprites(const Ship &ship, DrawList &draw, const vector<Ship::EnginePoint> &enginePoints,
+		const vector<pair<Body, int>> &flareSprites, uint8_t side)
 	{
 		for(const Ship::EnginePoint &point : enginePoints)
 		{
@@ -326,7 +330,7 @@ void Engine::Place()
 		else if(!ship->GetSystem())
 		{
 			// Log this error.
-			Files::LogError("Engine::Place: Set fallback system for the NPC \"" + ship->Name() + "\" as it had no system");
+			Logger::LogError("Engine::Place: Set fallback system for the NPC \"" + ship->Name() + "\" as it had no system");
 			ship->SetSystem(player.GetSystem());
 		}
 
@@ -506,6 +510,13 @@ void Engine::Step(bool isActive)
 	wasActive = isActive;
 	Audio::Update(center + Camera::CameraOffset());
 
+	// Update the zoom value now that the calculation thread is paused.
+	if(nextZoom)
+	{
+		// TODO: std::exchange
+		zoom = nextZoom;
+		nextZoom = 0.;
+	}
 	// Smoothly zoom in and out.
 	if(isActive)
 	{
@@ -520,9 +531,9 @@ void Engine::Step(bool isActive)
 
 			double zoomRatio = max(MIN_SPEED, min(MAX_SPEED, abs(log2(zoom) - log2(zoomTarget)) * ZOOM_SPEED));
 			if(zoom < zoomTarget)
-				zoom = min(zoomTarget, zoom * (1. + zoomRatio));
+				nextZoom = min(zoomTarget, zoom * (1. + zoomRatio));
 			else if(zoom > zoomTarget)
-				zoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
+				nextZoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
 		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
 		if(zoomMod > 0.01)
@@ -1009,7 +1020,8 @@ void Engine::Draw() const
 			break;
 		float alpha = (it->step + 1000 - step) * .001f;
 		const Color *color = nullptr;
-		switch (it->importance) {
+		switch(it->importance)
+		{
 			case Messages::Importance::Highest:
 				color = GameData::Colors().Find("message importance highest");
 				break;
@@ -1159,7 +1171,7 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift)
 	if(isRadarClick)
 		clickBox = Rectangle::WithCorners(
 			(from - radarCenter) / RADAR_SCALE + center,
-			(to - radarCenter) / RADAR_SCALE  + center);
+			(to - radarCenter) / RADAR_SCALE + center);
 	else
 		clickBox = Rectangle::WithCorners(from / zoom + center, to / zoom + center);
 }
@@ -1379,6 +1391,11 @@ void Engine::CalculateStep()
 {
 	FrameTimer loadTimer;
 
+	// If there is a pending zoom update then use it
+	// because the zoom will get updated in the main thread
+	// as soon as the calculation thread is finished.
+	const double zoom = nextZoom ? nextZoom : this->zoom;
+
 	// Clear the list of objects to draw.
 	draw[calcTickTock].Clear(step, zoom);
 	batchDraw[calcTickTock].Clear(step, zoom);
@@ -1417,7 +1434,8 @@ void Engine::CalculateStep()
 		lockedCamera = true;
 		firstHalf = true;
 		bool isJumping = flagship->IsUsingJumpDrive();
-		const map<const Sound *, int> &jumpSounds = isJumping ? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
+		const map<const Sound *, int> &jumpSounds = isJumping
+			? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
 		if(jumpSounds.empty())
 			Audio::Play(Audio::Get(isJumping ? "jump drive" : "hyperdrive"));
 		else
@@ -1521,7 +1539,7 @@ void Engine::CalculateStep()
 
 	// Step the weather.
 	for(Weather &weather : activeWeather)
-		weather.Step(newVisuals);
+		weather.Step(newVisuals, flagship ? flagship->Position() : center);
 	Prune(activeWeather);
 
 	// Move the visuals.
@@ -1706,7 +1724,8 @@ void Engine::MoveShip(const shared_ptr<Ship> &ship)
 		// Did this ship just begin hyperspacing?
 		if(wasHere && !wasHyperspacing && ship->IsHyperspacing())
 		{
-			const map<const Sound *, int> &jumpSounds = isJump ? ship->Attributes().JumpOutSounds() : ship->Attributes().HyperOutSounds();
+			const map<const Sound *, int> &jumpSounds = isJump
+				? ship->Attributes().JumpOutSounds() : ship->Attributes().HyperOutSounds();
 			if(jumpSounds.empty())
 				Audio::Play(Audio::Get(isJump ? "jump out" : "hyperdrive out"), position);
 			else
@@ -1717,7 +1736,8 @@ void Engine::MoveShip(const shared_ptr<Ship> &ship)
 		// Did this ship just jump into the player's system?
 		if(!wasHere && flagship && ship->GetSystem() == flagship->GetSystem())
 		{
-			const map<const Sound *, int> &jumpSounds = isJump ? ship->Attributes().JumpInSounds() : ship->Attributes().HyperInSounds();
+			const map<const Sound *, int> &jumpSounds = isJump
+				? ship->Attributes().JumpInSounds() : ship->Attributes().HyperInSounds();
 			if(jumpSounds.empty())
 				Audio::Play(Audio::Get(isJump ? "jump in" : "hyperdrive in"), position);
 			else
@@ -2232,7 +2252,8 @@ void Engine::DoWeather(Weather &weather)
 		// Get all ship bodies that are touching a ring defined by the hazard's min
 		// and max ranges at the hazard's origin. Any ship touching this ring takes
 		// hazard damage.
-		for(Body *body : shipCollisions.Ring(weather.Origin(), hazard->MinRange(), hazard->MaxRange()))
+		for(Body *body : (hazard->SystemWide() ? shipCollisions.All()
+			: shipCollisions.Ring(weather.Origin(), hazard->MinRange(), hazard->MaxRange())))
 		{
 			Ship *hit = reinterpret_cast<Ship *>(body);
 			hit->TakeDamage(visuals, damage.CalculateDamage(*hit), nullptr);
@@ -2433,11 +2454,14 @@ void Engine::AddSprites(const Ship &ship)
 				drawObject(*bay.ship);
 
 	if(ship.IsThrusting() && !ship.EnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.EnginePoints(), ship.Attributes().FlareSprites(), Ship::EnginePoint::UNDER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.EnginePoints(),
+			ship.Attributes().FlareSprites(), Ship::EnginePoint::UNDER);
 	else if(ship.IsReversing() && !ship.ReverseEnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.ReverseEnginePoints(), ship.Attributes().ReverseFlareSprites(), Ship::EnginePoint::UNDER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.ReverseEnginePoints(),
+			ship.Attributes().ReverseFlareSprites(), Ship::EnginePoint::UNDER);
 	if(ship.IsSteering() && !ship.SteeringEnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.SteeringEnginePoints(), ship.Attributes().SteeringFlareSprites(), Ship::EnginePoint::UNDER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.SteeringEnginePoints(),
+			ship.Attributes().SteeringFlareSprites(), Ship::EnginePoint::UNDER);
 
 	auto drawHardpoint = [&drawObject, &ship](const Hardpoint &hardpoint) -> void
 	{
@@ -2462,11 +2486,14 @@ void Engine::AddSprites(const Ship &ship)
 			drawHardpoint(hardpoint);
 
 	if(ship.IsThrusting() && !ship.EnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.EnginePoints(), ship.Attributes().FlareSprites(), Ship::EnginePoint::OVER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.EnginePoints(),
+			ship.Attributes().FlareSprites(), Ship::EnginePoint::OVER);
 	else if(ship.IsReversing() && !ship.ReverseEnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.ReverseEnginePoints(), ship.Attributes().ReverseFlareSprites(), Ship::EnginePoint::OVER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.ReverseEnginePoints(),
+			ship.Attributes().ReverseFlareSprites(), Ship::EnginePoint::OVER);
 	if(ship.IsSteering() && !ship.SteeringEnginePoints().empty())
-		DrawFlareSprites(ship, draw[calcTickTock], ship.SteeringEnginePoints(), ship.Attributes().SteeringFlareSprites(), Ship::EnginePoint::OVER);
+		DrawFlareSprites(ship, draw[calcTickTock], ship.SteeringEnginePoints(),
+			ship.Attributes().SteeringFlareSprites(), Ship::EnginePoint::OVER);
 
 	if(hasFighters)
 		for(const Ship::Bay &bay : ship.Bays())
@@ -2560,7 +2587,8 @@ void Engine::DoGrudge(const shared_ptr<Ship> &target, const Government *attacker
 
 
 // Constructor for the ship status display rings.
-Engine::Status::Status(const Point &position, double outer, double inner, double disabled, double radius, int type, double angle)
+Engine::Status::Status(const Point &position, double outer, double inner,
+	double disabled, double radius, int type, double angle)
 	: position(position), outer(outer), inner(inner), disabled(disabled), radius(radius), type(type), angle(angle)
 {
 }
