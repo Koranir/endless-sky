@@ -3552,8 +3552,8 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player, Command &activeCommand
 	if(Preferences::Has("Automatic aiming") && !command.Turn() && !ship.IsBoarding()
 			&& ((target && target->GetSystem() == ship.GetSystem() && target->IsTargetable())
 				|| ship.GetTargetAsteroid())
-			&& !autoPilot.Has(Command::LAND | Command::JUMP | Command::FLEET_JUMP | Command::BOARD))
-			&& (Preferences::Has("Automatic firing") || activeCommands.Has(Command::PRIMARY))
+			&& !autoPilot.Has(Command::LAND | Command::JUMP | Command::FLEET_JUMP | Command::BOARD)
+			&& (Preferences::Has("Automatic firing") || activeCommands.Has(Command::PRIMARY)))
 	{
 		// Check if this ship has any forward-facing weapons.
 		for(const Hardpoint &weapon : ship.Weapons())

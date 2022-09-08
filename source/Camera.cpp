@@ -14,69 +14,80 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Screen.h"
 
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
 namespace {
-	Point center2 = Point();
-	Point baseOffset = Point();
-	Point smoothOffset = Point();
-	Point trueOffset = Point();
-	Point frozenOffset = Point();
-	Point finalOffset = Point();
-}
-
-
-
-void Camera::SetSmoothOffset(Point offset)
-{
-	smoothOffset = offset;
+	Point center2, cameraPos, cameraPos2, cameraPos3, interpolatedPos, staticPos, balanceVel = Point();
+	Point cameraVelocity, cameraVelocity2, cameraVelocity3 = Point();
+//	double distToMin = 0.;
+	double SMOOTHNESS = 0.02; //Very Smooth.
 }
 
 void Camera::SetStaticCamera(Point offset)
 {
-	frozenOffset = offset;
+	staticPos = offset;
 }
 
 Point Camera::StaticPoint()
 {
-	return frozenOffset;
+	return staticPos;
 }
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
+	/*distToMin = (center-cameraPos).Length()/min(Screen::Height(), Screen::Width());
+
+	double x = max(min(distToMin,1.0), 0.0);
+	//ouble smoothstep = x*x*(3-(2*x));
+	SMOOTHNESS = 0.016;
 	center2 = center;
-	//Point OldOffset = CAMERA_OFFSET;
-	baseOffset = centerVelocity*-0.08*Screen::Height();
-	if (smoothOffset.Distance(baseOffset) > max(Screen::Height(), Screen::Width())*1.2)
-		smoothOffset = smoothOffset.Lerp(baseOffset, 0.16);
-	else
-		smoothOffset = smoothOffset.Lerp(baseOffset, 0.02);
-	trueOffset = baseOffset - smoothOffset;
+	//cameraVelocity += (center-cameraPos)*SMOOTHNESS;
+	cameraVelocity += centerVelocity.Unit()*(log(x+0.1)+1)*(center-cameraPos)*SMOOTHNESS;
+	//cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	//cameraVelocity *= 1+smoothstep;
+	cameraPos += (cameraVelocity)*100/Screen::Zoom();
 	if (locked)
 	{
-		finalOffset = (frozenOffset.Lerp(center, lockBlend) - center);
-	}
+		cameraPos = staticPos.Lerp(center2, lockBlend);
+	}*/
+
+	center2 = center;
+	Point facing = centerVelocity-cameraVelocity;
+	if (facing.Unit().Dot(cameraVelocity.Unit()) > 0.)
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.1, SMOOTHNESS);
 	else
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
+	cameraPos += (cameraVelocity)*100/Screen::Zoom();
+	cameraPos = cameraPos.Lerp(center, SMOOTHNESS*5);
+	if (cameraVelocity2 != cameraVelocity3)
 	{
-		if (trueOffset.Length() > Screen::RawHeight())
-			trueOffset = trueOffset.Unit() * Screen::RawHeight();
-		finalOffset = trueOffset.Lerp(frozenOffset - center, lockBlend);
-		finalOffset = finalOffset.Lerp(targetPos, 0.5);
+		cameraVelocity3 = cameraVelocity2;
+		cameraVelocity = cameraVelocity2;
 	}
+	if (cameraPos2 != cameraPos3)
+	{
+		cameraPos3 = cameraPos2;
+		cameraPos = cameraPos2;
+	}
+	/*if (locked)
+	{
+		cameraPos = staticPos.Lerp(center2, lockBlend);
+	}*/
 }
 
 Point Camera::CameraOffset()
 {
-	return finalOffset;
+	return cameraPos-center2;
 }
 
-Point Camera::TrueOffset()
+void Camera::SetCameraPosition(Point position)
 {
-	return trueOffset;
+	cameraPos2 = position;
 }
 
-Point Camera::CameraPos()
+void Camera::SetCameraVelocity(Point velocity)
 {
-	return center2 + finalOffset;
+	cameraVelocity2 = velocity;
 }

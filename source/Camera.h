@@ -22,8 +22,6 @@ class Camera {
 public:
 	//Screen Offsets
 	//Sets camera offsets
-	//Smooth Offset is subtracted from the Base Offset to get the final offset.
-	static void SetSmoothOffset(Point offset);
 	//Static Point is relative to the origin
 	static void SetStaticCamera(Point offset);
 	//returns the static point
@@ -37,10 +35,12 @@ public:
 	static void SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos);
 	//returns the offset relative to player
 	static Point CameraOffset();
-	//returns offset w/out target shifting
-	static Point TrueOffset();
 	//returns the offset relative to the origin
 	static Point CameraPos();
+	//Set Camera Position
+	static void SetCameraPosition(Point position);
+	//Set Camera Velocity
+	static void SetCameraVelocity(Point velocity);
 	//returns the zoom modifier
 	static double ZoomMod();
 	//Sets the xoom modifier
