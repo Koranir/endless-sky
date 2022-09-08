@@ -992,8 +992,6 @@ void Engine::Draw() const
 		}
 	}
 
-	//Camera::debugLineWorldSpace(Point(), Point(0, 200), 3.5f, colorPalette[5]);
-
 	// Draw messages. Draw the most recent messages first, as some messages
 	// may be wrapped onto multiple lines.
 	const Font &font = FontSet::Get(14);
