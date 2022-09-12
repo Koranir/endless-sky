@@ -1494,7 +1494,7 @@ void Engine::CalculateStep()
 		if(!flagship->IsHyperspacing())
 		{
 			if(blendLockedCamera > 0.)
-				blendLockedCamera *= 0.9;
+				blendLockedCamera *= 0.968;
 		}
 		zoomMod = 0.-blendLockedCamera;
 		if (firstHalf)
@@ -1507,7 +1507,7 @@ void Engine::CalculateStep()
 			focusedTarget = center;
 		}
 		isSelecting -= 0.033;
-		zoomMod = zoomMod - (0.18 * zoomMod);
+		zoomMod *= 0.968;
 	}
 
 
