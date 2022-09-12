@@ -1997,8 +1997,11 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				slowness += slownessCost;
 				disruption += disruptionCost;
 
-				velocity = velocity.Unit().Lerp(angle.Unit(), 0.16).Unit()*velocity.Length();
-				acceleration = acceleration.Unit().Lerp(angle.Unit(), 0.16).Unit()*acceleration.Length()*1.016;
+				if (afterburnerBlast > 0.01)
+				{
+					velocity = velocity.Unit().Lerp(angle.Unit(), 0.16).Unit()*velocity.Length();
+					acceleration = acceleration.Unit().Lerp(angle.Unit(), 0.16).Unit()*acceleration.Length()*1.016;
+				}
 
 				acceleration += angle.Unit() * thrust / mass;
 
