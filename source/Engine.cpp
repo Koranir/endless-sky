@@ -1507,6 +1507,7 @@ void Engine::CalculateStep()
 			if(object)
 			{
 				Camera::SetCameraPosition(object->Position());
+				focusedTarget = flagship->Position();
 			}
 		}
 		isSelecting -= 0.033;
