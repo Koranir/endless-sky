@@ -1459,8 +1459,8 @@ void Engine::CalculateStep()
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
-		Camera::SetCameraPosition(center);
-		focusedTarget = center;
+		Camera::SetCameraPosition(flagship->Position());
+		focusedTarget = flagship->Position();
 		Camera::SetCameraVelocity(Point());
 		lockedCamera = false;
 	}
