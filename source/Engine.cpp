@@ -1283,8 +1283,6 @@ void Engine::EnterSystem()
 			if(system != to && !flagship->JumpFuel(to))
 				player.TravelPlan().clear();
 		}
-		Camera::SetCameraPosition(flagship->Position());
-		Camera::SetCameraVelocity(Point());
 	}
 
 	asteroids.Clear();
@@ -1449,24 +1447,21 @@ void Engine::CalculateStep()
 	{
 		Camera::SetStaticCamera(flagship->GetTargetPoint());
 		firstHalf = false;
-		blendLockedCamera = flagship->IsUsingJumpDrive()?(0.):(1.);
 		//TODO: Place inside EnterSystem()
-		Camera::SetCameraPosition(flagship->GetTargetPoint());
-		Camera::SetCameraVelocity(-flagship->Velocity());
 		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
-						{
 							player.Visit(*it.GetPlanet());
-							focusedTarget = center;
-						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
+		Camera::SetCameraPosition(center);
+		focusedTarget = center;
+		Camera::SetCameraVelocity(Point());
 		lockedCamera = false;
 	}
 	Prune(ships);
@@ -1503,16 +1498,14 @@ void Engine::CalculateStep()
 		if (flagship->Zoom() < 1.)
 		{
 			zoomMod = 1.47	 * (1. - flagship->Zoom());
-			const StellarObject *object = player.GetStellarObject();
-			if(object)
-			{
-				Camera::SetCameraPosition(object->Position());
-				focusedTarget = flagship->Position();
-			}
+			Camera::SetCameraPosition(center);
+			Camera::SetCameraVelocity(Point());
+			focusedTarget = flagship->Position();
 		}
 		isSelecting -= 0.033;
 		zoomMod = zoomMod - (0.18 * zoomMod);
 	}
+
 
 	//Calculate camera offsets
 	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);

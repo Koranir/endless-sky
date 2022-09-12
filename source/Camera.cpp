@@ -63,6 +63,7 @@ Point Camera::CameraOffset()
 void Camera::SetCameraPosition(Point position)
 {
 	cameraPos = position;
+	interpolatedPos = position;
 }
 
 void Camera::SetCameraVelocity(Point velocity)

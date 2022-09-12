@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "MenuPanel.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "Command.h"
 #include "Files.h"
 #include "text/Font.h"
