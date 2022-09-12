@@ -52,6 +52,7 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 		interpolatedPos = cameraPos.Lerp(targetPos, 0.4);
 	else
 		interpolatedPos = cameraPos;
+	interpolatedPos = interpolatedPos.Lerp(staticPos, lockBlend);
 }
 
 Point Camera::CameraOffset()

@@ -536,7 +536,7 @@ void Engine::Step(bool isActive)
 				nextZoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
 		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
-		if(zoomMod > 0.01)
+		if((zoomMod > 0.01) || (zoomMod < -0.01))
 		{
 			nextZoom = zoomTargetTarget;
 		}
@@ -1459,10 +1459,13 @@ void Engine::CalculateStep()
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
-		Camera::SetCameraPosition(flagship->Position());
-		focusedTarget = flagship->Position();
-		Camera::SetCameraVelocity(Point());
-		lockedCamera = false;
+		center = flagship->Position();
+		Camera::SetCameraPosition(flagship->IsUsingJumpDrive() ? center : Point());
+		focusedTarget = flagship->IsUsingJumpDrive() ? center : Point();
+		Camera::SetCameraVelocity(flagship->IsUsingJumpDrive() ? centerVelocity : Point());
+		Camera::SetStaticCamera(Point());
+		blendLockedCamera = 1.;
+		lockedCamera = flagship->IsUsingJumpDrive() ? false : true;
 	}
 	Prune(ships);
 
@@ -1491,8 +1494,9 @@ void Engine::CalculateStep()
 		if(!flagship->IsHyperspacing())
 		{
 			if(blendLockedCamera > 0.)
-				blendLockedCamera *= 0.99;
+				blendLockedCamera *= 0.9;
 		}
+		zoomMod = 0.-blendLockedCamera;
 		if (firstHalf)
 			zoomMod = 1.8 * (flagship->HyperCount() * flagship->HyperCount());
 		if (flagship->Zoom() < 1.)
@@ -1500,7 +1504,7 @@ void Engine::CalculateStep()
 			zoomMod = 1.47	 * (1. - flagship->Zoom());
 			Camera::SetCameraPosition(center);
 			Camera::SetCameraVelocity(Point());
-			focusedTarget = flagship->Position();
+			focusedTarget = center;
 		}
 		isSelecting -= 0.033;
 		zoomMod = zoomMod - (0.18 * zoomMod);
