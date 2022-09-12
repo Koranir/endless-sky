@@ -224,7 +224,6 @@ Engine::Engine(PlayerInfo &player)
 	const StellarObject *object = player.GetStellarObject();
 	if(object)
 		center = object->Position();
-	Camera::SetCameraOffset(center, Point(), false, 0., center);
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
@@ -1284,6 +1283,8 @@ void Engine::EnterSystem()
 			if(system != to && !flagship->JumpFuel(to))
 				player.TravelPlan().clear();
 		}
+		Camera::SetCameraPosition(flagship->Position());
+		Camera::SetCameraVelocity(Point());
 	}
 
 	asteroids.Clear();
@@ -1448,18 +1449,10 @@ void Engine::CalculateStep()
 	{
 		Camera::SetStaticCamera(flagship->GetTargetPoint());
 		firstHalf = false;
-		blendLockedCamera = 1.;
-		if(flagship->IsUsingJumpDrive())
-		{
-			Camera::SetCameraPosition(flagship->Position());
-			Camera::SetCameraVelocity(Point());
-			blendLockedCamera = 0.;
-		}
-		else
-		{
-			Camera::SetCameraPosition(flagship->Position()+(flagship->Velocity()*10));
-			Camera::SetCameraVelocity(flagship->Velocity()*0.9);
-		}
+		blendLockedCamera = flagship->IsUsingJumpDrive()?(0.):(1.);
+		//TODO: Place inside EnterSystem()
+		Camera::SetCameraPosition(flagship->GetTargetPoint());
+		Camera::SetCameraVelocity(-flagship->Velocity());
 		// Wormhole travel: mark the wormhole "planet" as visited. ^
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
@@ -1467,8 +1460,7 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
-							Camera::SetCameraPosition(flagship->Position());
-							Camera::SetCameraVelocity(Point());
+							focusedTarget = center;
 						}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
@@ -1506,10 +1498,6 @@ void Engine::CalculateStep()
 			if(blendLockedCamera > 0.)
 				blendLockedCamera *= 0.99;
 		}
-		if (flagship->BlastCount())
-		{
-			zoomMod = flagship->BlastCount()/2.;
-		}
 		if (firstHalf)
 			zoomMod = 1.8 * (flagship->HyperCount() * flagship->HyperCount());
 		if (flagship->Zoom() < 1.)
@@ -1526,7 +1514,7 @@ void Engine::CalculateStep()
 	}
 
 	//Calculate camera offsets
-	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, center);
+	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
 	asteroids.Step(newVisuals, newFlotsam, step);

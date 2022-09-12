@@ -48,7 +48,7 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
 	cameraPos += (cameraVelocity)*100/Screen::Zoom();
 	cameraPos = cameraPos.Lerp(center2, SMOOTHNESS*2);
-	if (!(targetPos == center))
+	if (!(targetPos == center2))
 		interpolatedPos = cameraPos.Lerp(targetPos, 0.4);
 	else
 		interpolatedPos = cameraPos;
