@@ -538,7 +538,7 @@ void Engine::Step(bool isActive)
 		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
 		if(zoomMod > 0.01)
 		{
-			zoom = zoomTargetTarget;
+			nextZoom = zoomTargetTarget;
 		}
 	}
 
@@ -1466,7 +1466,7 @@ void Engine::CalculateStep()
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
 						{
 							player.Visit(*it.GetPlanet());
-							Camera::SetCameraPosition(flagship->Position();
+							Camera::SetCameraPosition(flagship->Position());
 							Camera::SetCameraVelocity(Point());
 						}
 
@@ -1479,49 +1479,46 @@ void Engine::CalculateStep()
 	Prune(ships);
 
 	Point oldfocusedTarget = focusedTarget;
-	focusedTarget = Point();
+	focusedTarget = center;
 	if(flagship)
 	{
-		const StellarObject *object = player.GetStellarObject();
-		if(object)
-		{
-			Camera::SetCameraPosition(object->Position());
-		}
-
-
 		if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
 		{
 			const Ship &target = *flagship->GetTargetShip();
-			focusedTarget = target.Position() - center;
+			focusedTarget = target.Position();
 		}
 		else if(flagship->GetTargetAsteroid() != nullptr)
 		{
-			focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+			focusedTarget = flagship->GetTargetAsteroid()->Position();
 		}
 		else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
 		{
-			focusedTarget = flagship->GetTargetStellar()->Position() - center;
+			focusedTarget = flagship->GetTargetStellar()->Position();
 		}
-		if (focusedTarget.Length() > Screen::RawHeight()/2)
-			focusedTarget *= ((Screen::RawHeight()/2) / focusedTarget.Length());
+		focusedTarget = flagship->Zoom()*(focusedTarget-center) + center;
+		if ((focusedTarget-center).Length() > Screen::RawHeight()/2)
+			focusedTarget = center + (focusedTarget-center)*((Screen::RawHeight()/2) / (focusedTarget-center).Length());
 		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
-		focusedTarget *= 1 - zoomMod;
 
-		if(!flagship->IsHyperspacing() && (!flagship->Commands().Has(Command::LAND)) )
+		if(!flagship->IsHyperspacing())
 		{
 			if(blendLockedCamera > 0.)
 				blendLockedCamera *= 0.99;
 		}
+		if (flagship->BlastCount())
+		{
+			zoomMod = flagship->BlastCount()/2.;
+		}
 		if (firstHalf)
 			zoomMod = 1.8 * (flagship->HyperCount() * flagship->HyperCount());
 		if (flagship->Zoom() < 1.)
-			zoomMod = 1.	 * (1. - flagship->Zoom());
+			zoomMod = 1.47	 * (1. - flagship->Zoom());
 		isSelecting -= 0.033;
 		zoomMod = zoomMod - (0.18 * zoomMod);
 	}
 
 	//Calculate camera offsets
-	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, focusedTarget);
+	Camera::SetCameraOffset(center, centerVelocity, lockedCamera, blendLockedCamera, center);
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
 	asteroids.Step(newVisuals, newFlotsam, step);

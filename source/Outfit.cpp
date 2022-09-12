@@ -225,6 +225,8 @@ void Outfit::Load(const DataNode &node)
 			++steeringFlareSounds[Audio::Get(child.Token(1))];
 		else if(child.Token(0) == "afterburner effect" && child.Size() >= 2)
 			++afterburnerEffects[GameData::Effects().Get(child.Token(1))];
+		else if(child.Token(0) == "blast effect" && child.Size() >= 2)
+			++blastEffects[GameData::Effects().Get(child.Token(1))];
 		else if(child.Token(0) == "jump effect" && child.Size() >= 2)
 			++jumpEffects[GameData::Effects().Get(child.Token(1))];
 		else if(child.Token(0) == "hyperdrive sound" && child.Size() >= 2)
@@ -467,6 +469,7 @@ void Outfit::Add(const Outfit &other, int count)
 	MergeMaps(reverseFlareSounds, other.reverseFlareSounds, count);
 	MergeMaps(steeringFlareSounds, other.steeringFlareSounds, count);
 	MergeMaps(afterburnerEffects, other.afterburnerEffects, count);
+	MergeMaps(blastEffects, other.blastEffects, count);
 	MergeMaps(jumpEffects, other.jumpEffects, count);
 	MergeMaps(hyperSounds, other.hyperSounds, count);
 	MergeMaps(hyperInSounds, other.hyperInSounds, count);
@@ -533,6 +536,11 @@ const map<const Sound *, int> &Outfit::SteeringFlareSounds() const
 const map<const Effect *, int> &Outfit::AfterburnerEffects() const
 {
 	return afterburnerEffects;
+}
+
+const map<const Effect *, int> &Outfit::BlastEffects() const
+{
+	return blastEffects;
 }
 
 

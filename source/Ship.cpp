@@ -856,6 +856,10 @@ void Ship::Save(DataWriter &out) const
 			for(const auto &it : baseAttributes.AfterburnerEffects())
 				for(int i = 0; i < it.second; ++i)
 					out.Write("afterburner effect", it.first->Name());
+			//TODO: Blast Effects
+			for(const auto &it : baseAttributes.BlastEffects())
+				for(int i = 0; i < it.second; ++i)
+					out.Write("blast effect", it.first->Name());
 			for(const auto &it : baseAttributes.JumpEffects())
 				for(int i = 0; i < it.second; ++i)
 					out.Write("jump effect", it.first->Name());
@@ -1929,8 +1933,51 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 			double leakageCost = attributes.Get("afterburner leakage");
 			double burningCost = attributes.Get("afterburner burn");
 
+			double blastThrust = attributes.Get("afterburner blast thrust");
+			double blastFalloff = 1.-(1./attributes.Get("afterburner blast falloff"));
+			double blastFalloffShape = attributes.Get("afterburner blast falloff shape");
+			//TODO: Blast afterburner
+
 			double slownessCost = attributes.Get("afterburner slowing");
 			double disruptionCost = attributes.Get("afterburner disruption");
+
+			if (blastFalloffShape > 0.)
+			{
+				afterburnerBlast = pow(blastFalloff, timeSinceBlast);
+			}
+
+			if (blastThrust)
+			{
+				if (afterburnerBlast < 0.01 && afterburned)
+				{
+					timeSinceBlast = 0;
+					velocity = Point();
+				}
+				timeSinceBlast++;
+				double blastHull = attributes.Get("afterburner blast hull")*afterburnerBlast;
+				double blastShield = attributes.Get("afterburner blast shield")*afterburnerBlast;
+			    double blastFuel = attributes.Get("afterburner blast fuel")*afterburnerBlast;
+			    double blastHeat = attributes.Get("afterburner blast heat")*afterburnerBlast;
+				if(thrust && shields >= blastShield && hull >= blastHull
+					&& fuel >= blastFuel && heat >= blastHeat)
+				{
+					shields -= blastShield;
+					hull -= blastHull;
+					fuel -= blastFuel;
+					heat -= blastHeat;
+
+					discharge += dischargeCost;
+					corrosion += corrosionCost;
+					ionization += ionCost;
+					leakage += leakageCost;
+					burning += burningCost;
+
+					slowness += slownessCost;
+					disruption += disruptionCost;
+
+					thrust += blastThrust*afterburnerBlast;
+				}
+			}
 
 			if(thrust && shields >= shieldCost && hull >= hullCost
 				&& energy >= energyCost && fuel >= fuelCost && heat >= heatCost)
@@ -1950,12 +1997,22 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				slowness += slownessCost;
 				disruption += disruptionCost;
 
+				velocity = velocity.Unit().Lerp(angle.Unit(), 0.16).Unit()*velocity.Length();
+				acceleration = acceleration.Unit().Lerp(angle.Unit(), 0.16).Unit()*acceleration.Length()*1.016;
+
 				acceleration += angle.Unit() * thrust / mass;
 
 				// Only create the afterburner effects if the ship is in the player's system.
 				isUsingAfterburner = !forget;
 			}
+			afterburned = false;
 		}
+		else
+		{
+			afterburned = true;
+			timeSinceBlast++;
+		}
+
 	}
 	if(acceleration)
 	{
@@ -2072,6 +2129,18 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				for(int i = 0; i < it.second; ++i)
 					visuals.emplace_back(*it.first, pos, effectVelocity, angle);
 		}
+	if (afterburnerBlast > 0.01 && isUsingAfterburner)
+		if (!Attributes().BlastEffects().empty())
+			for(const EnginePoint &point : enginePoints)
+			{
+				Point pos = angle.Rotate(point) * Zoom() + position;
+				// Stream the afterburner effects outward in the direction the engines are facing.
+				Point effectVelocity = velocity - 6. * angle.Unit();
+				for(auto &&it : Attributes().BlastEffects())
+				{
+					visuals.emplace_back(*it.first, pos, effectVelocity, angle);
+				}
+			}
 }
 
 
@@ -2793,6 +2862,13 @@ bool Ship::IsHyperspacing() const
 double Ship::HyperCount() const
 {
 	return (static_cast<double>(hyperspaceCount))/100.;
+}
+
+
+
+double Ship::BlastCount() const
+{
+	return afterburnerBlast*!afterburned;
 }
 
 

@@ -676,12 +676,50 @@ outfit "Bellows-Class Afterburner"
 	"afterburner effect" "remnant afterburner"
 	description "The Remnant live in an environment where the raw materials for fuel are relatively common on the winds of the nebula. As such, their ships incorporate significant built-in ramscoop technology, and while they are reluctant to waste fuel, they aren't afraid of using it when needed. Far more important is the ability for their ships to quickly and efficiently enter or exit combat as needed. At the end of the day, it is continued life that is paramount."
 	description "	The Bellows-class afterburner embodies this philosophy by providing captains with a tool that allows them to make great leaps of acceleration, typically during evasive maneuvers or to catch up with a fleeing target. Due to their enormous fuel usage, only the most specialized of ships have enough fuel to use these for more than a few seconds at a time before completely running out of fuel."
+	
+outfit "Injector-Class Afterburner"
+	category "Engines"
+	"cost" 1280000
+	thumbnail "outfit/remnant afterburner"
+	"mass" 12
+	"outfit space" -10
+	"engine capacity" -10
+	"slowing resistance" 0.01
+	"afterburner thrust" 153.0
+	"afterburner fuel" 0.5
+	"afterburner energy" 6.0
+	"afterburner heat" 8.0
+	"afterburner blast shield" 400.0
+	"afterburner blast thrust" 1530.0
+	"afterburner blast falloff" 12.0
+	"afterburner blast falloff shape" 1.0
+	"afterburner blast fuel" 20.0
+	"afterburner blast heat" 20.0
+	"afterburner effect" "remnant afterburner"
+	"blast effect" "blast afterburn"
+	description "In conflicts with the Korath, The Remnant quickly found that their Bellows-Class Afterburners were insufficient in escape. Through further research, The Remnant developed a new form of afterburner that spent a larger amount of the fuel initially to give a large boost to their escape. They act like weakened hyperdrives and use no energy, but are very inefficient as a result."
+	description "	The G-Forces involved in such a manouvre are so large that the ship's shields become destabilized."
+
+effect "blast afterburn"
+	sprite "effect/finisher impact"
+		"no repeat"
+		"frame rate" 6
+	sound "finisher impact"
+	"lifetime" 60
+	"random angle" 30
+	"random spin" 10
+	"random velocity" 1.
+	"velocity scale" 1.
 
 effect "remnant afterburner"
 	sprite "effect/remnant afterburner/remnant afterburner"
 		"frame rate" 10
 	sound "remnant afterburner"
-
+	
+effect "blast afterburn"
+	sprite "effect/ion explosion"
+		"frame rate" 10
+	sound "ion impact"
 
 
 outfit "Anvil-Class Engine"

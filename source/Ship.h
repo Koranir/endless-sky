@@ -246,6 +246,8 @@ public:
 	bool IsHyperspacing() const;
 	// Check if this ship is hyperspacing, specifically via a jump drive.
 	bool IsUsingJumpDrive() const;
+	//Return the blast afterburner percentage, 1.-0.
+	double BlastCount() const;
 	//Return the percentage of hyperjump completion, 1-100
 	double HyperCount() const;
 	// Check if this ship is currently able to enter hyperspace to it target.
@@ -554,6 +556,10 @@ private:
 	int crew = 0;
 	int pilotError = 0;
 	int pilotOkay = 0;
+
+	double afterburnerBlast = 0.;
+	int timeSinceBlast = 0;
+	bool afterburned = true;
 
 	// Current status of this particular ship:
 	const System *currentSystem = nullptr;

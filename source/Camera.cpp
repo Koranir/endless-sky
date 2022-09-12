@@ -15,6 +15,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -56,11 +57,11 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 	center2 = center;
 	Point facing = centerVelocity-cameraVelocity;
 	if (facing.Unit().Dot(cameraVelocity.Unit()) > 0.)
-		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.1, SMOOTHNESS);
+		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.5, SMOOTHNESS);
 	else
 		cameraVelocity = cameraVelocity.Lerp(centerVelocity, SMOOTHNESS);
 	cameraPos += (cameraVelocity)*100/Screen::Zoom();
-	cameraPos = cameraPos.Lerp(center, SMOOTHNESS*5);
+	cameraPos = cameraPos.Lerp(center2, SMOOTHNESS*5);
 	if (cameraVelocity2 != cameraVelocity3)
 	{
 		cameraVelocity3 = cameraVelocity2;
@@ -71,6 +72,7 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 		cameraPos3 = cameraPos2;
 		cameraPos = cameraPos2;
 	}
+	cameraPos = cameraPos.Lerp(targetPos, 0.4);
 	/*if (locked)
 	{
 		cameraPos = staticPos.Lerp(center2, lockBlend);
@@ -79,7 +81,8 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 
 Point Camera::CameraOffset()
 {
-	return cameraPos-center2;
+	Point offset = cameraPos-center2;
+	return offset;
 }
 
 void Camera::SetCameraPosition(Point position)
