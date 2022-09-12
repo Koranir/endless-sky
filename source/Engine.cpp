@@ -535,7 +535,7 @@ void Engine::Step(bool isActive)
 			else if(zoom > zoomTarget)
 				nextZoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
-		double zoomTargetTarget = Preferences::ViewZoom() + zoomMod;
+		double zoomTargetTarget = Preferences::ViewZoom() / zoomMod;
 		if((zoomMod > 0.01) || (zoomMod < -0.01))
 		{
 			nextZoom = zoomTargetTarget;
@@ -1464,7 +1464,7 @@ void Engine::CalculateStep()
 		focusedTarget = flagship->IsUsingJumpDrive() ? center : Point();
 		Camera::SetCameraVelocity(flagship->IsUsingJumpDrive() ? centerVelocity : Point());
 		Camera::SetStaticCamera(Point());
-		blendLockedCamera = 1.;
+		blendLockedCamera = 0.8;
 		lockedCamera = flagship->IsUsingJumpDrive() ? false : true;
 	}
 	Prune(ships);
