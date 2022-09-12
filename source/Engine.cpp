@@ -224,6 +224,7 @@ Engine::Engine(PlayerInfo &player)
 	const StellarObject *object = player.GetStellarObject();
 	if(object)
 		center = object->Position();
+	Camera::SetCameraOffset(center, Point(), false, 0., center);
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
@@ -1512,7 +1513,14 @@ void Engine::CalculateStep()
 		if (firstHalf)
 			zoomMod = 1.8 * (flagship->HyperCount() * flagship->HyperCount());
 		if (flagship->Zoom() < 1.)
+		{
 			zoomMod = 1.47	 * (1. - flagship->Zoom());
+			const StellarObject *object = player.GetStellarObject();
+			if(object)
+			{
+				Camera::SetCameraPosition(object->Position());
+			}
+		}
 		isSelecting -= 0.033;
 		zoomMod = zoomMod - (0.18 * zoomMod);
 	}

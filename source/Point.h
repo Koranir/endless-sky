@@ -59,6 +59,7 @@ public:
 
 	//Yeah but I need them #37!
 	bool operator!=(const Point &point) const;
+	bool operator==(const Point &point) const;
 
 	double &X();
 	const double &X() const noexcept;
