@@ -23,8 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace {
-	Point center2, cameraPos, cameraPos2, cameraPos3, interpolatedPos, staticPos, balanceVel = Point();
-	Point cameraVelocity, cameraVelocity2, cameraVelocity3 = Point();
+	Point cameraPos, interpolatedPos, staticPos, cameraVelocity = Point();
 	double SMOOTHNESS = 0.016;
 }
 
@@ -40,7 +39,6 @@ Point Camera::StaticPoint()
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
-	center2 = center;
 	Point facing = centerVelocity-cameraVelocity;
 	if (facing.Unit().Dot(cameraVelocity.Unit()) > 0.)
 		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.5, SMOOTHNESS);
@@ -53,12 +51,12 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 	else
 		interpolatedPos = cameraPos;
 	interpolatedPos = interpolatedPos.Lerp(staticPos, lockBlend);
+	interpolatedPos -= center;
 }
 
 Point Camera::CameraOffset()
 {
-	Point offset = interpolatedPos-center2;
-	return offset;
+	return interpolatedPos;
 }
 
 void Camera::SetCameraPosition(Point position)
