@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "BoardingPanel.h"
 #include "comparators/ByGivenOrder.h"
+#include "Camera.h"
 #include "CoreStartData.h"
 #include "Dialog.h"
 #include "text/Font.h"
@@ -257,7 +258,7 @@ bool MainPanel::Click(int x, int y, int clicks)
 	// Only allow drags that start when clicking was possible.
 	canDrag = true;
 
-	dragSource = Point(x, y);
+	dragSource = Point(x, y) + Camera::CameraOffset();
 	dragPoint = dragSource;
 
 	SDL_Keymod mod = SDL_GetModState();
@@ -272,7 +273,7 @@ bool MainPanel::Click(int x, int y, int clicks)
 
 bool MainPanel::RClick(int x, int y)
 {
-	engine.RClick(Point(x, y));
+	engine.RClick(Point(x, y)+Camera::CameraOffset());
 
 	return true;
 }
