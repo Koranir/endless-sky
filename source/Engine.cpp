@@ -535,7 +535,7 @@ void Engine::Step(bool isActive)
 			else if(zoom > zoomTarget)
 				nextZoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
-		double zoomTargetTarget = max(Preferences::ViewZoom() + zoomMod, 0.1);
+		double zoomTargetTarget = max(Preferences::ViewZoom() + zoomMod, 0.2);
 		if((zoomMod > 0.01) || (zoomMod < -0.01))
 		{
 			nextZoom = zoomTargetTarget;
@@ -1460,12 +1460,23 @@ void Engine::CalculateStep()
 		player.SetSystem(*playerSystem);
 		EnterSystem();
 		center = flagship->Position();
-		Camera::SetCameraPosition(!wasHyperspacing ? center : Point());
-		focusedTarget = wasHyperspacing ? center : Point();
-		Camera::SetCameraVelocity(!wasHyperspacing ? centerVelocity : Point());
-		Camera::SetStaticCamera(Point());
-		blendLockedCamera = !wasHyperspacing? 0. : 0.8;
-		lockedCamera = !wasHyperspacing ? false : true;
+		blendLockedCamera = false;
+		bool isJumping = flagship->IsUsingJumpDrive();
+		if (wasHyperspacing && !isJumping)
+		{
+			Camera::SetCameraPosition(Point());
+			focusedTarget = Point();
+			Camera::SetCameraVelocity(Point());
+			Camera::SetStaticCamera(Point());
+			blendLockedCamera = 1.;
+			lockedCamera = true;
+		}
+		else
+		{
+			Camera::SetCameraPosition(center);
+			focusedTarget = center;
+			Camera::SetCameraVelocity(centerVelocity);
+		}
 	}
 	Prune(ships);
 
