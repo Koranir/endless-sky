@@ -936,7 +936,7 @@ void Engine::Draw() const
 		double diagonal = Point(Screen::RawWidth(), Screen::RawHeight()).Length();
 		Point bound = centerVelocity.Unit()*diagonal*0.5;
 		double hyperC = flagship->HyperCount();
-		LineShader::Draw(bound, -bound, hyperC*hyperC*flagship->Radius()*1.2, Color(0.75f, 0.6f, 1.f, hyperC*0.8));
+		LineShader::Draw(bound, -bound, hyperC*hyperC*flagship->Radius()*1.2, Color(0.34f, 0.27f, 0.45f, hyperC*0.8));
 	}
 
 	// Draw any active planet labels.
