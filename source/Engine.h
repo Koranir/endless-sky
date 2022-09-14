@@ -257,9 +257,6 @@ private:
 	double load = 0.;
 	int loadCount = 0;
 	double loadSum = 0.;
-private:
-	//VERY BAD CODE FIX QUICK
-	std::string systemAttributeMusicPriority[1] = {"graveyard"};
 };
 
 
