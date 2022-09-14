@@ -47,6 +47,8 @@ public:
 	// Get the next audio buffer to play.
 	const std::vector<int16_t> &NextChunk();
 
+	const std::string &FromPriorityList(int index);
+
 
 private:
 	// This is the entry point for the decoding thread.

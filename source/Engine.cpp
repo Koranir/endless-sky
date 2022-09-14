@@ -934,9 +934,9 @@ void Engine::Draw() const
 	if (flagship->HyperCount() && !flagship->IsUsingJumpDrive())
 	{
 		double diagonal = Point(Screen::RawWidth(), Screen::RawHeight()).Length();
-		Point bound = centerVelocity.Unit()*diagonal*0.5;
+		Point bound = centerVelocity.Unit()*diagonal*100.0;
 		double hyperC = flagship->HyperCount();
-		LineShader::Draw(bound, -bound, hyperC*hyperC*flagship->Radius()*1.2, Color(0.34f, 0.27f, 0.45f, hyperC*0.8));
+		LineShader::Draw(bound-Camera::CameraOffset(), -bound-Camera::CameraOffset(), hyperC*hyperC*flagship->Radius()*1.2, Color(0.34f, 0.27f, 0.45f, hyperC*0.8));
 	}
 
 	// Draw any active planet labels.
@@ -1244,7 +1244,18 @@ void Engine::EnterSystem()
 	const Date &today = player.GetDate();
 
 	const System *system = flagship->GetSystem();
-	Audio::PlayMusic(system->MusicName());
+
+	string musicName = "";
+	for (int i = 0; i < 1; i++)
+	{
+		if (system->Attributes().find(systemAttributeMusicPriority[i]) != system->Attributes().end())
+			musicName = systemAttributeMusicPriority[i];
+	}
+	if (system->MusicName() != "")
+		Audio::PlayMusic(system->MusicName());
+	else
+		Audio::PlayMusic(musicName);
+
 	GameData::SetHaze(system->Haze(), false);
 
 	Messages::Add("Entering the " + system->Name() + " system on "
