@@ -2197,6 +2197,7 @@ system Aki'il
 	pos -83 722
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 1505
 	habitable 1505
 	belt 1500
@@ -7866,6 +7867,7 @@ system Delia
 	pos -41 757
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 500
 	habitable 490
 	belt 1500
@@ -8364,6 +8366,7 @@ system Dixere
 	pos 33 708
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 980
 	habitable 980
 	belt 1500
@@ -9897,6 +9900,7 @@ system Esix
 	pos 142 532
 	government Uninhabited
 	attributes "ember waste" "graveyard" "wormhole"
+	music ambient/graveyard
 	arrival 5000
 	habitable 5600
 	belt 1500
@@ -10615,6 +10619,7 @@ system Fearis
 	pos -16 643
 	government Uninhabited
 	attributes "ember waste" "graveyard" "wormhole"
+	music ambient/graveyard
 	arrival 980
 	habitable 980
 	belt 1500
@@ -10756,6 +10761,7 @@ system Feraticus
 	pos 58 630
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 500
 	habitable 10
 	belt 1500
@@ -10802,6 +10808,7 @@ system Fereti
 	pos -39 600
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 3200
 	habitable 3200
 	belt 1500
@@ -11580,6 +11587,7 @@ system Gerenus
 	pos 197 514
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 3000
 	habitable 3000
 	belt 1500
@@ -11706,6 +11714,7 @@ system Giribea
 	pos -6 674
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 1800
 	habitable 1800
 	belt 1500
@@ -15757,6 +15766,7 @@ system Lire
 	pos -59 676
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 1080
 	habitable 1080
 	belt 1500
@@ -18503,6 +18513,7 @@ system Nona
 	pos 166 558
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 1080
 	habitable 1080
 	belt 1500
@@ -18934,6 +18945,7 @@ system Paeli
 	pos 129 497
 	government Uninhabited
 	attributes "ember waste" "graveyard" "wormhole"
+	music ambient/graveyard
 	arrival 500
 	habitable 10
 	belt 1500
@@ -19117,6 +19129,7 @@ system Patir
 	pos -38 553
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 500
 	habitable 100
 	belt 1500
@@ -20009,6 +20022,7 @@ system Polerius
 	pos 88 482
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 2030
 	habitable 2030
 	belt 1500
@@ -20832,6 +20846,7 @@ system Queri
 	pos 69 518
 	government Uninhabited
 	attributes "ember waste" "graveyard"
+	music ambient/graveyard
 	arrival 700
 	habitable 700
 	belt 1500
@@ -21254,6 +21269,7 @@ system Relifer
 	pos 19 603
 	government Uninhabited
 	attributes "ember waste" "graveyard" "wormhole"
+	music ambient/graveyard
 	arrival 980
 	habitable 980
 	belt 1500
@@ -21469,6 +21485,7 @@ system Ritilas
 	pos 11 523
 	government Uninhabited
 	attributes "ember waste" "graveyard" "wormhole"
+	music ambient/graveyard
 	arrival 980
 	habitable 980
 	belt 1500
