@@ -931,6 +931,14 @@ void Engine::Draw() const
 
 	const Ship *flagship = player.Flagship();
 
+	if (flagship->HyperCount() && !flagship->IsUsingJumpDrive())
+	{
+		double diagonal = Point(Screen::RawWidth(), Screen::RawHeight()).Length();
+		Point bound = centerVelocity.Unit()*diagonal*0.5;
+		double hyperC = flagship->HyperCount();
+		LineShader::Draw(bound, -bound, hyperC*hyperC*flagship->Radius()*1.2, Color(0.75f, 0.6f, 1.f, hyperC*0.8));
+	}
+
 	// Draw any active planet labels.
 	for(const PlanetLabel &label : labels)
 		label.Draw();
@@ -1518,14 +1526,6 @@ void Engine::CalculateStep()
 		else if (!firstHalf)
 		{
 			Camera::SetStaticCamera(center);
-		}
-
-		if (!flagship->IsUsingJumpDrive())
-		{
-			double diagonal = Point(Screen::Width(), Screen::Height()).Length();
-			Point bound = centerVelocity.Unit()*diagonal*0.5;
-			double hyperC = flagship->HyperCount();
-			LineShader::Draw(bound, -bound, hyperC*hyperC, Color(1.f, static_cast<float>(hyperC)));
 		}
 
 		if (firstHalf)

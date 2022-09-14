@@ -3537,7 +3537,7 @@ int Ship::TakeDamage(vector<Visual> &visuals, const DamageDealt &damage, const G
 	if(damage.HitForce())
 	{
 		ApplyForce(damage.HitForce(), damage.GetWeapon().IsGravitational());
-		Camera::ShakeCamera(damage.HitForce().Length());
+		Camera::ShakeCamera(damage.HitForce().Length(), Position());
 	}
 
 	// Prevent various stats from reaching unallowable values.
