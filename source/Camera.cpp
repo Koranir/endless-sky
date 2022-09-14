@@ -14,6 +14,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "Camera.h"
+#include "Random.h"
 #include "Screen.h"
 
 #include <algorithm>
@@ -24,7 +25,9 @@ using namespace std;
 
 namespace {
 	Point cameraPos, interpolatedPos, staticPos, cameraVelocity = Point();
-	double SMOOTHNESS = 0.016;
+	static const double SMOOTHNESS = 0.016;
+	double INTENSITY = 0.;
+	Point CENTER = Point();
 }
 
 void Camera::SetStaticCamera(Point offset)
@@ -39,6 +42,7 @@ Point Camera::StaticPoint()
 
 void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, double lockBlend, Point targetPos)
 {
+	CENTER = center;
 	Point facing = centerVelocity-cameraVelocity;
 	if (facing.Unit().Dot(cameraVelocity.Unit()) > 0.)
 		cameraVelocity = cameraVelocity.Lerp(centerVelocity*1.5, SMOOTHNESS);
@@ -52,6 +56,8 @@ void Camera::SetCameraOffset(Point center, Point centerVelocity, bool locked, do
 		interpolatedPos = cameraPos;
 	interpolatedPos = interpolatedPos.Lerp(staticPos, lockBlend);
 	interpolatedPos -= center;
+	interpolatedPos += Point(Random::Real()-0.5, Random::Real()-0.5)*INTENSITY*Screen::Width();
+	INTENSITY *= 0.925;
 }
 
 Point Camera::CameraOffset()
@@ -68,4 +74,15 @@ void Camera::SetCameraPosition(Point position)
 void Camera::SetCameraVelocity(Point velocity)
 {
 	cameraVelocity = velocity;
+}
+
+void Camera::ShakeCamera(double intensity)
+{
+	INTENSITY += 0.00001*intensity;
+}
+
+void Camera::ShakeCamera(double intensity, Point origin)
+{
+	double len = (CENTER-origin).Length();
+	INTENSITY += (0.01*intensity)/(len*len);
 }

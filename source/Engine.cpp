@@ -1464,10 +1464,7 @@ void Engine::CalculateStep()
 		bool isJumping = flagship->IsUsingJumpDrive();
 		if (wasHyperspacing && !isJumping)
 		{
-			Camera::SetCameraPosition(Point());
-			focusedTarget = Point();
-			Camera::SetCameraVelocity(Point());
-			Camera::SetStaticCamera(Point());
+			Camera::SetStaticCamera(center);
 			blendLockedCamera = 1.;
 			lockedCamera = true;
 		}
@@ -1504,6 +1501,17 @@ void Engine::CalculateStep()
 
 		if(!flagship->IsHyperspacing())
 		{
+			//At the end of a hyperjump
+			if (blendLockedCamera == 1.)
+			{
+				Camera::SetCameraPosition(center);
+				focusedTarget = center;
+				Camera::SetCameraVelocity(centerVelocity);
+				if (Preferences::Has("Show hyperspace flash"))
+				{
+					flash = 0.2;
+				}
+			}
 			if(blendLockedCamera > 0.)
 				blendLockedCamera *= 0.984;
 		}
@@ -1511,8 +1519,21 @@ void Engine::CalculateStep()
 		{
 			Camera::SetStaticCamera(center);
 		}
+
+		if (!flagship->IsUsingJumpDrive())
+		{
+			double diagonal = Point(Screen::Width(), Screen::Height()).Length();
+			Point bound = centerVelocity.Unit()*diagonal*0.5;
+			double hyperC = flagship->HyperCount();
+			LineShader::Draw(bound, -bound, hyperC*hyperC, Color(1.f, static_cast<float>(hyperC)));
+		}
+
 		if (firstHalf)
-			zoomMod = 10. * (pow(flagship->HyperCount(), 4));
+		{
+			zoomMod = 1.8 * (pow(flagship->HyperCount(), 4));
+			Camera::ShakeCamera(flagship->HyperCount()*100.);
+		}
+
 		if (flagship->Zoom() < 1.)
 		{
 			zoomMod = 1.47	 * (1. - flagship->Zoom());
@@ -1521,7 +1542,7 @@ void Engine::CalculateStep()
 			focusedTarget = center;
 		}
 		isSelecting -= 0.033;
-		zoomMod *= 0.9;
+		zoomMod *= 0.8;
 	}
 
 

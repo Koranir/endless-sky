@@ -18,6 +18,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Point.h"
 
+#include <vector>
+
 class Ship;
 
 // Class that holds and sets offsets for the camera.
@@ -41,6 +43,9 @@ public:
 	static void SetCameraPosition(Point position);
 	//Set Camera Velocity
 	static void SetCameraVelocity(Point velocity);
+	//Shake the camera
+	static void ShakeCamera(double intensity);
+	static void ShakeCamera(double intensity, Point origin);
 };
 
 

@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Ship.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "CategoryTypes.h"
 #include "DamageDealt.h"
 #include "DataNode.h"
@@ -33,6 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Preferences.h"
 #include "Projectile.h"
 #include "Random.h"
+#include "Screen.h"
 #include "ShipEvent.h"
 #include "Sound.h"
 #include "Sprite.h"
@@ -1594,7 +1596,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 		// or more particles per ship per turn at the peak of the jump.
 		if(isUsingJumpDrive && !forget)
 		{
-			double sparkAmount = hyperspaceCount * hyperspaceCount * Width() * Height() * .000006;
+			double sparkAmount = hyperspaceCount * hyperspaceCount * Width() * Height() * .0000006;
 			const map<const Effect *, int> &jumpEffects = attributes.JumpEffects();
 			if(jumpEffects.empty())
 				CreateSparks(visuals, "jump drive", sparkAmount);
@@ -1605,6 +1607,12 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 				for(const auto &effect : jumpEffects)
 					CreateSparks(visuals, effect.first, sparkAmount);
 			}
+		}
+		else
+		{
+			//Creates a line of particles in the direction of the Jump
+			double sparkAmount = hyperspaceCount * hyperspaceCount * Radius() * Point(Screen::Width(), Screen::Height()).Length() * .0000006;
+			CreateHyperLane(visuals, GameData::Effects().Get("tracker fire"), sparkAmount, velocity);
 		}
 
 		if(hyperspaceCount == HYPER_C)
@@ -3527,7 +3535,10 @@ int Ship::TakeDamage(vector<Visual> &visuals, const DamageDealt &damage, const G
 	slowness += damage.Slowing();
 
 	if(damage.HitForce())
+	{
 		ApplyForce(damage.HitForce(), damage.GetWeapon().IsGravitational());
+		Camera::ShakeCamera(damage.HitForce().Length());
+	}
 
 	// Prevent various stats from reaching unallowable values.
 	hull = min(hull, attributes.Get("hull"));
@@ -4248,5 +4259,31 @@ void Ship::CreateSparks(vector<Visual> &visuals, const Effect *effect, double am
 			(Random::Real() - .5) * Height());
 		if(GetMask().Contains(point, Angle()))
 			visuals.emplace_back(*effect, angle.Rotate(point) + position, velocity, angle);
+	}
+}
+
+
+
+void Ship::CreateHyperLane(vector<Visual> &visuals, const Effect *effect, double amount, Point direction)
+{
+	if(forget)
+		return;
+
+	double diagonal = Point(Screen::Width(), Screen::Height()).Length();
+	// Limit the number of sparks, depending on the size of the sprite.
+	amount = min(amount, Radius() * diagonal * .000006);
+	// Preallocate capacity, in case we're adding a non-trivial number of sparks.
+	visuals.reserve(visuals.size() + static_cast<int>(amount));
+
+	while(true)
+	{
+		amount -= Random::Real();
+		if(amount <= 0.)
+			break;
+
+		Point point((Random::Real() - .5) * Width(),
+			(Random::Real() - .5) * Height());
+		if(GetMask().Contains(point, Angle()))
+			visuals.emplace_back(*effect, angle.Rotate(point) + position - (direction.Unit()*(Random::Real()-0.1)*diagonal*0.5), velocity, angle);
 	}
 }

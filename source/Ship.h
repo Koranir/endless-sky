@@ -449,6 +449,7 @@ private:
 	// Place a "spark" effect, like ionization or disruption.
 	void CreateSparks(std::vector<Visual> &visuals, const std::string &name, double amount);
 	void CreateSparks(std::vector<Visual> &visuals, const Effect *effect, double amount);
+	void CreateHyperLane(std::vector<Visual> &visuals, const Effect *effect, double amount, Point direction);
 
 
 private:
