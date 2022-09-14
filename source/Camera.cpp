@@ -84,5 +84,5 @@ void Camera::ShakeCamera(double intensity)
 void Camera::ShakeCamera(double intensity, Point origin)
 {
 	double len = (CENTER-origin).Length();
-	INTENSITY += (0.0001*intensity)/min(len*len, 1.);
+	INTENSITY += (0.00001*intensity)/min(len*len, 1.);
 }
