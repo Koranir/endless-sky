@@ -2014,16 +2014,21 @@ void Engine::HandleKeyboardInputs()
 		activeCommands |= Command::FLEET_JUMP;
 
 		//Holding TARGET keeps the lines graph thing open
+	if( keyDown.Has(Command::NEAREST) || keyDown.Has(Command::TARGET) )
+		isSelecting = 3.;
 	if((keyHeld.Has(Command::TARGET) | keyHeld.Has(Command::NEAREST)) && flagship->Attributes().Get("tactical scan power"))
 	{
-		if (isSelecting < 2.0)
-		{
 			activeCommands.Clear(Command::TARGET);
 			activeCommands.Clear(Command::NEAREST);
-		}
-		isSelecting = 3.0;
-
+		if (isSelecting < 2)
+			isSelecting = 2.5;
 	}
+	else if (oldHeld.Has(Command::TARGET) && isSelecting > 2.5)
+		activeCommands |= Command::TARGET;
+	else if (oldHeld.Has(Command::NEAREST) && isSelecting > 2.5)
+		activeCommands |= Command::NEAREST;
+
+
 }
 
 
