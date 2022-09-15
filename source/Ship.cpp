@@ -1608,7 +1608,7 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 					CreateSparks(visuals, effect.first, sparkAmount);
 			}
 		}
-		else
+		else if (!forget)
 		{
 			//Creates a line of particles in the direction of the Jump
 			double sparkAmount = hyperspaceCount * hyperspaceCount * Radius() * Point(Screen::Width(), Screen::Height()).Length() * .0000006;

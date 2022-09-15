@@ -934,9 +934,15 @@ void Engine::Draw() const
 	if (flagship->HyperCount() && !flagship->IsUsingJumpDrive())
 	{
 		double diagonal = Point(Screen::RawWidth(), Screen::RawHeight()).Length();
-		Point bound = centerVelocity.Unit()*diagonal*100000.0;
+		Point bound = centerVelocity.Unit()*diagonal*1000;
 		double hyperC = flagship->HyperCount();
-		LineShader::Draw(Camera::CameraOffset()+bound, Camera::CameraOffset()-bound, hyperC*hyperC*flagship->Radius()*1.2, Color(0.34f, 0.27f, 0.45f, hyperC*0.8));
+		LineShader::Draw(bound - Camera::CameraOffset()*zoom, -bound - Camera::CameraOffset()*zoom, hyperC*hyperC*flagship->Radius()*1.2, Color(0.34f, 0.27f, 0.45f, hyperC*0.8));
+		for (int i = 0; i < 10*hyperC; i++)
+		{
+			Point Offsetter = (Random::Real()-0.5) * 0.0004 *Point(bound.Y(), -bound.X());
+			LineShader::Draw(bound - Camera::CameraOffset()*zoom + Offsetter*zoom, -bound - Camera::CameraOffset()*zoom + Offsetter*zoom, hyperC*flagship->Radius()*0.4*Random::Real(),
+							Color(0.34*(Random::Real()+0.5), 0.27 * (Random::Real()+0.5), 0.45 * (Random::Real()+0.5), hyperC*0.3));
+		}
 	}
 
 	// Draw any active planet labels.
@@ -1539,9 +1545,12 @@ void Engine::CalculateStep()
 		if (flagship->Zoom() < 1.)
 		{
 			zoomMod = 1.47	 * (1. - flagship->Zoom());
-			Camera::SetCameraPosition(center);
-			Camera::SetCameraVelocity(Point());
-			focusedTarget = center;
+			if (!flagship->Commands().Has(Command::LAND))
+			{
+				Camera::SetCameraPosition(center);
+				Camera::SetCameraVelocity(Point());
+				focusedTarget = center;
+			}
 		}
 		isSelecting -= 0.033;
 		zoomMod *= 0.8;
