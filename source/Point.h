@@ -72,6 +72,8 @@ public:
 	double LengthSquared() const;
 	Point Unit() const;
 
+	Point Lerp(const Point &point, const double t) const;
+
 	double Distance(const Point &point) const;
 	double DistanceSquared(const Point &point) const;
 

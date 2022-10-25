@@ -281,6 +281,13 @@ Point Point::Unit() const
 
 
 
+Point Point::Lerp(const Point &point, const double t) const
+{
+	return *this + ((point - *this)*t);
+}
+
+
+
 double Point::Distance(const Point &point) const
 {
 	return (*this - point).Length();
