@@ -204,14 +204,18 @@ private:
 	Point highlightUnit;
 	float highlightFrame = 0.f;
 
-	// Variables for camera states
+	// Variables for dynamic camera states.
+	// Whether to use the locked camera system.
 	bool lockedCamera = false;
+	// How much influence the locked position has on the camera (0 is no influence).
 	double blendLockedCamera = 0.;
+	// Lock-on target.
 	Point focusedTarget = Point();
+	// Higher values zoom out.
 	double zoomMod = 0.;
 	double oldZoom = 0.;
 	double oldMod = 0.;
-	// First half of a hperjump
+	// First half of a hyperjump (from when control is lost to entering a new system).
 	bool firstHalf = false;
 
 	int step = 0;

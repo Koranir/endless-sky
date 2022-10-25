@@ -20,8 +20,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 
 
-// Class that holds a few methods & values for manipulating the camera
-// Position, Velocity, Offsets, Update Function
+// Class that holds a few methods & values for the camera
+// Update() is the main function, it calculates a new position for the camera every frame based on the given variables.
+// Position(), Velocity(), Offset(), and VelocityOffset() all return their respective variables.
+// Offset() is the most used function.
+// The Set...() functions just set their variables to those given.
+// SetPosition() assigns to two variables.
+// Reset() changes all the variables to those as if there was no dynamic camera i.e the offset becomes zero.
+// WhiteShake() is a very simple implementation of screenshake, it can be called with a source point or directly.
 class Camera {
 public:
 	static void Update(Point center, Point centerVelocity, Point focus, bool locked, double lockBlend);
@@ -34,8 +40,6 @@ public:
 	static void SetPosition(Point Position);
 	static void SetVelocity(Point Velocity);
 	static void SetOffset(Point Offset, Point center);
-	//Dangerous, uses old values
-	static void SetOffset(Point Offset);
 	static void SetLockedPosition(Point Position);
 
 	static void Reset(Point center, Point centerVelocity);

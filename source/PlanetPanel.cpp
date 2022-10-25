@@ -19,7 +19,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "text/alignment.hpp"
 #include "BankPanel.h"
-#include "Camera.h"
 #include "Command.h"
 #include "ConversationPanel.h"
 #include "Dialog.h"

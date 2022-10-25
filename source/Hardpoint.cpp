@@ -371,8 +371,9 @@ void Hardpoint::Fire(Ship &ship, const Point &start, const Angle &aim)
 	if(force)
 	{
 		ship.ApplyForce(aim.Unit() * -force);
-		if (ship.IsSpecial() && ship.IsYours())
-			Camera::WhiteShake(force);
+		// Couldn't find a way to make it only apply from the flagship.
+		// A little offset to prevent the calculation from giving infinity.
+		Camera::WhiteShake(force, position + Point(1.,1.));
 	}
 
 	// Expend any ammo that this weapon uses. Do this as the very last thing, in

@@ -24,9 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace {
-	Point position, sPosition, lPosition, velocity, offset, vOffset = Point();
-	Point oldCenter;
-	Point focusPoint;
+	static Point position, sPosition, lPosition, velocity, offset, vOffset, oldCenter = Point();
 	static double whiteShake = 0.;
 	static const double SMOOTHNESS = 0.016;
 }
@@ -35,8 +33,7 @@ namespace {
 
 void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked, double lockBlend)
 {
-	// Camera accelerates quickly when moving in the same direction as the flagship,
-	// and continues to speed past for a bit, which feels dynamic.
+	// Camera accelerates quickly when moving in the same direction as the centerVelocity
 	Point facing = centerVelocity-velocity;
 	velocity = velocity.Lerp(centerVelocity*(1 + max(0., facing.Unit().Dot(velocity.Unit()))), SMOOTHNESS);
 
@@ -48,10 +45,10 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 	// The distance from the camera's position is capped already
 	position = sPosition.Lerp(focus, 0.4);
 
-	// Locked Camera
+	// Interpolates the camera's position to the locked position by lockBlend
 	position = position.Lerp(lPosition, lockBlend);
 
-	// White noise camera shake
+	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
 		position += Point(cbrt(Random::Real()-0.5), cbrt(Random::Real()-0.5))*min(whiteShake*(Screen::Zoom()/16), Screen::Height()/4.);
 	whiteShake *= 0.925;
@@ -105,14 +102,6 @@ void Camera::SetPosition(Point Position)
 void Camera::SetVelocity(Point Velocity)
 {
 	velocity = Velocity;
-}
-
-
-
-void Camera::SetOffset(Point Offset, Point center)
-{
-	position = center + Offset;
-	offset = Offset;
 }
 
 
