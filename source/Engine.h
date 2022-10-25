@@ -204,6 +204,16 @@ private:
 	Point highlightUnit;
 	float highlightFrame = 0.f;
 
+	// Variables for camera states
+	bool lockedCamera = false;
+	double blendLockedCamera = 0.;
+	Point focusedTarget = Point();
+	double zoomMod = 0.;
+	double oldZoom = 0.;
+	double oldMod = 0.;
+	// First half of a hperjump
+	bool firstHalf = false;
+
 	int step = 0;
 
 	std::list<ShipEvent> eventQueue;

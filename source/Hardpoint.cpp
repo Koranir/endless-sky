@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Hardpoint.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "Effect.h"
 #include "Outfit.h"
 #include "pi.h"
@@ -368,7 +369,11 @@ void Hardpoint::Fire(Ship &ship, const Point &start, const Angle &aim)
 	// Apply any "kick" from firing this weapon.
 	double force = outfit->FiringForce();
 	if(force)
+	{
 		ship.ApplyForce(aim.Unit() * -force);
+		if (ship.IsSpecial() && ship.IsYours())
+			Camera::WhiteShake(force);
+	}
 
 	// Expend any ammo that this weapon uses. Do this as the very last thing, in
 	// case the outfit is its own ammunition.

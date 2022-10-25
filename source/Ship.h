@@ -262,6 +262,8 @@ public:
 	bool IsReadyToJump(bool waitingIsReady = false) const;
 	// Get this ship's custom swizzle.
 	int CustomSwizzle() const;
+	// Get the percentage of Hyperspace Acceleration (from 0-1)
+	double HyperCount() const;
 
 	// Check if the ship is thrusting. If so, the engine sound should be played.
 	bool IsThrusting() const;
