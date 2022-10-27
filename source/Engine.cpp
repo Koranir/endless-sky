@@ -1513,8 +1513,10 @@ void Engine::CalculateStep()
 			blendLockedCamera = 0. + flagship->HyperCount()/10.;
 		}
 
+		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
 		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.5 * (3. - flagship->Facing().Unit().Dot(flagship->Velocity().Unit())) * pow((1. - flagship->Velocity().Length()/flagship->MaxVelocity()), 4));
+			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.5 *
+								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::AFTERBURNER))
 			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
 

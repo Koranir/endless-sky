@@ -50,7 +50,7 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 
 	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
-		position += Point(cbrt(Random::Real()-0.5), cbrt(Random::Real()-0.5))*min(whiteShake*(Screen::Zoom()/16), Screen::Height()/4.);
+		position += (Screen::Zoom()/100) * Point(cbrt(Random::Real()-0.5), cbrt(Random::Real()-0.5))*min(whiteShake*(Screen::Zoom()/16), Screen::Height()/4.);
 	whiteShake *= 0.925;
 
 	// TODO: Sinusoidal Camera shake w/ variable period, amplitude, resolution
@@ -128,7 +128,7 @@ void Camera::Reset(Point center, Point centerVelocity)
 
 void Camera::WhiteShake(double intensity)
 {
-	whiteShake += intensity*0.001;
+	whiteShake += intensity*0.0008;
 }
 
 
