@@ -44,6 +44,8 @@ public:
 
 	static void Reset(Point center, Point centerVelocity);
 
+	static void SetRadius(double Radius);
+
 	static void WhiteShake(double intensity);
 	static void WhiteShake(double intensity, Point source);
 };

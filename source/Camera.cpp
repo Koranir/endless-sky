@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Camera.h"
 #include "Preferences.h"
+#include "PlayerInfo.h"
 #include "Random.h"
 #include "Screen.h"
 
@@ -26,6 +27,7 @@ using namespace std;
 namespace {
 	static Point position, sPosition, lPosition, velocity, offset, vOffset, oldCenter = Point();
 	static double whiteShake = 0.;
+	static double radius = 0.;
 	static const double SMOOTHNESS = 0.012;
 }
 
@@ -50,7 +52,7 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 
 	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
-		position += (Screen::Zoom()/5) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), Screen::Height());
+		position += (Screen::Zoom()*0.0025) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), static_cast<double>(Screen::Height()));
 	whiteShake *= 0.925;
 
 	// TODO: Sinusoidal Camera shake w/ variable period, amplitude, resolution
@@ -126,6 +128,13 @@ void Camera::Reset(Point center, Point centerVelocity)
 
 
 
+void Camera::SetRadius(double Radius)
+{
+	radius = Radius;
+}
+
+
+
 void Camera::WhiteShake(double intensity)
 {
 	whiteShake += intensity*0.0006;
@@ -135,5 +144,5 @@ void Camera::WhiteShake(double intensity)
 
 void Camera::WhiteShake(double intensity, Point source)
 {
-	whiteShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), 5.));
+	whiteShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
 }
