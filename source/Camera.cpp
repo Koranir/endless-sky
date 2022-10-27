@@ -106,14 +106,6 @@ void Camera::SetVelocity(Point Velocity)
 
 
 
-void Camera::SetOffset(Point Offset)
-{
-	position = oldCenter + Offset;
-	offset = Offset;
-}
-
-
-
 void Camera::SetLockedPosition(Point Position)
 {
 	lPosition = Position;
@@ -143,5 +135,5 @@ void Camera::WhiteShake(double intensity)
 
 void Camera::WhiteShake(double intensity, Point source)
 {
-	whiteShake += (intensity*5)/((oldCenter-source).LengthSquared());
+	whiteShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), 5.));
 }

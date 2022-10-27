@@ -1134,13 +1134,13 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift)
 	else
 		isRadarClick = false;
 
-	clickPoint = isRadarClick ? from - radarCenter : from;
+	clickPoint = isRadarClick ? from - radarCenter : from + Camera::Offset()*zoom;
 	if(isRadarClick)
 		clickBox = Rectangle::WithCorners(
-			(from - radarCenter) / RADAR_SCALE + center,
-			(to - radarCenter) / RADAR_SCALE + center);
+			(from - radarCenter) / RADAR_SCALE + Camera::Position(),
+			(to - radarCenter) / RADAR_SCALE + Camera::Position());
 	else
-		clickBox = Rectangle::WithCorners(from / zoom + center, to / zoom + center);
+		clickBox = Rectangle::WithCorners(from / zoom + Camera::Position(), to / zoom + Camera::Position());
 }
 
 
@@ -1156,9 +1156,9 @@ void Engine::RClick(const Point &point)
 	Point radarCenter = hud->GetPoint("radar");
 	double radarRadius = hud->GetValue("radar radius");
 	if(Preferences::Has("Clickable radar display") && (point - radarCenter).Length() <= radarRadius)
-		clickPoint = (point - radarCenter) / RADAR_SCALE;
+		clickPoint = (point - radarCenter) / RADAR_SCALE + Camera::Offset()*zoom;
 	else
-		clickPoint = point / zoom;
+		clickPoint = point / zoom + Camera::Offset()*zoom;
 }
 
 
