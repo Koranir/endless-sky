@@ -1390,6 +1390,7 @@ void Engine::CalculateStep()
 	// Keep track of the flagship to see if it jumps or enters a wormhole this turn.
 	const Ship *flagship = player.Flagship();
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
+	bool wasHyperspaced = (flagship && flagship->IsHyperspacing());
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
 		MoveShip(it);
@@ -1401,6 +1402,11 @@ void Engine::CalculateStep()
 		lockedCamera = true;
 		firstHalf = true;
 
+		if (Preferences::Has("Show hyperspace flash"))
+			{
+				flash = 0.1;
+			}
+
 		bool isJumping = flagship->IsUsingJumpDrive();
 		const map<const Sound *, int> &jumpSounds = isJumping
 			? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
@@ -1409,6 +1415,12 @@ void Engine::CalculateStep()
 		else
 			for(const auto &sound : jumpSounds)
 				Audio::Play(sound.first);
+		if (!isJumping)
+		{
+			Camera::SetVelocity(centerVelocity);
+			Camera::SetPosition(Camera::Position());
+			Camera::WhiteShake(1000.);
+		}
 	}
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
@@ -1431,6 +1443,7 @@ void Engine::CalculateStep()
 
 		Camera::SetLockedPosition(flagship->GetTargetStellar()?flagship->GetTargetStellar()->Position():Point());
 		firstHalf = false;
+		Camera::WhiteShake(2500.);
 
 		center = flagship->Position();
 		blendLockedCamera = false;
@@ -1490,10 +1503,9 @@ void Engine::CalculateStep()
 		if(!flagship->IsHyperspacing())
 		{
 			//At the end of a hyperjump
-			if (blendLockedCamera == 1.)
+			if (wasHyperspaced)
 			{
 				Camera::SetPosition(center);
-				focusedTarget = center;
 				Camera::SetVelocity(centerVelocity);
 				if (Preferences::Has("Show hyperspace flash"))
 				{
