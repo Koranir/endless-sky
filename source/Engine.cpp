@@ -1198,6 +1198,8 @@ void Engine::EnterSystem()
 	if(!flagship)
 		return;
 
+	Camera::SetRadius(flagship->Radius());
+
 	doEnter = true;
 	player.IncrementDate();
 	const Date &today = player.GetDate();
