@@ -26,7 +26,7 @@ using namespace std;
 namespace {
 	static Point position, sPosition, lPosition, velocity, offset, vOffset, oldCenter = Point();
 	static double whiteShake = 0.;
-	static const double SMOOTHNESS = 0.016;
+	static const double SMOOTHNESS = 0.012;
 }
 
 
@@ -128,7 +128,7 @@ void Camera::Reset(Point center, Point centerVelocity)
 
 void Camera::WhiteShake(double intensity)
 {
-	whiteShake += intensity*0.0008;
+	whiteShake += intensity*0.0006;
 }
 
 
