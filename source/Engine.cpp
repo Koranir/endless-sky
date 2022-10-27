@@ -1396,7 +1396,7 @@ void Engine::CalculateStep()
 	// If the flagship just began jumping, play the appropriate sound.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
-		Camera::SetLockedPosition(center + Camera::Offset());
+		Camera::SetLockedPosition(Camera::Position());
 		blendLockedCamera = 0.;
 		lockedCamera = true;
 		firstHalf = true;
@@ -1467,22 +1467,24 @@ void Engine::CalculateStep()
 			Camera::SetPosition(object->Position());
 		}
 
-
-		if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+		if (!flagship->IsHyperspacing())
 		{
-			const Ship &target = *flagship->GetTargetShip();
-			focusedTarget = target.Position() - center;
+			if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+			{
+				const Ship &target = *flagship->GetTargetShip();
+				focusedTarget = target.Position() - center;
+			}
+			else if(flagship->GetTargetAsteroid() != nullptr)
+			{
+				focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+			}
+			else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
+			{
+				focusedTarget = flagship->GetTargetStellar()->Position() - center;
+			}
+			if (focusedTarget.Length() > Screen::Height()/(2*zoom))
+				focusedTarget *= ((Screen::Height()/(2*zoom)) / focusedTarget.Length());
 		}
-		else if(flagship->GetTargetAsteroid() != nullptr)
-		{
-			focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
-		}
-		else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
-		{
-			focusedTarget = flagship->GetTargetStellar()->Position() - center;
-		}
-		if (focusedTarget.Length() > Screen::Height()/(2*zoom))
-			focusedTarget *= ((Screen::Height()/(2*zoom)) / focusedTarget.Length());
 		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 
 		if(!flagship->IsHyperspacing())
@@ -1508,9 +1510,9 @@ void Engine::CalculateStep()
 
 		if (firstHalf)
 		{
-			zoomMod = 1.8 * (pow(flagship->HyperCount(), 4));
+			zoomMod = 1.8 * (pow(flagship->HyperCount(), 3));
 			Camera::WhiteShake(flagship->HyperCount()*100.);
-			blendLockedCamera = 0. + flagship->HyperCount()/10.;
+			blendLockedCamera = 0. + flagship->HyperCount()*flagship->HyperCount()/2.;
 		}
 
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
