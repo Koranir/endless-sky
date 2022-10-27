@@ -50,7 +50,7 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 
 	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
-		position += (Screen::Zoom()/5) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), Screen::Height());
+		position += (Screen::Zoom()/25) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), static_cast<double>(Screen::Height()));
 	whiteShake *= 0.925;
 
 	// TODO: Sinusoidal Camera shake w/ variable period, amplitude, resolution

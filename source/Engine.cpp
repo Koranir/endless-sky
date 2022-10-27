@@ -1513,7 +1513,7 @@ void Engine::CalculateStep()
 		{
 			zoomMod = 1.8 * hyperCount;
 			Camera::WhiteShake(hyperCount*100.);
-			blendLockedCamera = 0. + hyperCount*hyperCount/1.5.;
+			blendLockedCamera = 0. + hyperCount*hyperCount/1.5;
 		}
 
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
