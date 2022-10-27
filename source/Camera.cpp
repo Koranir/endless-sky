@@ -34,8 +34,8 @@ namespace {
 void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked, double lockBlend)
 {
 	// Camera accelerates quickly when moving in the same direction as the centerVelocity
-	Point facing = centerVelocity-velocity;
-	velocity = velocity.Lerp(centerVelocity*(1 + max(0., facing.Unit().Dot(velocity.Unit()))), SMOOTHNESS);
+	Point facing = (centerVelocity-velocity).Unit();
+	velocity = velocity.Lerp(centerVelocity*(1 + max(0., facing.Dot(velocity.Unit()))), SMOOTHNESS);
 
 	// The camera is moved in this step
 	sPosition += (velocity)*100/Screen::Zoom();
@@ -50,7 +50,7 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 
 	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
-		position += (Screen::Zoom()/100) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/16), Screen::Height()/4.);
+		position += (Screen::Zoom()/5) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), Screen::Height());
 	whiteShake *= 0.925;
 
 	// TODO: Sinusoidal Camera shake w/ variable period, amplitude, resolution

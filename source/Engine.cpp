@@ -1391,22 +1391,13 @@ void Engine::CalculateStep()
 	const Ship *flagship = player.Flagship();
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
 	bool wasHyperspaced = (flagship && flagship->IsHyperspacing());
+
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
 		MoveShip(it);
 	// If the flagship just began jumping, play the appropriate sound.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{
-		Camera::SetLockedPosition(Camera::Position());
-		blendLockedCamera = 0.;
-		lockedCamera = true;
-		firstHalf = true;
-
-		if (Preferences::Has("Show hyperspace flash"))
-			{
-				flash = 0.1;
-			}
-
 		bool isJumping = flagship->IsUsingJumpDrive();
 		const map<const Sound *, int> &jumpSounds = isJumping
 			? flagship->Attributes().JumpSounds() : flagship->Attributes().HyperSounds();
@@ -1415,11 +1406,20 @@ void Engine::CalculateStep()
 		else
 			for(const auto &sound : jumpSounds)
 				Audio::Play(sound.first);
+
+		Camera::SetLockedPosition(Camera::Position());
+		blendLockedCamera = 0.;
+		lockedCamera = true;
+		firstHalf = true;
 		if (!isJumping)
 		{
 			Camera::SetVelocity(centerVelocity);
 			Camera::SetPosition(Camera::Position());
 			Camera::WhiteShake(1000.);
+		}
+			if (Preferences::Has("Show hyperspace flash"))
+		{
+			flash = 0.1;
 		}
 	}
 	// Check if the flagship just entered a new system.
@@ -1441,7 +1441,7 @@ void Engine::CalculateStep()
 		player.SetSystem(*playerSystem);
 		EnterSystem();
 
-		Camera::SetLockedPosition(flagship->GetTargetStellar()?flagship->GetTargetStellar()->Position():Point());
+//		Camera::SetLockedPosition(flagship->GetTargetStellar()?flagship->GetTargetStellar()->Position():Point());
 		firstHalf = false;
 		Camera::WhiteShake(2500.);
 
@@ -1449,28 +1449,19 @@ void Engine::CalculateStep()
 		blendLockedCamera = false;
 		bool isJumping = flagship->IsUsingJumpDrive();
 		if (wasHyperspacing && !isJumping)
-		{
-			Camera::SetLockedPosition(center);
 			blendLockedCamera = 1.;
-			lockedCamera = true;
-		}
 		else if (isJumping)
 		{
 			Camera::SetPosition(center);
-			Camera::SetLockedPosition(center);
-			focusedTarget = Point();
 			Camera::SetVelocity(centerVelocity);
 		}
-		else
-		{
+		else if (obj)
 			Camera::SetPosition(obj->Position());
-			Camera::SetLockedPosition(obj->Position());
-			focusedTarget = Point();
-		}
+		Camera::SetLockedPosition(obj ? center : obj->Position());
 	}
 	Prune(ships);
 
-	Point oldfocusedTarget = focusedTarget;
+	const Point oldfocusedTarget = focusedTarget;
 	focusedTarget = Point();
 	if(flagship && Preferences::Has("Enable dynamic camera"))
 	{
@@ -1497,11 +1488,7 @@ void Engine::CalculateStep()
 			}
 			if (focusedTarget.Length() > Screen::Height()/(2*zoom))
 				focusedTarget *= ((Screen::Height()/(2*zoom)) / focusedTarget.Length());
-		}
-		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 
-		if(!flagship->IsHyperspacing())
-		{
 			//At the end of a hyperjump
 			if (wasHyperspaced)
 			{
@@ -1519,30 +1506,31 @@ void Engine::CalculateStep()
 		{
 			Camera::SetLockedPosition(center);
 		}
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
 
+		const double hyperCount = flagship->HyperCount();
 		if (firstHalf)
 		{
-			zoomMod = 1.8 * (pow(flagship->HyperCount(), 3));
-			Camera::WhiteShake(flagship->HyperCount()*100.);
-			blendLockedCamera = 0. + flagship->HyperCount()*flagship->HyperCount()/2.;
+			zoomMod = 1.8 * hyperCount;
+			Camera::WhiteShake(hyperCount*100.);
+			blendLockedCamera = 0. + hyperCount*hyperCount/1.5.;
 		}
 
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
 		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.5 *
+			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
 								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::BACK))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.5 *
+			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
 								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::AFTERBURNER))
 			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
 
 		if (flagship->Zoom() < 1.)
 		{
-			bool inc = (flagship->Zoom() > oldZoom);
+			const bool inc = (flagship->Zoom() > oldZoom);
 			Camera::SetLockedPosition(inc && flagship->GetTargetStellar() ? flagship->GetTargetStellar()->Position() : center);
 			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.016));
-
 			focusedTarget = focusedTarget.Lerp(Point(), inc ? 1 : 0.016);
 			zoomMod = 2 * (1. - flagship->Zoom());
 			Camera::SetVelocity(Point());
