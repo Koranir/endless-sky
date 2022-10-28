@@ -1417,7 +1417,7 @@ void Engine::CalculateStep()
 		{
 			Camera::SetVelocity(centerVelocity);
 			Camera::SetPosition(Camera::Position());
-			Camera::WhiteShake(1000.);
+			Camera::WhiteShake(2000.);
 		}
 			if (Preferences::Has("Show hyperspace flash"))
 		{
@@ -1443,7 +1443,6 @@ void Engine::CalculateStep()
 		player.SetSystem(*playerSystem);
 		EnterSystem();
 
-//		Camera::SetLockedPosition(flagship->GetTargetStellar()?flagship->GetTargetStellar()->Position():Point());
 		firstHalf = false;
 		Camera::WhiteShake(2500.);
 
