@@ -1514,19 +1514,8 @@ void Engine::CalculateStep()
 		if (firstHalf)
 		{
 			zoomMod = 1.8 * hyperCount;
-			Camera::WhiteShake(hyperCount*100.);
-			blendLockedCamera = 0. + hyperCount*hyperCount/1.5;
+			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/2;
 		}
-
-		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
-		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
-								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
-		if (flagship->Commands().Has(Command::BACK))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
-								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
-		if (flagship->Commands().Has(Command::AFTERBURNER))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
 
 		if (flagship->Zoom() < 1.)
 		{
@@ -1552,6 +1541,24 @@ void Engine::CalculateStep()
 		Camera::Reset(center, centerVelocity);
 		focusedTarget = Point();
 		lockedCamera = false;
+	}
+
+	if (Preferences::Has("Enable screen shake"))
+	{
+		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
+		if (flagship->Commands().Has(Command::FORWARD))
+			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
+								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
+		if (flagship->Commands().Has(Command::BACK))
+			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
+								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
+		if (flagship->Commands().Has(Command::AFTERBURNER))
+			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
+
+		if (firstHalf)
+		{
+			Camera::WhiteShake(flagship->HyperCount()*100.);
+		}
 	}
 
 	//Update the Camera
