@@ -1513,15 +1513,15 @@ void Engine::CalculateStep()
 		if (firstHalf)
 		{
 			zoomMod = 1.8 * hyperCount;
-			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/2;
+			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/10;
 		}
 
 		if (flagship->Zoom() < 1.)
 		{
 			const bool inc = (flagship->Zoom() > oldZoom);
-			Camera::SetLockedPosition(inc && flagship->GetTargetStellar() ? flagship->GetTargetStellar()->Position() : center);
-			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.016));
-			focusedTarget = focusedTarget.Lerp(Point(), inc ? 1 : 0.016);
+			Camera::SetLockedPosition((inc && flagship->GetTargetStellar()) ? flagship->GetTargetStellar()->Position() : center);
+			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.008));
+			focusedTarget = focusedTarget.Lerp(inc ? Point() : focusedTarget, inc ? 1 : 0.008);
 			zoomMod = 2 * (1. - flagship->Zoom());
 			Camera::SetVelocity(Point());
 			blendLockedCamera = 1.-flagship->Zoom();
@@ -1539,7 +1539,8 @@ void Engine::CalculateStep()
 	{
 		Camera::Reset(center, centerVelocity);
 		focusedTarget = Point();
-		lockedCamera = false;
+		blendLockedCamera = 1.;
+		lockedCamera = true;
 	}
 
 	if (Preferences::Has("Enable screen shake"))
