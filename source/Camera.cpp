@@ -26,7 +26,7 @@ using namespace std;
 
 namespace {
 	static Point position, sPosition, lPosition, velocity, offset, vOffset, oldCenter = Point();
-	static double whiteShake = 0.;
+	static double screenshake = 0.;
 	static double radius = 0.;
 	static const double SMOOTHNESS = 0.012;
 }
@@ -135,14 +135,14 @@ void Camera::SetRadius(double Radius)
 
 
 
-void Camera::WhiteShake(double intensity)
+void Camera::ScreenShake(double intensity)
 {
-	whiteShake += intensity*0.0006;
+	screenshake += intensity*0.0006;
 }
 
 
 
-void Camera::WhiteShake(double intensity, Point source)
+void Camera::ScreenShake(double intensity, Point source)
 {
-	whiteShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
+	screenshake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
 }

@@ -1417,7 +1417,7 @@ void Engine::CalculateStep()
 		{
 			Camera::SetVelocity(centerVelocity);
 			Camera::SetPosition(Camera::Position());
-			Camera::WhiteShake(2000.);
+			Camera::ScreenShake(2000.);
 		}
 			if (Preferences::Has("Show hyperspace flash"))
 		{
@@ -1444,7 +1444,7 @@ void Engine::CalculateStep()
 		EnterSystem();
 
 		firstHalf = false;
-		Camera::WhiteShake(2500.);
+		Camera::ScreenShake(2500.);
 
 		center = flagship->Position();
 		blendLockedCamera = false;
@@ -1547,17 +1547,17 @@ void Engine::CalculateStep()
 	{
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
 		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
 								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::BACK))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
 								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::AFTERBURNER))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
+			Camera::ScreenShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
 
 		if (firstHalf)
 		{
-			Camera::WhiteShake(flagship->HyperCount()*100.);
+			Camera::ScreenShake(flagship->HyperCount()*100.);
 		}
 	}
 
@@ -2232,7 +2232,7 @@ void Engine::DoCollisions(Projectile &projectile)
 		{
 			// Even friendly ships can be hit by the blast, unless it is a
 			// "safe" weapon.
-			Camera::WhiteShake(projectile.GetWeapon().HitForce(), hitPos);
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			for(Body *body : shipCollisions.Circle(hitPos, blastRadius))
 			{
 				Ship *ship = reinterpret_cast<Ship *>(body);
@@ -2249,7 +2249,7 @@ void Engine::DoCollisions(Projectile &projectile)
 		}
 		else if(hit)
 		{
-			Camera::WhiteShake(projectile.GetWeapon().HitForce(), hitPos);
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			int eventType = hit->TakeDamage(visuals, damage.CalculateDamage(*hit), gov);
 			if(eventType)
 				eventQueue.emplace_back(gov, hit, eventType);
