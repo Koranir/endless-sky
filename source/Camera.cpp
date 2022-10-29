@@ -19,14 +19,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Random.h"
 #include "Screen.h"
 
-#include <algorithm>
 #include <cmath>
 
 using namespace std;
 
 namespace {
 	static Point position, sPosition, lPosition, velocity, offset, vOffset, oldCenter = Point();
-	static double screenshake = 0.;
+	static double screenShake = 0.;
 	static double radius = 0.;
 	static const double SMOOTHNESS = 0.012;
 }
@@ -137,12 +136,12 @@ void Camera::SetRadius(double Radius)
 
 void Camera::ScreenShake(double intensity)
 {
-	screenshake += intensity*0.0006;
+	screenShake += intensity*0.0006;
 }
 
 
 
 void Camera::ScreenShake(double intensity, Point source)
 {
-	screenshake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
+	screenShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
 }
