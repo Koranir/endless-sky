@@ -56,6 +56,8 @@ void Preferences::Load()
 {
 	// These settings should be on by default. There is no need to specify
 	// values for settings that are off by default.
+	settings["Enable dynamic camera"] = true;
+	settings["Enable screen shake"] = true;
 	settings["Automatic aiming"] = true;
 	settings["Render motion blur"] = true;
 	settings[FRUGAL_ESCORTS] = true;

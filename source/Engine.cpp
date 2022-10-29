@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Engine.h"
 
 #include "Audio.h"
+#include "Camera.h"
 #include "CategoryTypes.h"
 #include "CoreStartData.h"
 #include "DamageDealt.h"
@@ -225,8 +226,8 @@ Engine::Engine(PlayerInfo &player)
 
 	// Now we know the player's current position. Draw the planets.
 	draw[calcTickTock].Clear(step, zoom);
-	draw[calcTickTock].SetCenter(center);
-	radar[calcTickTock].SetCenter(center);
+	draw[calcTickTock].SetCenter(center + Camera::Offset());
+	radar[calcTickTock].SetCenter(center + Camera::Offset());
 	const Ship *flagship = player.Flagship();
 	for(const StellarObject &object : player.GetSystem()->Objects())
 		if(object.HasSprite())
@@ -348,6 +349,7 @@ void Engine::Place()
 	// that all special ships have been repositioned.
 	ships.splice(ships.end(), newShips);
 
+	Camera::SetLockedPosition(player.GetStellarObject()->Position());
 	player.SetPlanet(nullptr);
 }
 
@@ -506,7 +508,7 @@ void Engine::Step(bool isActive)
 	testContext = nullptr;
 
 	wasActive = isActive;
-	Audio::Update(center);
+	Audio::Update(center + Camera::Offset());
 
 	// Update the zoom value now that the calculation thread is paused.
 	if(nextZoom)
@@ -533,6 +535,11 @@ void Engine::Step(bool isActive)
 			else if(zoom > zoomTarget)
 				nextZoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 		}
+
+		double modZoom = max(Preferences::ViewZoom() + zoomMod, 0.2);
+		if (zoomMod != oldMod)
+				nextZoom = modZoom;
+		oldMod = zoomMod;
 	}
 
 	// Draw a highlight to distinguish the flagship from other ships.
@@ -629,7 +636,7 @@ void Engine::Step(bool isActive)
 			if(isEnemy || it->IsYours() || it->GetPersonality().IsEscort())
 			{
 				double width = min(it->Width(), it->Height());
-				statuses.emplace_back(it->Position() - center, it->Shields(), it->Hull(),
+				statuses.emplace_back(it->Position() - center - Camera::Offset(), it->Shields(), it->Hull(),
 					min(it->Hull(), it->DisabledHull()), max(20., width * .5), isEnemy);
 			}
 		}
@@ -643,7 +650,7 @@ void Engine::Step(bool isActive)
 			if(!object.HasSprite() || !object.HasValidPlanet() || !object.GetPlanet()->IsAccessible(flagship.get()))
 				continue;
 
-			Point pos = object.Position() - center;
+			Point pos = object.Position() - center - Camera::Offset();
 			if(pos.Length() - object.Radius() < 600. / zoom)
 				labels.emplace_back(pos, object, currentSystem, zoom);
 		}
@@ -746,7 +753,7 @@ void Engine::Step(bool isActive)
 			targetAsteroid->GetFrame(step));
 		info.SetString("target name", Format::Capitalize(targetAsteroid->Name()) + " Asteroid");
 
-		targetVector = targetAsteroid->Position() - center;
+		targetVector = targetAsteroid->Position() - center - Camera::Offset();
 
 		if(flagship->Attributes().Get("tactical scan power"))
 		{
@@ -817,7 +824,7 @@ void Engine::Step(bool isActive)
 		&& (flagship->CargoScanFraction() || flagship->OutfitScanFraction()))
 	{
 		double width = max(target->Width(), target->Height());
-		Point pos = target->Position() - center;
+		Point pos = target->Position() - center - Camera::Offset();
 		statuses.emplace_back(pos, flagship->OutfitScanFraction(), flagship->CargoScanFraction(),
 			0, 10. + max(20., width * .5), 2, Angle(pos).Degrees() + 180.);
 	}
@@ -917,7 +924,7 @@ list<ShipEvent> &Engine::Events()
 // Draw a frame.
 void Engine::Draw() const
 {
-	GameData::Background().Draw(center, centerVelocity, zoom);
+	GameData::Background().Draw(center + Camera::Offset(), centerVelocity, zoom);
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
 
@@ -956,10 +963,10 @@ void Engine::Draw() const
 	{
 		Point size(highlightSprite->Width(), highlightSprite->Height());
 		const Color &color = *colors.Get("flagship highlight");
-		// The flagship is always in the dead center of the screen.
-		OutlineShader::Draw(highlightSprite, Point(), size, color, highlightUnit, highlightFrame);
+		OutlineShader::Draw(highlightSprite, -Camera::Offset()*zoom, size, color, highlightUnit, highlightFrame);
 	}
 
+	// Draw hyperspace flash
 	if(flash)
 		FillShader::Fill(Point(), Point(Screen::Width(), Screen::Height()), Color(flash, flash));
 
@@ -1006,7 +1013,7 @@ void Engine::Draw() const
 		PointerShader::Bind();
 		for(int i = 0; i < target.count; ++i)
 		{
-			PointerShader::Add(target.center * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
+			PointerShader::Add((target.center - Camera::Offset()) * zoom, a.Unit(), 12.f, 14.f, -target.radius * zoom,
 				Radar::GetColor(target.type));
 			a += da;
 		}
@@ -1127,13 +1134,13 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift)
 	else
 		isRadarClick = false;
 
-	clickPoint = isRadarClick ? from - radarCenter : from;
+	clickPoint = isRadarClick ? from - radarCenter : from + Camera::Offset()*zoom;
 	if(isRadarClick)
 		clickBox = Rectangle::WithCorners(
-			(from - radarCenter) / RADAR_SCALE + center,
-			(to - radarCenter) / RADAR_SCALE + center);
+			(from - radarCenter) / RADAR_SCALE + Camera::Position(),
+			(to - radarCenter) / RADAR_SCALE + Camera::Position());
 	else
-		clickBox = Rectangle::WithCorners(from / zoom + center, to / zoom + center);
+		clickBox = Rectangle::WithCorners(from / zoom + Camera::Position(), to / zoom + Camera::Position());
 }
 
 
@@ -1149,9 +1156,9 @@ void Engine::RClick(const Point &point)
 	Point radarCenter = hud->GetPoint("radar");
 	double radarRadius = hud->GetValue("radar radius");
 	if(Preferences::Has("Clickable radar display") && (point - radarCenter).Length() <= radarRadius)
-		clickPoint = (point - radarCenter) / RADAR_SCALE;
+		clickPoint = (point - radarCenter) / RADAR_SCALE + Camera::Offset()*zoom;
 	else
-		clickPoint = point / zoom;
+		clickPoint = point / zoom + Camera::Offset()*zoom;
 }
 
 
@@ -1190,6 +1197,8 @@ void Engine::EnterSystem()
 	Ship *flagship = player.Flagship();
 	if(!flagship)
 		return;
+
+	Camera::SetRadius(flagship->Radius());
 
 	doEnter = true;
 	player.IncrementDate();
@@ -1383,6 +1392,8 @@ void Engine::CalculateStep()
 	// Keep track of the flagship to see if it jumps or enters a wormhole this turn.
 	const Ship *flagship = player.Flagship();
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
+	bool wasHyperspaced = (flagship && flagship->IsHyperspacing());
+
 	// Move all the ships.
 	for(const shared_ptr<Ship> &it : ships)
 		MoveShip(it);
@@ -1397,23 +1408,161 @@ void Engine::CalculateStep()
 		else
 			for(const auto &sound : jumpSounds)
 				Audio::Play(sound.first);
+
+		Camera::SetLockedPosition(Camera::Position());
+		blendLockedCamera = 0.;
+		lockedCamera = true;
+		firstHalf = true;
+		if (!isJumping)
+		{
+			Camera::SetVelocity(centerVelocity);
+			Camera::SetPosition(Camera::Position());
+			Camera::ScreenShake(2000.);
+		}
+			if (Preferences::Has("Show hyperspace flash"))
+		{
+			flash = 0.1;
+		}
 	}
 	// Check if the flagship just entered a new system.
 	if(flagship && playerSystem != flagship->GetSystem())
 	{
+		const StellarObject* obj;
 		// Wormhole travel: mark the wormhole "planet" as visited.
 		if(!wasHyperspacing)
 			for(const auto &it : playerSystem->Objects())
 				if(it.HasValidPlanet() && it.GetPlanet()->IsWormhole() &&
 						it.GetPlanet()->WormholeDestination(playerSystem) == flagship->GetSystem())
-					player.Visit(*it.GetPlanet());
+					{
+						player.Visit(*it.GetPlanet());
+						obj = &it;
+					}
 
 		doFlash = Preferences::Has("Show hyperspace flash");
 		playerSystem = flagship->GetSystem();
 		player.SetSystem(*playerSystem);
 		EnterSystem();
+
+		firstHalf = false;
+		Camera::ScreenShake(2500.);
+
+		center = flagship->Position();
+		blendLockedCamera = false;
+		bool isJumping = flagship->IsUsingJumpDrive();
+		if (wasHyperspacing && !isJumping)
+			blendLockedCamera = 1.;
+		else if (isJumping)
+		{
+			Camera::SetPosition(center);
+			Camera::SetVelocity(centerVelocity);
+		}
+		else if (obj)
+			Camera::SetPosition(obj->Position());
+		Camera::SetLockedPosition(obj ? center : obj->Position());
 	}
 	Prune(ships);
+
+	const Point oldfocusedTarget = focusedTarget;
+	focusedTarget = Point();
+	if(flagship && Preferences::Has("Enable dynamic camera"))
+	{
+		const StellarObject *object = player.GetStellarObject();
+		if(object)
+		{
+			Camera::SetPosition(object->Position());
+		}
+
+		if (!flagship->IsHyperspacing())
+		{
+			if((flagship->GetTargetShip() != nullptr) && (flagship->GetTargetShip()->GetSystem() == flagship->GetSystem()))
+			{
+				const Ship &target = *flagship->GetTargetShip();
+				focusedTarget = target.Position() - center;
+			}
+			else if(flagship->GetTargetAsteroid() != nullptr)
+			{
+				focusedTarget = flagship->GetTargetAsteroid()->Position() - center;
+			}
+			else if(flagship->Commands().Has(Command::LAND) && flagship->GetTargetStellar())
+			{
+				focusedTarget = flagship->GetTargetStellar()->Position() - center;
+			}
+			if (focusedTarget.Length() > Screen::Height()/(2*zoom))
+				focusedTarget *= ((Screen::Height()/(2*zoom)) / focusedTarget.Length());
+
+			//At the end of a hyperjump
+			if (wasHyperspaced)
+			{
+				Camera::SetPosition(center);
+				Camera::SetVelocity(centerVelocity);
+				if (Preferences::Has("Show hyperspace flash"))
+				{
+					flash = 0.2;
+				}
+			}
+			if(blendLockedCamera > 0.)
+				blendLockedCamera *= 0.984;
+		}
+		else if (!firstHalf)
+		{
+			Camera::SetLockedPosition(center);
+		}
+		focusedTarget = oldfocusedTarget.Lerp(focusedTarget, 0.1);
+
+		const double hyperCount = flagship->HyperCount();
+		if (firstHalf)
+		{
+			zoomMod = 1.8 * hyperCount;
+			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/10;
+		}
+
+		if (flagship->Zoom() < 1.)
+		{
+			const bool inc = (flagship->Zoom() > oldZoom);
+			Camera::SetLockedPosition((inc && flagship->GetTargetStellar()) ? flagship->GetTargetStellar()->Position() : center);
+			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.008));
+			focusedTarget = focusedTarget.Lerp(inc ? Point() : focusedTarget, inc ? 1 : 0.008);
+			zoomMod = 2 * (1. - flagship->Zoom());
+			Camera::SetVelocity(Point());
+			blendLockedCamera = 1.-flagship->Zoom();
+			lockedCamera = true;
+		}
+		else if (oldZoom < 1.)
+		{
+			lockedCamera = false;
+		}
+		oldZoom = flagship->Zoom();
+
+		zoomMod *= 0.8;
+	}
+	else
+	{
+		Camera::Reset(center, centerVelocity);
+		focusedTarget = Point();
+		blendLockedCamera = 1.;
+		lockedCamera = true;
+	}
+
+	if (Preferences::Has("Enable screen shake"))
+	{
+		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
+		if (flagship->Commands().Has(Command::FORWARD))
+			Camera::ScreenShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
+								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
+		if (flagship->Commands().Has(Command::BACK))
+			Camera::ScreenShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
+								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
+		if (flagship->Commands().Has(Command::AFTERBURNER))
+			Camera::ScreenShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
+
+		if (firstHalf)
+		{
+			Camera::ScreenShake(flagship->HyperCount()*100.);
+		}
+	}
+
+	//Update the Camera
+	Camera::Update(center, centerVelocity, focusedTarget + center, lockedCamera, blendLockedCamera);
 
 	// Move the asteroids. This must be done before collision detection. Minables
 	// may create visuals or flotsam.
@@ -1491,9 +1640,9 @@ void Engine::CalculateStep()
 		newCenter = flagship->Position();
 		newCenterVelocity = flagship->Velocity();
 	}
-	draw[calcTickTock].SetCenter(newCenter, newCenterVelocity);
-	batchDraw[calcTickTock].SetCenter(newCenter);
-	radar[calcTickTock].SetCenter(newCenter);
+	draw[calcTickTock].SetCenter(newCenter + Camera::Offset(), newCenterVelocity);
+	batchDraw[calcTickTock].SetCenter(newCenter + Camera::Offset());
+	radar[calcTickTock].SetCenter(newCenter + Camera::Offset());
 
 	// Populate the radar.
 	FillRadar();
@@ -1509,7 +1658,7 @@ void Engine::CalculateStep()
 				draw[calcTickTock].Add(object);
 		}
 	// Draw the asteroids and minables.
-	asteroids.Draw(draw[calcTickTock], newCenter, zoom);
+	asteroids.Draw(draw[calcTickTock], newCenter + Camera::Offset(), zoom);
 	// Draw the flotsam.
 	for(const shared_ptr<Flotsam> &it : flotsam)
 		draw[calcTickTock].Add(*it);
@@ -2078,11 +2227,12 @@ void Engine::DoCollisions(Projectile &projectile)
 		// radius. Otherwise, only one is damaged.
 		double blastRadius = projectile.GetWeapon().BlastRadius();
 		bool isSafe = projectile.GetWeapon().IsSafe();
+		Point hitPos = projectile.Position() + closestHit * projectile.Velocity();
 		if(blastRadius)
 		{
 			// Even friendly ships can be hit by the blast, unless it is a
 			// "safe" weapon.
-			Point hitPos = projectile.Position() + closestHit * projectile.Velocity();
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			for(Body *body : shipCollisions.Circle(hitPos, blastRadius))
 			{
 				Ship *ship = reinterpret_cast<Ship *>(body);
@@ -2099,6 +2249,7 @@ void Engine::DoCollisions(Projectile &projectile)
 		}
 		else if(hit)
 		{
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			int eventType = hit->TakeDamage(visuals, damage.CalculateDamage(*hit), gov);
 			if(eventType)
 				eventQueue.emplace_back(gov, hit, eventType);

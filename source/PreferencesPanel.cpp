@@ -446,6 +446,8 @@ void PreferencesPanel::DrawSettings()
 		"Show planet labels",
 		"Show mini-map",
 		"Always underline shortcuts",
+		"Enable dynamic camera",
+		"Enable screen shake",
 		"",
 		"AI",
 		"Automatic aiming",
