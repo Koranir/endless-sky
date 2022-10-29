@@ -51,10 +51,8 @@ void Camera::Update(Point center, Point centerVelocity, Point focus, bool locked
 
 	// Simple camera shake, enabled by a setting (on by default).
 	if (Preferences::Has("Enable screen shake"))
-		position += (Screen::Zoom()*0.0025) * Point(Random::Real()-0.5, Random::Real()-0.5)*min(whiteShake*(Screen::Zoom()/4), static_cast<double>(Screen::Height()));
-	whiteShake *= 0.925;
-
-	// TODO: Sinusoidal Camera shake w/ variable period, amplitude, resolution
+		position += Point(sin((Random::Real()-0.5)*3.14), sin((Random::Real()-0.5)*3.14))*min(screenShake/2., Screen::Height()/2.);
+	screenShake *= 0.925;
 
 	// Just calculates some dependant variables while the center variable is still available.
 	offset = position - center;
@@ -136,12 +134,12 @@ void Camera::SetRadius(double Radius)
 
 void Camera::ScreenShake(double intensity)
 {
-	screenShake += intensity*0.0006;
+	screenShake += intensity*0.005;
 }
 
 
 
 void Camera::ScreenShake(double intensity, Point source)
 {
-	screenShake += (intensity*5)/(max((oldCenter-source).LengthSquared(), radius*radius));
+	screenShake += sqrt(intensity*5)*max(0.1, Screen::Height()/2. - screenShake)/(max((oldCenter-source).LengthSquared(), 4*radius*radius));
 }

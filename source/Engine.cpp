@@ -1547,13 +1547,13 @@ void Engine::CalculateStep()
 	{
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
 		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::ScreenShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(sqrt(flagship->Attributes().Get("thrust")) *
 								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::BACK))
-			Camera::ScreenShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(sqrt(flagship->Attributes().Get("reverse thrust")) *
 								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::AFTERBURNER))
-			Camera::ScreenShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
+			Camera::ScreenShake(sqrt(flagship->Attributes().Get("afterburner thrust")));
 
 		if (firstHalf)
 		{
