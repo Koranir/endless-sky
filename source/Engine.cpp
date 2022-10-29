@@ -1417,7 +1417,7 @@ void Engine::CalculateStep()
 		{
 			Camera::SetVelocity(centerVelocity);
 			Camera::SetPosition(Camera::Position());
-			Camera::WhiteShake(2000.);
+			Camera::ScreenShake(2000.);
 		}
 			if (Preferences::Has("Show hyperspace flash"))
 		{
@@ -1444,7 +1444,7 @@ void Engine::CalculateStep()
 		EnterSystem();
 
 		firstHalf = false;
-		Camera::WhiteShake(2500.);
+		Camera::ScreenShake(2500.);
 
 		center = flagship->Position();
 		blendLockedCamera = false;
@@ -1513,15 +1513,15 @@ void Engine::CalculateStep()
 		if (firstHalf)
 		{
 			zoomMod = 1.8 * hyperCount;
-			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/2;
+			blendLockedCamera = 0. + hyperCount*hyperCount*hyperCount/10;
 		}
 
 		if (flagship->Zoom() < 1.)
 		{
 			const bool inc = (flagship->Zoom() > oldZoom);
-			Camera::SetLockedPosition(inc && flagship->GetTargetStellar() ? flagship->GetTargetStellar()->Position() : center);
-			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.016));
-			focusedTarget = focusedTarget.Lerp(Point(), inc ? 1 : 0.016);
+			Camera::SetLockedPosition((inc && flagship->GetTargetStellar()) ? flagship->GetTargetStellar()->Position() : center);
+			Camera::SetPosition(Camera::Position().Lerp(center, inc ? 1 : 0.008));
+			focusedTarget = focusedTarget.Lerp(inc ? Point() : focusedTarget, inc ? 1 : 0.008);
 			zoomMod = 2 * (1. - flagship->Zoom());
 			Camera::SetVelocity(Point());
 			blendLockedCamera = 1.-flagship->Zoom();
@@ -1539,24 +1539,25 @@ void Engine::CalculateStep()
 	{
 		Camera::Reset(center, centerVelocity);
 		focusedTarget = Point();
-		lockedCamera = false;
+		blendLockedCamera = 1.;
+		lockedCamera = true;
 	}
 
 	if (Preferences::Has("Enable screen shake"))
 	{
 		double dotFacing = flagship->Facing().Unit().Dot(flagship->Velocity().Unit());
 		if (flagship->Commands().Has(Command::FORWARD))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(pow(flagship->Attributes().Get("thrust"), 2/3.) * 0.4 *
 								(3. - dotFacing) * (1 - ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::BACK))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
+			Camera::ScreenShake(pow(flagship->Attributes().Get("reverse thrust"), 2/3.) * 0.4 *
 								(3. + dotFacing) * (1 + ( dotFacing * flagship->Velocity().Length()/flagship->MaxVelocity())));
 		if (flagship->Commands().Has(Command::AFTERBURNER))
-			Camera::WhiteShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
+			Camera::ScreenShake(pow(flagship->Attributes().Get("afterburner thrust"), 2/3.));
 
 		if (firstHalf)
 		{
-			Camera::WhiteShake(flagship->HyperCount()*100.);
+			Camera::ScreenShake(flagship->HyperCount()*100.);
 		}
 	}
 
@@ -2231,7 +2232,7 @@ void Engine::DoCollisions(Projectile &projectile)
 		{
 			// Even friendly ships can be hit by the blast, unless it is a
 			// "safe" weapon.
-			Camera::WhiteShake(projectile.GetWeapon().HitForce(), hitPos);
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			for(Body *body : shipCollisions.Circle(hitPos, blastRadius))
 			{
 				Ship *ship = reinterpret_cast<Ship *>(body);
@@ -2248,7 +2249,7 @@ void Engine::DoCollisions(Projectile &projectile)
 		}
 		else if(hit)
 		{
-			Camera::WhiteShake(projectile.GetWeapon().HitForce(), hitPos);
+			Camera::ScreenShake(projectile.GetWeapon().HitForce(), hitPos);
 			int eventType = hit->TakeDamage(visuals, damage.CalculateDamage(*hit), gov);
 			if(eventType)
 				eventQueue.emplace_back(gov, hit, eventType);

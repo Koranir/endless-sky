@@ -27,7 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // The Set...() functions just set their variables to those given.
 // SetPosition() assigns to two variables.
 // Reset() changes all the variables to those as if there was no dynamic camera i.e the offset becomes zero.
-// WhiteShake() is a very simple implementation of screenshake, it can be called with a source point or directly.
+// ScreenShake() is a very simple implementation of screenshake, it can be called with a source point or directly.
 class Camera {
 public:
 	static void Update(Point center, Point centerVelocity, Point focus, bool locked, double lockBlend);
@@ -46,8 +46,8 @@ public:
 
 	static void SetRadius(double Radius);
 
-	static void WhiteShake(double intensity);
-	static void WhiteShake(double intensity, Point source);
+	static void ScreenShake(double intensity);
+	static void ScreenShake(double intensity, Point source);
 };
 
 
