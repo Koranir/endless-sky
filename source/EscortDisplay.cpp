@@ -117,7 +117,7 @@ void EscortDisplay::Draw(const Rectangle &bounds) const
 		// Figure out what scale should be applied to the ship sprite.
 		float scale = min(ICON_SIZE / escort.sprite->Width(), ICON_SIZE / escort.sprite->Height());
 		Point size(escort.sprite->Width() * scale, escort.sprite->Height() * scale);
-		OutlineShader::Draw(escort.sprite, pos, size, color);
+		OutlineShader::Draw(escort.sprite, pos, size, 0.f, 1, color);
 		zones.push_back(pos);
 		stacks.push_back(escort.ships);
 		// Draw the number of ships in this stack.

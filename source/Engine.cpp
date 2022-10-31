@@ -951,13 +951,40 @@ void Engine::Draw() const
 			RingShader::Draw(pos, radius, 1.5f, it.disabled, color[6 + it.type], dashes, it.angle);
 	}
 
+	if(Preferences::Has("Damage highlights"))
+	{
+		for(const shared_ptr<Ship> &ship : ships)
+		{
+			if(ship->GetSystem() == player.GetSystem() && ship->HasSprite())
+			{
+				const Sprite *sprite = ship->GetSprite();
+				const Point unit = ship->Unit() * zoom;
+				const float frame = ship->GetFrame();
+				const Point size(sprite->Width(), sprite->Height());
+				const Point pos = zoom*(ship->Position()-(center-centerVelocity));
+				if ((ship->RecentShield()))
+				{
+					const float recS = ship->RecentShield();
+					OutlineShader::Draw(sprite, pos, size, recS * ship->Radius(), 4,
+										Color(.43f * recS, .55f * recS, .70f * recS, .75f * recS), unit, frame);
+				}
+				if ((ship->RecentHull()))
+				{
+					const float recH = ship->RecentHull();
+					OutlineShader::Draw(sprite, pos, size, recH * ship->Radius()/4.f, 4,
+										Color(.70f * recH, .62f * recH, .43f * recH, .75f * recH), unit, frame);
+				}
+			}
+		}
+	}
+
 	// Draw the flagship highlight, if any.
 	if(highlightSprite)
 	{
 		Point size(highlightSprite->Width(), highlightSprite->Height());
 		const Color &color = *colors.Get("flagship highlight");
 		// The flagship is always in the dead center of the screen.
-		OutlineShader::Draw(highlightSprite, Point(), size, color, highlightUnit, highlightFrame);
+		OutlineShader::Draw(highlightSprite, Point(), size, 0.f, 1, color, highlightUnit, highlightFrame);
 	}
 
 	if(flash)

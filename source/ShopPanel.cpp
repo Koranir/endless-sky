@@ -149,7 +149,7 @@ void ShopPanel::Draw()
 		{
 			static const Color selected(.8f, 1.f);
 			Point size(sprite->Width() * scale, sprite->Height() * scale);
-			OutlineShader::Draw(sprite, dragPoint, size, selected);
+			OutlineShader::Draw(sprite, dragPoint, size, 0.f, 1, selected);
 		}
 		else
 		{
@@ -242,7 +242,7 @@ void ShopPanel::DrawShipsSidebar()
 			if(Preferences::Has(SHIP_OUTLINES))
 			{
 				Point size(sprite->Width() * scale, sprite->Height() * scale);
-				OutlineShader::Draw(sprite, point, size, isSelected ? selected : unselected);
+				OutlineShader::Draw(sprite, point, size, 0.f, 1, isSelected ? selected : unselected);
 			}
 			else
 			{

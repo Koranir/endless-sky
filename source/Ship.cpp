@@ -2143,7 +2143,10 @@ void Ship::DoGeneration()
 			* (1. + attributes.Get("hull heat multiplier"))) / hullAvailable;
 		double hullRemaining = hullAvailable;
 		if(!hullDelay)
+		{
 			DoRepair(hull, hullRemaining, attributes.Get("hull"), energy, hullEnergy, fuel, hullFuel, heat, hullHeat);
+			recentHull *= 0.95;
+		}
 
 		const double shieldsAvailable = attributes.Get("shield generation")
 			* (1. + attributes.Get("shield generation multiplier"));
@@ -2155,8 +2158,14 @@ void Ship::DoGeneration()
 			* (1. + attributes.Get("shield heat multiplier"))) / shieldsAvailable;
 		double shieldsRemaining = shieldsAvailable;
 		if(!shieldDelay)
+		{
 			DoRepair(shields, shieldsRemaining, attributes.Get("shields"),
 				energy, shieldsEnergy, fuel, shieldsFuel, heat, shieldsHeat);
+			recentShield *= 0.8;
+		}
+
+		recentShield *= 0.984;
+		recentHull *= 0.992;
 
 		if(!bays.empty())
 		{
@@ -2204,6 +2213,11 @@ void Ship::DoGeneration()
 		// and hull repair have been skipped over.
 		shieldDelay = max(0, shieldDelay - 1);
 		hullDelay = max(0, hullDelay - 1);
+	}
+	else
+	{
+		recentHull *= 0.95;
+		recentShield *= 0.95;
 	}
 
 	// Handle ionization effects, etc.
@@ -3205,6 +3219,20 @@ double Ship::DisruptionLevel() const
 
 
 
+double Ship::RecentShield() const
+{
+	return recentShield;
+}
+
+
+
+double Ship::RecentHull() const
+{
+	return recentHull;
+}
+
+
+
 // Get the (absolute) amount of hull that needs to be damaged until the
 // ship becomes disabled. Returns 0 if the ships hull is already below the
 // disabled threshold.
@@ -3517,6 +3545,9 @@ int Ship::TakeDamage(vector<Visual> &visuals, const DamageDealt &damage, const G
 	energy -= damage.Energy();
 	heat += damage.Heat();
 	fuel -= damage.Fuel();
+
+	recentShield += damage.Shield()/attributes.Get("shields");
+	recentHull += damage.Hull()/attributes.Get("hull");
 
 	discharge += damage.Discharge();
 	corrosion += damage.Corrosion();

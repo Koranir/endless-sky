@@ -27,6 +27,8 @@ namespace {
 	Shader shader;
 	GLint scaleI;
 	GLint offI;
+	GLint influenceI;
+	GLint stepsMaxI;
 	GLint transformI;
 	GLint positionI;
 	GLint frameI;
@@ -78,6 +80,8 @@ void OutlineShader::Init()
 		"uniform float frameCount;\n"
 		"uniform vec4 color;\n"
 		"uniform vec2 off;\n"
+		"uniform float influence;\n"
+		"uniform int stepsMax;\n"
 		"const vec4 weight = vec4(.4, .4, .4, 1.);\n"
 
 		"in vec2 fragTexCoord;\n"
@@ -86,22 +90,25 @@ void OutlineShader::Init()
 
 		"float Sobel(float layer) {\n"
 		"  float sum = 0.f;\n"
-		"  for(int dy = -1; dy <= 1; ++dy)\n"
+		"  for(int step = 0; step < stepsMax; step++)\n"
 		"  {\n"
-		"    for(int dx = -1; dx <= 1; ++dx)\n"
+		"    for(int dy = -1; dy <= 1; ++dy)\n"
 		"    {\n"
-		"      vec2 center = fragTexCoord + .618034 * off * vec2(dx, dy);\n"
-		"      float nw = dot(texture(tex, vec3(center + vec2(-off.x, -off.y), layer)), weight);\n"
-		"      float ne = dot(texture(tex, vec3(center + vec2(off.x, -off.y), layer)), weight);\n"
-		"      float sw = dot(texture(tex, vec3(center + vec2(-off.x, off.y), layer)), weight);\n"
-		"      float se = dot(texture(tex, vec3(center + vec2(off.x, off.y), layer)), weight);\n"
-		"      float h = nw + sw - ne - se + 2.f * (\n"
-		"        dot(texture(tex, vec3(center + vec2(-off.x, 0.f), layer)), weight)\n"
-		"          - dot(texture(tex, vec3(center + vec2(off.x, 0.f), layer)), weight));\n"
-		"      float v = nw + ne - sw - se + 2.f * (\n"
-		"        dot(texture(tex, vec3(center + vec2(0.f, -off.y), layer)), weight)\n"
-		"          - dot(texture(tex, vec3(center + vec2(0.f, off.y), layer)), weight));\n"
-		"      sum += h * h + v * v;\n"
+		"      for(int dx = -1; dx <= 1; ++dx)\n"
+		"      {\n"
+		"        vec2 center = fragTexCoord + .618034 * off * (step * influence) * vec2(dx, dy);\n"
+		"        float nw = dot(texture(tex, vec3(center + vec2(-off.x, -off.y), layer)), weight);\n"
+		"        float ne = dot(texture(tex, vec3(center + vec2(off.x, -off.y), layer)), weight);\n"
+		"        float sw = dot(texture(tex, vec3(center + vec2(-off.x, off.y), layer)), weight);\n"
+		"        float se = dot(texture(tex, vec3(center + vec2(off.x, off.y), layer)), weight);\n"
+		"        float h = nw + sw - ne - se + 2.f * (\n"
+		"          dot(texture(tex, vec3(center + vec2(-off.x, 0.f), layer)), weight)\n"
+		"            - dot(texture(tex, vec3(center + vec2(off.x, 0.f), layer)), weight));\n"
+		"        float v = nw + ne - sw - se + 2.f * (\n"
+		"          dot(texture(tex, vec3(center + vec2(0.f, -off.y), layer)), weight)\n"
+		"            - dot(texture(tex, vec3(center + vec2(0.f, off.y), layer)), weight));\n"
+		"        sum += h * h + v * v;\n"
+		"      }\n"
 		"    }\n"
 		"  }\n"
 		"  return sum;\n"
@@ -118,6 +125,8 @@ void OutlineShader::Init()
 	shader = Shader(vertexCode, fragmentCode);
 	scaleI = shader.Uniform("scale");
 	offI = shader.Uniform("off");
+	influenceI = shader.Uniform("influence");
+	stepsMaxI = shader.Uniform("stepsMax");
 	transformI = shader.Uniform("transform");
 	positionI = shader.Uniform("position");
 	frameI = shader.Uniform("frame");
@@ -158,8 +167,8 @@ void OutlineShader::Init()
 
 
 
-void OutlineShader::Draw(const Sprite *sprite, const Point &pos, const Point &size,
-	const Color &color, const Point &unit, float frame)
+void OutlineShader::Draw(const Sprite *sprite, const Point &pos, const Point &size, const float radii,
+						const int quality, const Color &color, const Point &unit, float frame)
 {
 	glUseProgram(shader.Object());
 	glBindVertexArray(vao);
@@ -171,6 +180,10 @@ void OutlineShader::Draw(const Sprite *sprite, const Point &pos, const Point &si
 		static_cast<float>(.5 / size.X()),
 		static_cast<float>(.5 / size.Y())};
 	glUniform2fv(offI, 1, off);
+
+	glUniform1f(influenceI, radii);
+
+	glUniform1i(stepsMaxI, quality);
 
 	glUniform1f(frameI, frame);
 	glUniform1f(frameCountI, sprite->Frames());

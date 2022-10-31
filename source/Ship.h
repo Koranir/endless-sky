@@ -312,6 +312,9 @@ public:
 	double ShieldLevel() const;
 	// Get how disrupted this ship's shields are.
 	double DisruptionLevel() const;
+	// Get the damage that this ship has taken recently
+	double RecentShield() const;
+	double RecentHull() const;
 	// Get the (absolute) amount of hull that needs to be damaged until the
 	// ship becomes disabled. Returns 0 if the ships hull is already below the
 	// disabled threshold.
@@ -560,6 +563,8 @@ private:
 	double fuel = 0.;
 	double energy = 0.;
 	double heat = 0.;
+	double recentShield = 0.;
+	double recentHull = 0.;
 	// Accrued "ion damage" that will affect this ship's energy over time.
 	double ionization = 0.;
 	// Accrued "disruption damage" that will affect this ship's shield effectiveness over time.
