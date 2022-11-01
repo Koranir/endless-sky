@@ -951,6 +951,15 @@ void Engine::Draw() const
 			RingShader::Draw(pos, radius, 1.5f, it.disabled, color[6 + it.type], dashes, it.angle);
 	}
 
+	for(const shared_ptr<Ship> &ship : ships)
+	{
+		if(ship->Cloaking() && ship->IsYours() && ship->GetSystem() == player.GetSystem())
+		{
+			OutlineShader::Draw(ship->GetSprite(), (ship->Position()-center-ship->Velocity())*zoom, Point(ship->Width(), ship->Height())*zoom,
+								Color(0.5f, 0.1f, 0.1f, 0.8f*static_cast<float>(ship->Cloaking())), ship->Facing().Unit(), ship->GetFrame());
+		}
+	}
+
 	// Draw the flagship highlight, if any.
 	if(highlightSprite)
 	{
@@ -2326,10 +2335,9 @@ void Engine::AddSprites(const Ship &ship)
 	auto &itemsToDraw = draw[calcTickTock];
 	auto drawObject = [&itemsToDraw, cloak, drawCloaked](const Body &body) -> void
 	{
-		// Draw cloaked/cloaking sprites swizzled red, and overlay this solid
-		// sprite with an increasingly transparent "regular" sprite.
+		// Draw cloaked/cloaking sprites swizzled transparent grey.
 		if(drawCloaked)
-			itemsToDraw.AddSwizzled(body, 27);
+			itemsToDraw.AddSwizzled(body, 10, 0.7);
 		itemsToDraw.Add(body, cloak);
 	};
 
