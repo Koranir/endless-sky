@@ -63,6 +63,8 @@ namespace {
 
 	const double SCAN_TIME = 600.;
 
+	const double RECENT_SHIELD_MULT = 0.75;
+
 	// Helper function to transfer energy to a given stat if it is less than the
 	// given maximum value.
 	void DoRepair(double &stat, double &available, double maximum)
@@ -2212,6 +2214,10 @@ void Ship::DoGeneration()
 	energy -= ionization;
 	fuel -= leakage;
 	heat += burning;
+
+	if(Preferences::Has("Damage highlights"))
+		recentShieldDamage *= RECENT_SHIELD_MULT;
+
 	// TODO: Mothership gives status resistance to carried ships?
 	if(ionization)
 	{
@@ -3229,6 +3235,13 @@ double Ship::DisruptionLevel() const
 
 
 
+double Ship::RecentShieldDamage() const
+{
+	return recentShieldDamage;
+}
+
+
+
 // Get the (absolute) amount of hull that needs to be damaged until the
 // ship becomes disabled. Returns 0 if the ships hull is already below the
 // disabled threshold.
@@ -3536,6 +3549,8 @@ int Ship::TakeDamage(vector<Visual> &visuals, const DamageDealt &damage, const G
 	bool wasDestroyed = IsDestroyed();
 
 	shields -= damage.Shield();
+	recentShieldDamage += damage.Shield();
+
 	if(damage.Shield() && !isDisabled)
 	{
 		int disabledDelay = attributes.Get("depleted shield delay");
