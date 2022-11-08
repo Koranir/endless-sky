@@ -442,6 +442,7 @@ void PreferencesPanel::DrawSettings()
 		SCREEN_MODE_SETTING,
 		VSYNC_SETTING,
 		"Show status overlays",
+		"Show missile overlays",
 		"Highlight player's flagship",
 		"Damage highlights",
 		"Rotate flagship in HUD",
