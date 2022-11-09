@@ -89,6 +89,8 @@ void PlanetPanel::Step()
 		else
 			player.HandleBlockedMissions(Mission::LANDING, GetUI());
 	}
+	else if(GetUI()->IsTop(spaceport.get()))
+		missionAvailable = false;
 }
 
 
@@ -118,8 +120,9 @@ void PlanetPanel::Draw()
 			}
 		}
 
+		missionAvailable |= static_cast<bool>(player.MissionToOffer(Mission::SPACEPORT));
 		if(flagship && planet.HasSpaceport())
-			info.SetCondition("has spaceport");
+			info.SetCondition(missionAvailable ? "has spaceport mission" : "has spaceport");
 
 		if(planet.HasShipyard())
 			info.SetCondition("has shipyard");

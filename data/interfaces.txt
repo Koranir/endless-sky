@@ -692,6 +692,15 @@ interface "planet"
 		size 18
 		align left
 		pad 10 0
+	visible if "has spaceport mission"
+	sprite "ui/planet dialog button alert"
+		center -400 270
+	button p "Space_port (!)"
+		center -400 270
+		dimensions 140 40
+		size 18
+		align left
+		pad 10 0
 	
 	visible if "has ship"
 	sprite "ui/planet dialog button"

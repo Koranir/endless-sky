@@ -61,6 +61,8 @@ private:
 	const System &system;
 	const Interface &ui;
 
+	bool missionAvailable = false;
+
 	std::shared_ptr<Panel> trading;
 	std::shared_ptr<Panel> bank;
 	std::shared_ptr<SpaceportPanel> spaceport;
