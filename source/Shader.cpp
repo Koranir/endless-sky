@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "Files.h"
 #include "Shader.h"
 
 #include "Logger.h"
@@ -27,10 +28,33 @@ using namespace std;
 
 
 
-Shader::Shader(const char *vertex, const char *fragment)
+Shader::Shader(const char *name)
 {
-	GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
-	GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
+	const string strName = name;
+	MakeShader(strName, false);
+}
+
+
+
+Shader::Shader(const string name, bool useShaderSwizzle)
+{
+	MakeShader(name, useShaderSwizzle);
+}
+
+
+
+void Shader::MakeShader(const string name, bool useShaderSwizzle)
+{
+	const string vertexPath = Shader::ShaderPath(name, false, useShaderSwizzle);
+	const string fragmentPath = Shader::ShaderPath(name, true, useShaderSwizzle);
+	const string vertexCode = Files::Read(vertexPath);
+	const string fragmentCode = Files::Read(fragmentPath);
+	if(vertexCode.empty())
+		throw runtime_error("Vertex Shader cannot be found at " + vertexPath);
+	if(fragmentCode.empty())
+		throw runtime_error("Fragment Shader cannot be found at " + fragmentPath);
+	GLuint vertexShader = Compile(vertexCode.c_str(), GL_VERTEX_SHADER);
+	GLuint fragmentShader = Compile(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
 
 	program = glCreateProgram();
 	if(!program)
@@ -150,4 +174,15 @@ GLuint Shader::Compile(const char *str, GLenum type)
 	}
 
 	return object;
+}
+
+
+
+string Shader::ShaderPath(string shader, bool isFragment, bool useShaderSwizzle)
+{
+	string path = Files::Shaders();
+	path += shader;
+	path += useShaderSwizzle ? "/swizzle/" : "/";
+	path += isFragment ? "FragmentCode.txt" : "VertexCode.txt";
+	return path;
 }
