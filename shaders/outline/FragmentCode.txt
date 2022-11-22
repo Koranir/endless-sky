@@ -19,7 +19,7 @@ float Sobel(float layer)
   {
     for(int dx = -1; dx <= 1; ++dx)
     {
-      vec2 center = fragTexCoord + .618034 * off * vec2(dx, dy);
+      vec2 center = fragTexCoord + .618134 * off * vec2(dx, dy);
       float nw = dot(texture(tex, vec3(center + vec2(-off.x, -off.y), layer)), weight);
       float ne = dot(texture(tex, vec3(center + vec2(off.x, -off.y), layer)), weight);
       float sw = dot(texture(tex, vec3(center + vec2(-off.x, off.y), layer)), weight);

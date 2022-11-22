@@ -13,8 +13,12 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "File.h"
 #include "Files.h"
 #include "Shader.h"
+#include "ShaderCache.h"
+
+#include <sys/stat.h>
 
 #include "Logger.h"
 
@@ -23,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cstdio>
 
 using namespace std;
 
@@ -53,20 +58,61 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 		throw runtime_error("Vertex Shader cannot be found at " + vertexPath);
 	if(fragmentCode.empty())
 		throw runtime_error("Fragment Shader cannot be found at " + fragmentPath);
-	GLuint vertexShader = Compile(vertexCode.c_str(), GL_VERTEX_SHADER);
-	GLuint fragmentShader = Compile(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
+
+	Logger::LogError("sprite bin exists?: " + to_string(Files::Exists(Files::Shaders() + "sprite/sprite.cache")));
 
 	program = glCreateProgram();
+
+	if(ShaderCache::HasCached(name, useShaderSwizzle))
+	{
+		string path = Files::Shaders() + name + "/" + name + ".cache";
+		// Get the binary file from the cache.
+		FILE *bin;
+		bin = fopen(path.c_str(), "rb");
+		fseek(bin, 0, SEEK_END);
+		size_t size = ftell(bin);
+		fseek(bin, 0, SEEK_SET);
+
+		// Read it into a buffer.
+		char *buffer = new char[size];
+		size_t result = fread(buffer, 1, size, bin);
+		if(result != size)
+			throw runtime_error("Shader Cache read failed at " + path + ", Size: " + to_string(size) + "\n Sizeof: " + to_string(result));
+		fclose(bin);
+
+		// Grab the format from the front of the buffer;
+		GLenum format = *(reinterpret_cast<GLenum*>(buffer));
+		Logger::LogError(to_string(format));
+
+		// Calculate offset to start of the shader binary.
+		void* binaryStart = buffer + sizeof(GLenum);
+		size_t binaryLength = size - sizeof(GLenum);
+
+		// Upload the binary.
+		glProgramBinary(program, format, binaryStart, binaryLength);
+
+		// Clean up.
+		delete[] buffer;
+
+		Logger::LogError("Shader binary found: " + name);
+	}
+	else
+	{
+		GLuint vertexShader = Compile(vertexCode.c_str(), GL_VERTEX_SHADER);
+		GLuint fragmentShader = Compile(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
+		glAttachShader(program, vertexShader);
+		glAttachShader(program, fragmentShader);
+
+		glLinkProgram(program);
+
+		glDetachShader(program, vertexShader);
+		glDetachShader(program, fragmentShader);
+		Logger::LogError("Shader uncached: " + name);
+	}
 	if(!program)
 		throw runtime_error("Creating OpenGL shader program failed.");
 
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
 
-	glLinkProgram(program);
-
-	glDetachShader(program, vertexShader);
-	glDetachShader(program, fragmentShader);
 
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
@@ -81,6 +127,28 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 
 		throw runtime_error("Linking OpenGL shader program failed.");
 	}
+	else if(!ShaderCache::HasCached(name, useShaderSwizzle) && ShaderCache::CanCache())
+	{
+		GLint binaryLength = 0;
+		glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+
+		size_t bufferSize = sizeof(GLenum) + binaryLength;
+		char* binary = new char[sizeof(GLenum) + binaryLength];
+
+		GLenum binaryFormat;
+		glGetProgramBinary(program, binaryLength, nullptr, &binaryFormat, binary + sizeof(GLenum));
+
+		*(reinterpret_cast<GLint*>(binary)) = binaryFormat;
+
+		ShaderCache::Cache(Files::Shaders() + name + "/" + name + ".cache", binary, bufferSize);
+		Logger::LogError("Tried to cache " + name + " shader.");
+
+		delete[] binary;
+	}
+	else if(ShaderCache::HasCached(name, useShaderSwizzle))
+		Logger::LogError("Has cached " + name + ".");
+	else
+		Logger::LogError("Caching not supoorted. Failed to cache " + name + ".");
 }
 
 
