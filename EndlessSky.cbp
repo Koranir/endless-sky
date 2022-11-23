@@ -26,7 +26,6 @@
 				<Option external_deps="lib/Release/libendless-sky.a;" />
 				<Option type="0" />
 				<Option compiler="gcc" />
-				<Option parameters="-d" />
 				<Option projectLinkerOptionsRelation="2" />
 				<Compiler>
 					<Add option="-flto" />

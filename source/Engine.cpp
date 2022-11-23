@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DamageDealt.h"
 #include "DamageProfile.h"
 #include "Effect.h"
+#include "FrameBuffer.h"
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
@@ -939,8 +940,13 @@ void Engine::Draw() const
 	for(const PlanetLabel &label : labels)
 		label.Draw();
 
+	unsigned int fbo;
+	FrameBuffer::CreateFrameBuffer(FrameBuffer::bufferType::frame, &fbo, Screen::RawWidth(), Screen::RawHeight());
 	draw[drawTickTock].Draw();
 	batchDraw[drawTickTock].Draw();
+	FrameBuffer::SetFrameBuffer();
+	FrameBuffer::RemoveFrameBuffer(&fbo);
+
 
 	for(const auto &it : statuses)
 	{

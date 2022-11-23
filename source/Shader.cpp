@@ -33,6 +33,82 @@ using namespace std;
 
 
 
+namespace {
+	bool HasCached(const string name)
+	{
+		bool hasCached = true;
+		string path = Files::Shaders() + name + "/" + name + ".cache";
+		Logger::LogError("Cheking " + path + " for binary.");
+		struct stat buf;
+		hasCached &= !stat(path.c_str(), &buf);
+		Logger::LogError(to_string(hasCached) + " at Exists");
+		hasCached &= Files::Timestamp(path) > max(Files::Timestamp(Shader::ShaderPath(name, true)),
+												Files::Timestamp(Shader::ShaderPath(name, false)));
+		Logger::LogError(to_string(hasCached) + " at Time " + to_string(Files::Timestamp(path)));
+
+		return hasCached;
+	}
+
+
+
+	bool Readcache(string path, GLuint program)
+	{
+		FILE *bin;
+		bin = fopen(path.c_str(), "rb");
+		fseek(bin, 0, SEEK_END);
+		size_t size = ftell(bin);
+		fseek(bin, 0, SEEK_SET);
+
+		// Read it into a buffer.
+		char *buffer = new char[size];
+		size_t result = fread(buffer, 1, size, bin);
+		if(result != size)
+		{
+			throw runtime_error("Shader Cache read failed at " + path + ", Size: " + to_string(size) + "\n Sizeof: " + to_string(result));
+			return false;
+		}
+		fclose(bin);
+
+		// Grab the format from the front of the buffer;
+		GLenum format = *(reinterpret_cast<GLenum*>(buffer));
+		Logger::LogError(to_string(format));
+
+		// Calculate offset to start of the shader binary.
+		void* binaryStart = buffer + sizeof(GLenum);
+		size_t binaryLength = size - sizeof(GLenum);
+
+		// Upload the binary.
+		glProgramBinary(program, format, binaryStart, binaryLength);
+
+		// Clean up.
+		delete[] buffer;
+		return true;
+	}
+
+
+
+	bool Cache(string path, char* buffer, size_t length)
+	{
+		FILE *bin;
+		bin = fopen(path.c_str(), "w+b");
+		fwrite(buffer, sizeof(char), length, bin);
+		fclose(bin);
+		return true;
+	}
+
+
+
+	bool CanCache()
+	{
+		// Shader caching is only available on GPUs which support at least one binary format.
+		GLint formats;
+		glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
+		return formats > 0;
+	}
+}
+
+
+
 Shader::Shader(const char *name)
 {
 	const string strName = name;
@@ -63,36 +139,11 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 
 	program = glCreateProgram();
 
-	if(ShaderCache::HasCached(name, useShaderSwizzle))
+	if(HasCached(name))
 	{
 		string path = Files::Shaders() + name + "/" + name + ".cache";
 		// Get the binary file from the cache.
-		FILE *bin;
-		bin = fopen(path.c_str(), "rb");
-		fseek(bin, 0, SEEK_END);
-		size_t size = ftell(bin);
-		fseek(bin, 0, SEEK_SET);
-
-		// Read it into a buffer.
-		char *buffer = new char[size];
-		size_t result = fread(buffer, 1, size, bin);
-		if(result != size)
-			throw runtime_error("Shader Cache read failed at " + path + ", Size: " + to_string(size) + "\n Sizeof: " + to_string(result));
-		fclose(bin);
-
-		// Grab the format from the front of the buffer;
-		GLenum format = *(reinterpret_cast<GLenum*>(buffer));
-		Logger::LogError(to_string(format));
-
-		// Calculate offset to start of the shader binary.
-		void* binaryStart = buffer + sizeof(GLenum);
-		size_t binaryLength = size - sizeof(GLenum);
-
-		// Upload the binary.
-		glProgramBinary(program, format, binaryStart, binaryLength);
-
-		// Clean up.
-		delete[] buffer;
+		Readcache(path, program);
 
 		Logger::LogError("Shader binary found: " + name);
 	}
@@ -127,7 +178,7 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 
 		throw runtime_error("Linking OpenGL shader program failed.");
 	}
-	else if(!ShaderCache::HasCached(name, useShaderSwizzle) && ShaderCache::CanCache())
+	else if(!HasCached(name) && CanCache())
 	{
 		GLint binaryLength = 0;
 		glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
@@ -140,12 +191,12 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 
 		*(reinterpret_cast<GLint*>(binary)) = binaryFormat;
 
-		ShaderCache::Cache(Files::Shaders() + name + "/" + name + ".cache", binary, bufferSize);
+		Cache(Files::Shaders() + name + "/" + name + ".cache", binary, bufferSize);
 		Logger::LogError("Tried to cache " + name + " shader.");
 
 		delete[] binary;
 	}
-	else if(ShaderCache::HasCached(name, useShaderSwizzle))
+	else if(HasCached(name))
 		Logger::LogError("Has cached " + name + ".");
 	else
 		Logger::LogError("Caching not supoorted. Failed to cache " + name + ".");
