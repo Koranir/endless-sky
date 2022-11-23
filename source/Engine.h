@@ -251,6 +251,8 @@ private:
 	double load = 0.;
 	int loadCount = 0;
 	double loadSum = 0.;
+
+	float time = 0.f;
 };
 
 

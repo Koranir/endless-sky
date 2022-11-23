@@ -33,24 +33,23 @@ using namespace std;
 
 
 
-bool FrameBuffer::CreateFrameBuffer(bufferType type, GLuint *fbo, int width, int height)
+bool FrameBufferObject::CreateFrameBuffer(FrameBuffer::bufferType type, int width, int height)
 {
-	glGenFramebuffers(1, fbo);
-	buffers.emplace_back(fbo);
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
 	switch (type)
 	{
-	case bufferType::frame:
-		GLuint bufferTexture;
+	case FrameBuffer::bufferType::frame:
 		glGenTextures(1, &bufferTexture);
 		glBindTexture(GL_TEXTURE_2D, bufferTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
-
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bufferTexture, 0);
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
 		break;
 	default:
 		Logger::LogError("No Type supplied");
@@ -66,21 +65,35 @@ bool FrameBuffer::CreateFrameBuffer(bufferType type, GLuint *fbo, int width, int
 
 
 
-bool FrameBuffer::RemoveFrameBuffer(GLuint *fbo)
+bool FrameBufferObject::RemoveFrameBuffer()
 {
-	glDeleteFramebuffers(1, fbo);
-	for(auto buffer : buffers)
-		glDeleteFramebuffers(1, buffer);
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteTextures(1, &bufferTexture);
+	Logger::LogError("Tried to remove" + to_string(fbo));
 	return true;
 }
 
 
 
-bool FrameBuffer::SetFrameBuffer(GLuint fbo)
+unsigned int FrameBufferObject::Buffer()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	return fbo;
+}
+
+
+
+GLuint FrameBufferObject::BufferTexture()
+{
+	return bufferTexture;
+}
+
+
+
+void FrameBuffer::ResetFrameBuffer()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-		return true;
-	throw runtime_error("Could not create framebuffer");
-	return false;
+	{
+		Logger::LogError("Frambuffer exists");
+	}
 }

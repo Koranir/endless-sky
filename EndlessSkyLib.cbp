@@ -276,6 +276,8 @@
 		<Unit filename="source/PointerShader.h" />
 		<Unit filename="source/Politics.cpp" />
 		<Unit filename="source/Politics.h" />
+		<Unit filename="source/PostProcess.cpp" />
+		<Unit filename="source/PostProcess.h" />
 		<Unit filename="source/Preferences.cpp" />
 		<Unit filename="source/Preferences.h" />
 		<Unit filename="source/PreferencesPanel.cpp" />
@@ -301,8 +303,6 @@
 		<Unit filename="source/Set.h" />
 		<Unit filename="source/Shader.cpp" />
 		<Unit filename="source/Shader.h" />
-		<Unit filename="source/ShaderCache.cpp" />
-		<Unit filename="source/ShaderCache.h" />
 		<Unit filename="source/Ship.cpp" />
 		<Unit filename="source/Ship.h" />
 		<Unit filename="source/ShipEvent.cpp" />

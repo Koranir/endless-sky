@@ -13,21 +13,24 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef FILL_SHADER_H_
-#define FILL_SHADER_H_
+#ifndef POST_PROCESS_H_
+#define POST_PROCESS_H_
 
 class Point;
 class Color;
+#include "FrameBuffer.h"
+
+#include <string>
 
 
 
 // Class holding a function to fill a rectangular region of the screen with a
 // given color. This can be used with translucent colors to darken or lighten a
 // part of the screen, or with additive colors (alpha = 0) as well.
-class FillShader {
+class PostProcess {
 public:
-	static void Init();
-	static void Fill(const Point &center, const Point &size, const Color &color);
+	static void Init(std::string name);
+	static void ApplyPost(FrameBufferObject *fbo, float time);
 };
 
 

@@ -28,7 +28,6 @@ using namespace std;
 namespace {
 	Shader shader;
 	GLint bufferImage;
-	GLint iTime;
 
 	GLuint vao;
 	GLuint vbo;
@@ -38,7 +37,6 @@ void PostProcess::Init(string name)
 {
 	shader = Shader(name);
 	bufferImage = shader.Uniform("bufferTexture");
-	iTime = shader.Uniform("iTime");
 
 	// Generate the vertex data for drawing sprites.
 	glGenVertexArrays(1, &vao);
@@ -64,15 +62,13 @@ void PostProcess::Init(string name)
 
 
 
-void PostProcess::ApplyPost(FrameBufferObject *fbo, float time)
+void PostProcess::ApplyPost(FrameBufferObject *fbo)
 {
 	if(!shader.Object())
 		throw std::runtime_error("PostProcess called before Init().");
 
 	glUseProgram(shader.Object());
 	glBindVertexArray(vao);
-
-	glUniform1f(iTime, time);
 
 	glBindTexture(GL_TEXTURE_2D, fbo->BufferTexture());
 

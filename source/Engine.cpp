@@ -48,6 +48,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "PlayerInfo.h"
 #include "PointerShader.h"
 #include "Politics.h"
+#include "PostProcess.h"
 #include "Preferences.h"
 #include "Projectile.h"
 #include "Random.h"
@@ -940,12 +941,12 @@ void Engine::Draw() const
 	for(const PlanetLabel &label : labels)
 		label.Draw();
 
-	unsigned int fbo;
-	FrameBuffer::CreateFrameBuffer(FrameBuffer::bufferType::frame, &fbo, Screen::RawWidth(), Screen::RawHeight());
+	FrameBufferObject drawLayer;
+	drawLayer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
 	draw[drawTickTock].Draw();
 	batchDraw[drawTickTock].Draw();
-	FrameBuffer::SetFrameBuffer();
-	FrameBuffer::RemoveFrameBuffer(&fbo);
+	FrameBuffer::ResetFrameBuffer();
+	PostProcess::ApplyPost(&drawLayer, time);
 
 
 	for(const auto &it : statuses)
@@ -1122,6 +1123,7 @@ void Engine::Draw() const
 		font.Draw(loadString,
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
+	drawLayer.RemoveFrameBuffer();
 }
 
 
@@ -1593,6 +1595,7 @@ void Engine::CalculateStep()
 
 	// Keep track of how much of the CPU time we are using.
 	loadSum += loadTimer.Time();
+	time += static_cast<float>(loadTimer.Time());
 	if(++loadCount == 60)
 	{
 		load = loadSum;

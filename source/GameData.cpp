@@ -47,6 +47,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Person.h"
 #include "Phrase.h"
 #include "Planet.h"
+#include "PostProcess.h"
 #include "PointerShader.h"
 #include "Politics.h"
 #include "Random.h"
@@ -167,7 +168,7 @@ void GameData::CheckReferences()
 void GameData::LoadShaders(bool useShaderSwizzle)
 {
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
-//	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
+	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 
 	// Load the key settings.
 	Command::LoadSettings(Files::Resources() + "keys.txt");
@@ -181,6 +182,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	RingShader::Init();
 	SpriteShader::Init(useShaderSwizzle);
 	BatchShader::Init();
+	PostProcess::Init("invert");
 
 	background.Init(16384, 4096);
 }

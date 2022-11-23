@@ -27,23 +27,26 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // in order to draw something. In modern GPL, everything is drawn with shaders.
 // In general, rather than using this class directly, drawing code will use one
 // of the classes representing a particular shader.
-class FrameBuffer {
+class FrameBuffer{
 public:
 	enum class bufferType : GLint{
 		frame = 0,
 		texture = 1,
 		mask = 2
 	};
-	static bool CreateFrameBuffer(bufferType type, GLuint *fbo, int width, int height);
-	static bool SetFrameBuffer(GLuint fbo = 0);
-	static bool RemoveFrameBuffer(GLuint *fbo);
+	static void ResetFrameBuffer();
+};
+
+
+class FrameBufferObject{
+public:
+	bool CreateFrameBuffer(FrameBuffer::bufferType type, int width, int height);
+	bool RemoveFrameBuffer();
+	unsigned int Buffer();
+	GLuint BufferTexture();
 private:
-
-
-
-private:
-	static std::vector<GLuint*> buffers;
-	static GLuint texture;
+	GLuint fbo;
+	GLuint bufferTexture;
 };
 
 
