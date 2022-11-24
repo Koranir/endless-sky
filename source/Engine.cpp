@@ -937,16 +937,28 @@ void Engine::Draw() const
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
 
+	FrameBufferObject drawLayer;
+
 	// Draw any active planet labels.
 	for(const PlanetLabel &label : labels)
 		label.Draw();
 
-	FrameBufferObject drawLayer;
-	drawLayer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
-	draw[drawTickTock].Draw();
-	batchDraw[drawTickTock].Draw();
-	FrameBuffer::ResetFrameBuffer();
-	PostProcess::ApplyPost(&drawLayer, time);
+	if(activePostprocessing.empty())
+	{
+		draw[drawTickTock].Draw();
+		batchDraw[drawTickTock].Draw();
+	}
+	else
+	{
+		drawLayer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
+		draw[drawTickTock].Draw();
+		batchDraw[drawTickTock].Draw();
+		FrameBuffer::ResetFrameBuffer();
+		for(PostProcess post : activePostprocessing)
+		{
+			post.ApplyPost(&drawLayer, time);
+		}
+	}
 
 
 	for(const auto &it : statuses)
@@ -1123,7 +1135,8 @@ void Engine::Draw() const
 		font.Draw(loadString,
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
-	drawLayer.RemoveFrameBuffer();
+	if(!activePostprocessing.empty())
+		drawLayer.RemoveFrameBuffer();
 }
 
 
@@ -1224,6 +1237,23 @@ void Engine::EnterSystem()
 	const System *system = flagship->GetSystem();
 	Audio::PlayMusic(system->MusicName());
 	GameData::SetHaze(system->Haze(), false);
+
+	for(PostProcess pps : activePostprocessing)
+	{
+		pps.Remove();
+	}
+	activePostprocessing.clear();
+//	for(const System *vSystem : system->VisibleNeighbors())
+//	{
+//		for(const string name : vSystem->Shaders())
+//		{
+//			loadedPosts.emplace_back(pair<PostProcess, string>(PostProcess(name), name));
+//		}
+//	}
+	for(const string name : system->Shaders())
+	{
+		activePostprocessing.emplace_back(PostProcess(name));
+	}
 
 	Messages::Add("Entering the " + system->Name() + " system on "
 		+ today.ToString() + (system->IsInhabited(flagship) ?

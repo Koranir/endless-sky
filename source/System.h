@@ -138,6 +138,9 @@ public:
 	// Check whether you can buy or sell ship outfits in this system.
 	bool HasOutfitter() const;
 
+	bool HasShader() const;
+	const std::vector<std::string> &Shaders() const;
+
 	// Get the specification of how many asteroids of each type there are.
 	const std::vector<Asteroid> &Asteroids() const;
 	// Get the background haze sprite for this system.
@@ -208,6 +211,7 @@ private:
 	const Sprite *haze = nullptr;
 	std::vector<RandomEvent<Fleet>> fleets;
 	std::vector<RandomEvent<Hazard>> hazards;
+	std::vector<std::string> shaders;
 	double habitable = 1000.;
 	WeightedList<double> belts;
 	double jumpRange = 0.;

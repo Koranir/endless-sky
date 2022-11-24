@@ -18,19 +18,37 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 class Point;
 class Color;
+#include "Shader.h"
 #include "FrameBuffer.h"
 
 #include <string>
+#include <map>
 
 
 
 // Class holding a function to fill a rectangular region of the screen with a
 // given color. This can be used with translucent colors to darken or lighten a
 // part of the screen, or with additive colors (alpha = 0) as well.
+
 class PostProcess {
 public:
-	static void Init(std::string name);
-	static void ApplyPost(FrameBufferObject *fbo, float time);
+	enum class dataType {
+		typeInt = 0,
+		typeFloat = 1,
+		typeVec2 = 2
+	};
+	std::string GetName();
+	PostProcess(std::string name);
+	void LoadPost(std::string name);
+	void ApplyPost(FrameBufferObject *fbo, float time);
+	void Remove();
+private:
+	std::string coreName;
+	Shader shader;
+	GLint bufferImage;
+
+	GLuint vao;
+	GLuint vbo;
 };
 
 

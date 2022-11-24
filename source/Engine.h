@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "EscortDisplay.h"
 #include "Information.h"
 #include "Point.h"
+#include "PostProcess.h"
 #include "Radar.h"
 #include "Rectangle.h"
 
@@ -200,6 +201,8 @@ private:
 	std::vector<PlanetLabel> labels;
 	std::vector<AlertLabel> missileLabels;
 	std::vector<std::pair<const Outfit *, int>> ammo;
+	std::map<PostProcess, std::string> loadedPosts;
+	std::vector<PostProcess> activePostprocessing;
 	int jumpCount = 0;
 	const System *jumpInProgress[2] = {nullptr, nullptr};
 	const Sprite *highlightSprite = nullptr;

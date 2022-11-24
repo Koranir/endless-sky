@@ -327,6 +327,8 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 			government = GameData::Governments().Get(value);
 		else if(key == "music")
 			music = value;
+		else if(key == "shader")
+			shaders.emplace_back(child.Token(1));
 		else if(key == "habitable")
 			habitable = child.Value(valueIndex);
 		else if(key == "jump range")
@@ -757,6 +759,20 @@ bool System::HasOutfitter() const
 			return true;
 
 	return false;
+}
+
+
+
+bool System::HasShader() const
+{
+	return !shaders.empty();
+}
+
+
+
+const vector<string> &System::Shaders() const
+{
+	return shaders;
 }
 
 

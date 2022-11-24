@@ -182,7 +182,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	RingShader::Init();
 	SpriteShader::Init(useShaderSwizzle);
 	BatchShader::Init();
-	PostProcess::Init("invert");
+
 
 	background.Init(16384, 4096);
 }

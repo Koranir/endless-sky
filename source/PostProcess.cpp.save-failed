@@ -16,24 +16,24 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "PostProcess.h"
 
 #include "Color.h"
+#include "DataNode.h"
 #include "Point.h"
 #include "Screen.h"
 #include "Shader.h"
 #include "FrameTimer.h"
 
+#include <map>
 #include <stdexcept>
+#include <set>
 
 using namespace std;
 
-namespace {
-	Shader shader;
-	GLint bufferImage;
-
-	GLuint vao;
-	GLuint vbo;
+PostProcess::PostProcess(string name, map<PostProcess::dataType, uint64_t*> data)
+{
+	PostProcess::LoadPost(name);
 }
 
-void PostProcess::Init(string name)
+void PostProcess::LoadPost(string name)
 {
 	shader = Shader(name);
 	bufferImage = shader.Uniform("bufferTexture");
@@ -62,7 +62,7 @@ void PostProcess::Init(string name)
 
 
 
-void PostProcess::ApplyPost(FrameBufferObject *fbo)
+void PostProcess::ApplyPost(FrameBufferObject *fbo, float time)
 {
 	if(!shader.Object())
 		throw std::runtime_error("PostProcess called before Init().");
@@ -77,3 +77,15 @@ void PostProcess::ApplyPost(FrameBufferObject *fbo)
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
+
+
+
+//void PostProcess::SetUniforms(PostProcess::dataType uniform, const DataNode &node)
+//{
+//	switch (PostProcess::dataType)
+//	{
+//	case dataType::typeFloat:
+//		input1 = shader.Uniform(node.Token(1));
+//		if
+//	}
+//}

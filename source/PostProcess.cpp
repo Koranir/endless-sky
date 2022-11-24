@@ -16,29 +16,33 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "PostProcess.h"
 
 #include "Color.h"
+#include "DataNode.h"
 #include "Point.h"
 #include "Screen.h"
 #include "Shader.h"
 #include "FrameTimer.h"
 
+#include <map>
 #include <stdexcept>
+#include <set>
 
 using namespace std;
 
-namespace {
-	Shader shader;
-	GLint bufferImage;
-	GLint iTime;
-
-	GLuint vao;
-	GLuint vbo;
+PostProcess::PostProcess(string name)
+{
+	PostProcess::LoadPost(name);
+	coreName = name;
 }
 
-void PostProcess::Init(string name)
+string PostProcess::GetName()
+{
+	return coreName;
+}
+
+void PostProcess::LoadPost(string name)
 {
 	shader = Shader(name);
 	bufferImage = shader.Uniform("bufferTexture");
-	iTime = shader.Uniform("iTime");
 
 	// Generate the vertex data for drawing sprites.
 	glGenVertexArrays(1, &vao);
@@ -72,8 +76,6 @@ void PostProcess::ApplyPost(FrameBufferObject *fbo, float time)
 	glUseProgram(shader.Object());
 	glBindVertexArray(vao);
 
-	glUniform1f(iTime, time);
-
 	glBindTexture(GL_TEXTURE_2D, fbo->BufferTexture());
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
@@ -81,3 +83,22 @@ void PostProcess::ApplyPost(FrameBufferObject *fbo, float time)
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
+
+
+
+void PostProcess::Remove()
+{
+	glDeleteShader(shader.Object());
+}
+
+
+
+//void PostProcess::SetUniforms(PostProcess::dataType uniform, const DataNode &node)
+//{
+//	switch (PostProcess::dataType)
+//	{
+//	case dataType::typeFloat:
+//		input1 = shader.Uniform(node.Token(1));
+//		if
+//	}
+//}
