@@ -16,7 +16,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "File.h"
 #include "Files.h"
 #include "Shader.h"
-#include "ShaderCache.h"
 
 #include <sys/stat.h>
 
@@ -164,9 +163,11 @@ void Shader::MakeShader(const string name, bool useShaderSwizzle)
 		throw runtime_error("Creating OpenGL shader program failed.");
 
 
-
+	Logger::LogError("167");
 	GLint status;
+	Logger::LogError("169");
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	Logger::LogError("171");
 	if(status == GL_FALSE)
 	{
 		GLint maxLength = 0;

@@ -954,10 +954,10 @@ void Engine::Draw() const
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
 		FrameBuffer::ResetFrameBuffer();
-		for(PostProcess post : activePostprocessing)
-		{
-			post.ApplyPost(&drawLayer, time);
-		}
+//		for(PostProcess post : activePostprocessing)
+//		{
+//			post.ApplyPost(&drawLayer, time);
+//		}
 	}
 
 
