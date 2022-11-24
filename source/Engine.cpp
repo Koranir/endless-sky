@@ -954,10 +954,10 @@ void Engine::Draw() const
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
 		FrameBuffer::ResetFrameBuffer();
-//		for(PostProcess post : activePostprocessing)
-//		{
-//			post.ApplyPost(&drawLayer, time);
-//		}
+		for(PostProcess post : activePostprocessing)
+		{
+			post.ApplyPost(&drawLayer, time);
+		}
 	}
 
 
@@ -1252,7 +1252,15 @@ void Engine::EnterSystem()
 //	}
 	for(const string name : system->Shaders())
 	{
-		activePostprocessing.emplace_back(PostProcess(name));
+		bool duplicate = false;
+		for(PostProcess ppses : activePostprocessing
+		{
+			if(ppses.GetName() == name)
+			{
+				PostProcess ppse = PostProcess(name)
+				activePostprocessing.emplace_back(ppse);
+			}
+		}
 	}
 
 	Messages::Add("Entering the " + system->Name() + " system on "

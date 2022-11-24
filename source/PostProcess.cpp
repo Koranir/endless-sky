@@ -30,8 +30,8 @@ using namespace std;
 
 PostProcess::PostProcess(string name)
 {
-	PostProcess::LoadPost(name);
 	coreName = name;
+	PostProcess::LoadPost(name);
 }
 
 string PostProcess::GetName()
