@@ -943,7 +943,7 @@ void Engine::Draw() const
 	for(const PlanetLabel &label : labels)
 		label.Draw();
 
-	if(activePostprocessing.empty())
+	if(activeShaders.empty())
 	{
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
@@ -954,9 +954,9 @@ void Engine::Draw() const
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
 		FrameBuffer::ResetFrameBuffer();
-		for(PostProcess post : activePostprocessing)
+		for(pair<string, PostProcess> post : activePostProcess)
 		{
-			post.ApplyPost(&drawLayer, time);
+			post.second.ApplyPost(&drawLayer, time);
 		}
 	}
 
@@ -1135,7 +1135,7 @@ void Engine::Draw() const
 		font.Draw(loadString,
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
-	if(!activePostprocessing.empty())
+	if(!activeShaders.empty())
 		drawLayer.RemoveFrameBuffer();
 }
 
@@ -1238,11 +1238,11 @@ void Engine::EnterSystem()
 	Audio::PlayMusic(system->MusicName());
 	GameData::SetHaze(system->Haze(), false);
 
-	for(PostProcess pps : activePostprocessing)
+	for(PostProcess pps : activeShaders)
 	{
 		pps.Remove();
 	}
-	activePostprocessing.clear();
+	activeShaders.clear();
 //	for(const System *vSystem : system->VisibleNeighbors())
 //	{
 //		for(const string name : vSystem->Shaders())
@@ -1253,12 +1253,12 @@ void Engine::EnterSystem()
 	for(const string name : system->Shaders())
 	{
 		bool duplicate = false;
-		for(PostProcess ppses : activePostprocessing
+		for(pair<string, PostProcess> ppser : activeShaders)
 		{
-			if(ppses.GetName() == name)
+			if(ppser.first == name)
 			{
 				PostProcess ppse = PostProcess(name)
-				activePostprocessing.emplace_back(ppse);
+				activePostprocessing.emplace(name, true);
 			}
 		}
 	}

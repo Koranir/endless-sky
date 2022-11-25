@@ -89,6 +89,8 @@ public:
 	// Get the list of resource sources (i.e. plugin folders).
 	static const std::vector<std::string> &Sources();
 
+	static const std::vector<std::pair<std::string, bool>> &Shaders();
+
 	// Revert any changes that have been made to the universe.
 	static void Revert();
 	static void SetDate(const Date &date);

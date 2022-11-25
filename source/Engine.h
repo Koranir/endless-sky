@@ -35,6 +35,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <memory>
 #include <thread>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 class AlertLabel;
@@ -201,8 +202,8 @@ private:
 	std::vector<PlanetLabel> labels;
 	std::vector<AlertLabel> missileLabels;
 	std::vector<std::pair<const Outfit *, int>> ammo;
-	std::map<PostProcess, std::string> loadedPosts;
-	std::vector<PostProcess> activePostprocessing;
+	std::map<std::string, PostProcess> activePostProcess;
+	std::unordered_map<std::string, bool> activeShaders;
 	int jumpCount = 0;
 	const System *jumpInProgress[2] = {nullptr, nullptr};
 	const Sprite *highlightSprite = nullptr;

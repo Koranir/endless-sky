@@ -68,6 +68,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
 using namespace std;
 
@@ -91,6 +92,8 @@ namespace {
 	SpriteQueue spriteQueue;
 
 	vector<string> sources;
+
+
 	map<const Sprite *, shared_ptr<ImageSet>> deferred;
 	map<const Sprite *, int> preloaded;
 

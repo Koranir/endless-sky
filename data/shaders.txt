@@ -1,0 +1,58 @@
+#Basic Shaders - They have custom .cpp files to define behaviours.
+
+shader "SpriteShader"
+	path "shaders/basic/sprite/"
+
+shader "LineShader"
+	path "shaders/basic/line/"
+	
+shader "OutlineShader"
+	path "shaders/basic/outline/"
+	
+shader "BatchShader"
+	path "shaders/basic/batch/"
+	
+shader "PointerShader"
+	path "shaders/basic/pointer/"
+	
+shader "FillShader"
+	path "shaders/basic/fill/"
+	
+shader "FogShader"
+	path "shaders/basic/fog/"
+	
+shader "RingShader"
+	path "shaders/basic/ring/"
+	
+shader "SpriteShader"
+	path "shaders/basic/sprite/"
+	
+shader "StarfieldShader"
+	path "shaders/basic/starfield/"
+	
+shader "TextShader"
+	path "shaders/basic/text/"
+	
+# Custom Shaders - They get procedurally loaded, so need defines.
+
+# Defines include:
+# time - Float: time in seconds since initialisation of the game
+# center - vec2: Position of the center of the camer in world space
+# resolution - vec2: The size in pixels of the screen
+# systeminput - gets a definition from the map file
+	
+shader "BadBloom"
+	path "shaders/postprocess/bloom/"
+	float "iTime" time
+
+shader "Invert"
+	path "shaders/postprocess/invert/"
+	
+shader "Pinch"
+	path "shaders/postprocess/pinch/"
+	float "iTime" time
+	float "intensity" systeminput "intensity"
+	vec2 "center" center
+	vec2 "source" systeminput "source"
+	vec2 "screenSize" resolution
+	
