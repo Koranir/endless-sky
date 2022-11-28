@@ -1,0 +1,12 @@
+// Fragment passthrough shader
+precision mediump float;
+
+uniform sampler2D frameBuffer;
+
+in vec2 fragTexCoord;
+out vec2 finalColor;
+
+void main()
+{
+	finalColor = texture(frameBuffer, fragTexCoord);
+}

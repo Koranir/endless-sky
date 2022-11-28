@@ -23,8 +23,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Command.h"
 #include "DrawList.h"
 #include "EscortDisplay.h"
+#include "FrameBuffer.h"
 #include "Information.h"
 #include "Point.h"
+#include "PostProcess.h"
 #include "Radar.h"
 #include "Rectangle.h"
 
@@ -177,6 +179,8 @@ private:
 	std::thread calcThread;
 	std::condition_variable condition;
 	std::mutex swapMutex;
+
+	FrameBufferObject postProcessBuffer;
 
 	bool calcTickTock = false;
 	bool drawTickTock = false;

@@ -221,6 +221,9 @@ Engine::Engine(PlayerInfo &player)
 		if(object.HasSprite() && object.HasValidPlanet())
 			GameData::Preload(object.GetPlanet()->Landscape());
 
+	// Initialise a post-processing buffer and a render to layer.
+	postProcessBuffer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::Width(), Screen::Height());
+
 	// Figure out what planet the player is landed on, if any.
 	const StellarObject *object = player.GetStellarObject();
 	if(object)
@@ -939,8 +942,26 @@ void Engine::Draw() const
 	for(const PlanetLabel &label : labels)
 		label.Draw();
 
-	draw[drawTickTock].Draw();
-	batchDraw[drawTickTock].Draw();
+	// If there are no postprocessing shaders, draw normally.
+	if(PostProcessList::GetShaders().empty())
+	{
+		draw[drawTickTock].Draw();
+		batchDraw[drawTickTock].Draw();
+	}
+	else
+	{
+		// Clear and Bind the Post-Processing buffer
+		postProcessBuffer.BindAndClear();
+		draw[drawTickTock].Draw();
+		batchDraw[drawTickTock].Draw();
+		for(PostProcessShader &post : PostProcessList::GetShaders())
+		{
+			post.Draw(postProcessBuffer.BufferTexture());
+		}
+		FrameBuffer::ResetFrameBuffer();
+		FrameBuffer::Clear();
+		FrameBuffer::BlitBufferToScreen(postProcessBuffer, Screen::Width(), Screen::Height());
+	}
 
 	for(const auto &it : statuses)
 	{
