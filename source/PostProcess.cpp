@@ -49,6 +49,10 @@
 
 using namespace std;
 
+namespace{
+	unordered_map<string, PostProcessShader> postProcessList;
+}
+
 
 
 PostProcessShader::PostProcessShader(string name)
@@ -146,7 +150,7 @@ GLuint PostProcessShader::GetShader()
 
 
 
-bool PostProcessList::HasDuplicate(string name) const
+bool PostProcessList::HasDuplicate(string name)
 {
 	Logger::LogError("Checking ofr duplicates");
 	return postProcessList.find(name) != postProcessList.end();
@@ -175,18 +179,18 @@ void PostProcessList::RemoveShader(string name)
 
 
 
-void PostProcessList::DrawList(GLuint texture) const
+void PostProcessList::DrawList(vector<string> shaders, GLuint texture)
 {
 	Logger::LogError("Drawing list");
-	for(pair<const string, PostProcessShader> post : postProcessList)
+	for(const string &name : shaders)
 	{
-		post.second.Draw(texture);
+		postProcessList.at(name).Draw(texture);
 	}
 }
 
 
 
-bool PostProcessList::IsEmpty() const
+bool PostProcessList::IsEmpty()
 {
 	return postProcessList.empty();
 }

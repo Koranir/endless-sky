@@ -29,6 +29,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Fleet.h"
 #include "FogShader.h"
 #include "FrameTimer.h"
+#include "PostProcess.h"
 #include "text/FontSet.h"
 #include "FormationPattern.h"
 #include "Galaxy.h"
@@ -195,6 +196,11 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	RingShader::Init();
 	SpriteShader::Init(useShaderSwizzle);
 	BatchShader::Init();
+
+	for(const string name : FindShaders())
+	{
+		PostProcessList::AddShader(name);
+	}
 
 
 
@@ -830,14 +836,14 @@ void GameData::LoadSources()
 	vector<string> globalPlugins = Files::ListDirectories(Files::Resources() + "plugins/");
 	for(const string &path : globalPlugins)
 	{
-		if(Files::Exists(path + "data") || Files::Exists(path + "images") || Files::Exists(path + "sounds"))
+		if(Files::Exists(path + "data") || Files::Exists(path + "images") || Files::Exists(path + "sounds") || Files::Exists(path + "shaders"))
 			sources.push_back(path);
 	}
 
 	vector<string> localPlugins = Files::ListDirectories(Files::Config() + "plugins/");
 	for(const string &path : localPlugins)
 	{
-		if(Files::Exists(path + "data") || Files::Exists(path + "images") || Files::Exists(path + "sounds"))
+		if(Files::Exists(path + "data") || Files::Exists(path + "images") || Files::Exists(path + "sounds") || Files::Exists(path + "shaders"))
 			sources.push_back(path);
 	}
 
@@ -871,6 +877,27 @@ void GameData::LoadSources()
 			spriteQueue.Add(icon);
 		}
 	}
+}
+
+
+
+vector<string> GameData::FindShaders()
+{
+	vector<string> shaders;
+	for(const string &source : sources)
+	{
+		string directoryPath = source + "shaders/";
+		size_t start = directoryPath.size();
+		vector<string> shaderFolders = Files::ListDirectories(directoryPath);
+		for(string &path : shaderFolders)
+		{
+			string name = path.substr(start, path.length() - start - 1);
+			// TODO: Get rid of inbuilt directory and make all shaders load thorugh this system
+			if(name != "inbuilt" && name != "/")
+				shaders.emplace_back(name);
+		}
+	}
+	return shaders;
 }
 
 

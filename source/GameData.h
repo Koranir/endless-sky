@@ -177,6 +177,7 @@ public:
 private:
 	static void LoadSources();
 	static std::map<std::string, std::shared_ptr<ImageSet>> FindImages();
+	static std::vector<std::string> FindShaders();
 };
 
 

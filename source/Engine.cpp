@@ -958,7 +958,7 @@ void Engine::Draw() const
 
 		FrameBuffer::ResetFrameBuffer();
 
-		fxList.DrawList(postProcessBuffer.BufferTexture());
+		fxList.DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)
@@ -1252,9 +1252,6 @@ void Engine::EnterSystem()
 				usedWormhole = &object;
 		}
 
-	// Load any postprocessing effects in the system
-//	fxList.AddShader("fakeHDR");
-
 	// Advance the positions of every StellarObject and update politics.
 	// Remove expired bribes, clearance, and grace periods from past fines.
 	GameData::SetDate(today);
@@ -1479,11 +1476,6 @@ void Engine::CalculateStep()
 	for(Visual &visual : visuals)
 		visual.Move();
 	Prune(visuals);
-
-	// Reapply PostProcessing
-	fxList.Clear();
-	for(const string &shaderName : playerSystem->Shaders())
-		fxList.AddShader(shaderName);
 
 	// Perform various minor actions.
 	SpawnFleets();
