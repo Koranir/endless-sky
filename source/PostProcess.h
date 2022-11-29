@@ -12,9 +12,17 @@ class PostProcessShader
 public:
 	PostProcessShader(std::string name);
 	std::string GetName();
+	void Delete();
+	GLuint GetShader();
 	void LoadShader(std::string name);
 	void Draw(GLuint texture);
 private:
+	Shader shader;
+	GLint bufferImage;
+
+	GLuint vao;
+	GLuint vbo;
+	bool loaded = false;
 	std::string name;
 };
 

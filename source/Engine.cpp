@@ -1253,9 +1253,10 @@ void Engine::EnterSystem()
 		}
 
 	// Load any postprocessing effects in the system
-	fxList.Clear();
-	for(const string &shaderName : system->Shaders())
-		fxList.AddShader(shaderName);
+//	fxList.Clear();
+//	for(const string &shaderName : system->Shaders())
+//		fxList.AddShader(shaderName);
+//	fxList.AddShader("fakeHDR");
 
 	// Advance the positions of every StellarObject and update politics.
 	// Remove expired bribes, clearance, and grace periods from past fines.

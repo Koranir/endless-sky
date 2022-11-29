@@ -4,14 +4,6 @@
 
 using namespace std;
 
-namespace {
-	Shader shader;
-	GLint bufferImage;
-
-	GLuint vao;
-	GLuint vbo;
-}
-
 
 
 PostProcessShader::PostProcessShader(string name) : name(name)
@@ -31,7 +23,7 @@ string PostProcessShader::GetName()
 void PostProcessShader::LoadShader(string name)
 {
 	Logger::LogError("Loading Shader " + name);
-	shader = Shader(name);
+	shader = Shader(name, false, false);
 	bufferImage = shader.Uniform("bufferTexture");
 
 	// Generate the vertex data for drawing sprites.
@@ -55,26 +47,46 @@ void PostProcessShader::LoadShader(string name)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	Logger::LogError("Loaded Shader");
+	loaded = true;
 }
 
 
 
 void PostProcessShader::Draw(GLuint texture)
 {
-	Logger::LogError("Drawing Shader");
-	if(!shader.Object())
-		throw runtime_error("PostProcess called before Init().");
+	if(loaded)
+	{
+		Logger::LogError("Drawing Shader");
+		if(!shader.Object())
+			throw runtime_error("PostProcess called before Init().");
 
-	glUseProgram(shader.Object());
-	glBindVertexArray(vao);
+		glUseProgram(shader.Object());
+		glBindVertexArray(vao);
 
-	glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 
-	glBindVertexArray(0);
-	glUseProgram(0);
-	Logger::LogError("Drew Shader");
+		glBindVertexArray(0);
+		glUseProgram(0);
+		Logger::LogError("Drew Shader");
+	}
+}
+
+
+
+void PostProcessShader::Delete()
+{
+	glDeleteShader(shader.Object());
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
+}
+
+
+
+GLuint PostProcessShader::GetShader()
+{
+	return shader.Object();
 }
 
 
@@ -91,6 +103,8 @@ void PostProcessList::AddShader(string name)
 	Logger::LogError("Adding Shader");
 	if(!HasDuplicate(name))
 		postProcessList.insert(make_pair(name, PostProcessShader(name)));
+	else
+		Logger::LogError("Shader already loaded");
 	Logger::LogError("Added Shader");
 }
 
@@ -99,6 +113,7 @@ void PostProcessList::AddShader(string name)
 void PostProcessList::RemoveShader(string name)
 {
 	Logger::LogError("Removing " + name);
+	postProcessList[name].Delete();
 	postProcessList.erase(postProcessList.find(name));
 }
 
@@ -125,5 +140,9 @@ bool PostProcessList::IsEmpty() const
 void PostProcessList::Clear()
 {
 	Logger::LogError("Cleared List");
+	for(pair<string, PostProcessShader> post : postProcessList)
+	{
+		post.second.Delete();
+	}
 	postProcessList.clear();
 }

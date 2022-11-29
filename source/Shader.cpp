@@ -29,6 +29,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #include <vector>
 
+#include "opengl.h"
+#include <SDL2/SDL.h>
+
 using namespace std;
 
 
@@ -41,9 +44,12 @@ namespace {
 		if(GameData::DebugMode())
 			Logger::LogError("Shader: Checking " + path + " for binary.");
 		struct stat buf;
+		Logger::LogError("Inited buf");
 		hasCached &= !stat(path.c_str(), &buf);
-		hasCached &= Files::Timestamp(path) > max(Files::Timestamp(Shader::ShaderPath(name, true, isInBuilt)),
-												Files::Timestamp(Shader::ShaderPath(name, false, isInBuilt)));
+		Logger::LogError("Has @C-Str");
+		if(hasCached)
+			hasCached &= Files::Timestamp(path) > max(Files::Timestamp(Shader::ShaderPath(name, true, isInBuilt)),
+													Files::Timestamp(Shader::ShaderPath(name, false, isInBuilt)));
 
 		return hasCached;
 	}
@@ -142,11 +148,24 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 	const string fragmentPath = Shader::ShaderPath(name, true, isInBuilt, useShaderSwizzle);
 
 	program = glCreateProgram();
+	if(!SDL_GL_GetCurrentContext())
+	{
+		Logger::LogError("No Context");
+	}
+
+	if(!program)
+	{
+		Logger::LogError("No Programs?");
+		throw runtime_error("Creating OpenGL shader program failed.");
+	}
+
 	bool cached = false;
 
 	if(HasCached(name, isInBuilt))
 	{
+		Logger::LogError("Getting path");
 		string path = Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache";
+		Logger::LogError("Atemting Loading Shader from cache");
 		// Get the binary file from the cache.
 		cached = ReadCache(path, program);
 		if(GameData::DebugMode())
@@ -172,9 +191,6 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 		glDetachShader(program, fragmentShader);
 		Logger::LogError("Shader: " + name + " shader not cached.");
 	}
-
-	if(!program)
-		throw runtime_error("Creating OpenGL shader program failed.");
 
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
