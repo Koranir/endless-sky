@@ -182,8 +182,13 @@ void PostProcessList::RemoveShader(string name)
 void PostProcessList::DrawList(vector<string> shaders, GLuint texture)
 {
 	Logger::LogError("Drawing list");
+	for(const auto &it : postProcessList)
+	{
+		Logger::LogError(it.first);
+	}
 	for(const string &name : shaders)
 	{
+		Logger::LogError(name);
 		postProcessList.at(name).Draw(texture);
 	}
 }

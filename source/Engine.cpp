@@ -943,7 +943,7 @@ void Engine::Draw() const
 		label.Draw();
 
 	// If there are no postprocessing shaders, draw normally.
-	if(fxList.IsEmpty())
+	if(player.GetSystem()->Shaders().empty())
 	{
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
@@ -958,7 +958,7 @@ void Engine::Draw() const
 
 		FrameBuffer::ResetFrameBuffer();
 
-		fxList.DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
+		PostProcessList::DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)

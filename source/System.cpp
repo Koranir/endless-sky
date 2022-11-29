@@ -27,6 +27,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Random.h"
 #include "SpriteSet.h"
 
+#include "Logger.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -336,7 +338,13 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 		else if(key == "haze")
 			haze = SpriteSet::Get(value);
 		else if(key == "shader")
+		{
 			shaders.emplace_back(value);
+			for(const auto &it : shaders)
+			{
+				Logger::LogError(it);
+			}
+		}
 		else if(key == "trade" && child.Size() >= 3)
 			trade[value].SetBase(child.Value(valueIndex + 1));
 		else if(key == "arrival")
