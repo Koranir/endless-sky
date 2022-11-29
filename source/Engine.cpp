@@ -221,7 +221,7 @@ Engine::Engine(PlayerInfo &player)
 		if(object.HasSprite() && object.HasValidPlanet())
 			GameData::Preload(object.GetPlanet()->Landscape());
 
-	// Initialise a post-processing buffer and a render to layer.
+	// Initialise a post-processing buffer.
 	postProcessBuffer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::Width(), Screen::Height());
 
 	// Figure out what planet the player is landed on, if any.
@@ -943,7 +943,7 @@ void Engine::Draw() const
 		label.Draw();
 
 	// If there are no postprocessing shaders, draw normally.
-	if(PostProcessList::GetShaders().empty())
+	if(fxList.IsEmpty())
 	{
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
@@ -951,16 +951,14 @@ void Engine::Draw() const
 	else
 	{
 		// Clear and Bind the Post-Processing buffer
+		postProcessBuffer.UpdateBuffer(Screen::RawWidth(), Screen::RawHeight());
 		postProcessBuffer.BindAndClear();
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
-		for(PostProcessShader &post : PostProcessList::GetShaders())
-		{
-			post.Draw(postProcessBuffer.BufferTexture());
-		}
+
 		FrameBuffer::ResetFrameBuffer();
-		FrameBuffer::Clear();
-		FrameBuffer::BlitBufferToScreen(postProcessBuffer, Screen::Width(), Screen::Height());
+
+		fxList.DrawList(postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)
@@ -1253,6 +1251,11 @@ void Engine::EnterSystem()
 					&& flagship->Position().Distance(object.Position()) < 1.)
 				usedWormhole = &object;
 		}
+
+	// Load any postprocessing effects in the system
+	fxList.Clear();
+	for(const string &shaderName : system->Shaders())
+		fxList.AddShader(shaderName);
 
 	// Advance the positions of every StellarObject and update politics.
 	// Remove expired bribes, clearance, and grace periods from past fines.

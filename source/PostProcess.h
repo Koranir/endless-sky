@@ -21,12 +21,14 @@ private:
 class PostProcessList
 {
 public:
-	static bool HasDuplicate(std::string name);
-	static void AddShader(std::string name);
-	static void RemoveShader(std::string name);
-	static std::vector<PostProcessShader> GetShaders();
+	bool HasDuplicate(std::string name) const;
+	void AddShader(std::string name);
+	void RemoveShader(std::string name);
+	void DrawList(GLuint texture) const;
+	bool IsEmpty() const;
+	void Clear();
 private:
-	static std::unordered_map<std::string, PostProcessShader> postProcessList;
+	std::unordered_map<std::string, PostProcessShader> postProcessList;
 };
 
 #endif

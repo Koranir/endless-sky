@@ -1,6 +1,6 @@
 #include "PostProcess.h"
 
-#
+#include "Logger.h"
 
 using namespace std;
 
@@ -30,6 +30,7 @@ string PostProcessShader::GetName()
 
 void PostProcessShader::LoadShader(string name)
 {
+	Logger::LogError("Loading Shader " + name);
 	shader = Shader(name);
 	bufferImage = shader.Uniform("bufferTexture");
 
@@ -53,14 +54,16 @@ void PostProcessShader::LoadShader(string name)
 	// unbind the VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	Logger::LogError("Loaded Shader");
 }
 
 
 
 void PostProcessShader::Draw(GLuint texture)
 {
+	Logger::LogError("Drawing Shader");
 	if(!shader.Object())
-		throw std::runtime_error("PostProcess called before Init().");
+		throw runtime_error("PostProcess called before Init().");
 
 	glUseProgram(shader.Object());
 	glBindVertexArray(vao);
@@ -71,11 +74,12 @@ void PostProcessShader::Draw(GLuint texture)
 
 	glBindVertexArray(0);
 	glUseProgram(0);
+	Logger::LogError("Drew Shader");
 }
 
 
 
-bool PostProcessList::HasDuplicate(string name)
+bool PostProcessList::HasDuplicate(string name) const
 {
 	return postProcessList.find(name) != postProcessList.end();
 }
@@ -84,22 +88,42 @@ bool PostProcessList::HasDuplicate(string name)
 
 void PostProcessList::AddShader(string name)
 {
-	postProcessList.emplace(make_pair(name, PostProcessShader(name)));
+	Logger::LogError("Adding Shader");
+	if(!HasDuplicate(name))
+		postProcessList.insert(make_pair(name, PostProcessShader(name)));
+	Logger::LogError("Added Shader");
 }
 
 
 
 void PostProcessList::RemoveShader(string name)
 {
+	Logger::LogError("Removing " + name);
 	postProcessList.erase(postProcessList.find(name));
 }
 
 
 
-vector<PostProcessShader> PostProcessList::GetShaders()
+void PostProcessList::DrawList(GLuint texture) const
 {
-	vector<PostProcessShader> stiblite;
-	for(const auto &it : postProcessList)
-		stiblite.emplace_back(it.second);
-	return stiblite;
+	Logger::LogError("Drawing list");
+	for(pair<string, PostProcessShader> post : postProcessList)
+	{
+		post.second.Draw(texture);
+	}
+}
+
+
+
+bool PostProcessList::IsEmpty() const
+{
+	return postProcessList.empty();
+}
+
+
+
+void PostProcessList::Clear()
+{
+	Logger::LogError("Cleared List");
+	postProcessList.clear();
 }

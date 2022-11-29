@@ -198,6 +198,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	BatchShader::Init();
 
 
+
 	background.Init(16384, 4096);
 	if(debug)
 		Logger::LogError("Shader: Finished Loading after " + to_string(timer.Time()) + " seconds.");

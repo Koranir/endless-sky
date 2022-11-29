@@ -62,6 +62,16 @@ bool FrameBufferObject::CreateFrameBuffer(FrameBuffer::bufferType type, int widt
 
 
 
+bool FrameBufferObject::UpdateBuffer(int width, int height) const
+{
+	glBindTexture(GL_TEXTURE_2D, bufferTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return true;
+}
+
+
+
 bool FrameBufferObject::RemoveFrameBuffer()
 {
 	glDeleteFramebuffers(1, &fbo);
@@ -138,8 +148,4 @@ GLuint FrameBufferObject::BufferTexture() const
 void FrameBuffer::ResetFrameBuffer()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-	{
-		Logger::LogError("Frambuffer exists");
-	}
 }

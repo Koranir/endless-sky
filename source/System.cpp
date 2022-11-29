@@ -142,6 +142,8 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 				links.clear();
 			else if(key == "asteroids" || key == "minables")
 				asteroids.clear();
+			else if(key == "shader")
+				shaders.clear();
 			else if(key == "haze")
 				haze = nullptr;
 			else if(key == "trade")
@@ -333,6 +335,8 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 			jumpRange = max(0., child.Value(valueIndex));
 		else if(key == "haze")
 			haze = SpriteSet::Get(value);
+		else if(key == "shader")
+			shaders.emplace_back(value);
 		else if(key == "trade" && child.Size() >= 3)
 			trade[value].SetBase(child.Value(valueIndex + 1));
 		else if(key == "arrival")
@@ -765,6 +769,13 @@ bool System::HasOutfitter() const
 const vector<System::Asteroid> &System::Asteroids() const
 {
 	return asteroids;
+}
+
+
+
+const vector<string> &System::Shaders() const
+{
+	return shaders;
 }
 
 

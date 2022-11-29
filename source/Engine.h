@@ -180,6 +180,7 @@ private:
 	std::condition_variable condition;
 	std::mutex swapMutex;
 
+	PostProcessList fxList;
 	FrameBufferObject postProcessBuffer;
 
 	bool calcTickTock = false;

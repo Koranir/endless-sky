@@ -42,6 +42,7 @@ public:
 class FrameBufferObject{
 public:
 	bool CreateFrameBuffer(FrameBuffer::bufferType type, int width, int height);
+	bool UpdateBuffer(int width, int height) const;
 	void BlitBufferTo(FrameBufferObject to);
 	bool BindAndClear() const;
 	bool RemoveFrameBuffer();
