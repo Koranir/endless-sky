@@ -30,7 +30,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "opengl.h"
-#include <SDL2/SDL.h>
+#include "SDL2/SDL.h"
 
 using namespace std;
 
@@ -148,10 +148,6 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 	const string fragmentPath = Shader::ShaderPath(name, true, isInBuilt, useShaderSwizzle);
 
 	program = glCreateProgram();
-	if(!SDL_GL_GetCurrentContext())
-	{
-		Logger::LogError("No Context");
-	}
 
 	if(!program)
 	{

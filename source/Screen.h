@@ -18,6 +18,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Point.h"
 
+#include "SDL2/SDL.h"
+
 
 
 // Class that simply holds the screen dimensions. This is really just a wrapper
@@ -55,6 +57,12 @@ public:
 	static Point TopRight();
 	static Point BottomLeft();
 	static Point BottomRight();
+
+	static void SetSDLContext(SDL_GLContext sdlContext);
+	static SDL_GLContext *GetSDLContextPtr();
+
+	static void SetSDLWindow(SDL_Window *sdlWindow);
+	static SDL_Window *GetSDLWindow();
 };
 
 

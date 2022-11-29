@@ -1253,9 +1253,6 @@ void Engine::EnterSystem()
 		}
 
 	// Load any postprocessing effects in the system
-//	fxList.Clear();
-//	for(const string &shaderName : system->Shaders())
-//		fxList.AddShader(shaderName);
 //	fxList.AddShader("fakeHDR");
 
 	// Advance the positions of every StellarObject and update politics.
@@ -1482,6 +1479,11 @@ void Engine::CalculateStep()
 	for(Visual &visual : visuals)
 		visual.Move();
 	Prune(visuals);
+
+	// Reapply PostProcessing
+	fxList.Clear();
+	for(const string &shaderName : playerSystem->Shaders())
+		fxList.AddShader(shaderName);
 
 	// Perform various minor actions.
 	SpawnFleets();

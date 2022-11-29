@@ -4,8 +4,12 @@
 #include "Shader.h"
 
 #include <string>
+#include <cstring>
 #include <unordered_map>
 #include <vector>
+
+#include "opengl.h"
+#include "SDL2/SDL.h"
 
 class PostProcessShader
 {

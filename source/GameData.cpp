@@ -180,7 +180,6 @@ void GameData::CheckReferences()
 
 void GameData::LoadShaders(bool useShaderSwizzle)
 {
-	FrameTimer timer;
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 
@@ -200,8 +199,6 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 
 
 	background.Init(16384, 4096);
-	if(debug)
-		Logger::LogError("Shader: Finished Loading after " + to_string(timer.Time()) + " seconds.");
 }
 
 
@@ -214,7 +211,7 @@ double GameData::GetProgress()
 	if(initiallyLoaded)
 		return 1.;
 
-	double val = min(min(spriteQueue.GetProgress(), Audio::GetProgress()), objects.GetProgress());
+	double val = (spriteQueue.GetProgress() + Audio::GetProgress() + objects.GetProgress())/3;
 	if(val >= 1.)
 		initiallyLoaded = true;
 	return val;

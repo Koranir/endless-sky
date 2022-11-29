@@ -27,6 +27,9 @@ namespace {
 	int USER_ZOOM = 100;
 	int EFFECTIVE_ZOOM = 100;
 	bool HIGH_DPI = false;
+
+	SDL_GLContext context = nullptr;
+	SDL_Window *mainWindow = nullptr;
 }
 
 
@@ -179,4 +182,32 @@ Point Screen::BottomLeft()
 Point Screen::BottomRight()
 {
 	return Point(.5 * WIDTH, .5 * HEIGHT);
+}
+
+
+
+void Screen::SetSDLContext(SDL_GLContext sdlContext)
+{
+	context = sdlContext;
+}
+
+
+
+SDL_GLContext *Screen::GetSDLContextPtr()
+{
+	return &context;
+}
+
+
+
+void Screen::SetSDLWindow(SDL_Window *sdlWindow)
+{
+	mainWindow = sdlWindow;
+}
+
+
+
+SDL_Window *Screen::GetSDLWindow()
+{
+	return mainWindow;
 }

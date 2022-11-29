@@ -1,12 +1,58 @@
 #include "PostProcess.h"
+#include "Screen.h"
+#include "MainPanel.h"
+#include "GameWindow.h"
 
+#include <stdexcept>
 #include "Logger.h"
+#include "opengl.h"
+#include "SDL2/SDL.h"
+
+#include "Audio.h"
+#include "Command.h"
+#include "Conversation.h"
+#include "ConversationPanel.h"
+#include "DataFile.h"
+#include "DataNode.h"
+#include "Dialog.h"
+#include "Files.h"
+#include "text/Font.h"
+#include "FrameTimer.h"
+#include "GameData.h"
+#include "GameLoadingPanel.h"
+#include "GameWindow.h"
+#include "Hardpoint.h"
+#include "Logger.h"
+#include "MenuPanel.h"
+#include "Panel.h"
+#include "PlayerInfo.h"
+#include "Preferences.h"
+#include "PrintData.h"
+#include "Screen.h"
+#include "SpriteSet.h"
+#include "SpriteShader.h"
+#include "Test.h"
+#include "TestContext.h"
+#include "UI.h"
+
+#include "PostProcess.h"
+
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <thread>
+
+#include <cassert>
+#include <future>
+#include <stdexcept>
+#include <string>
 
 using namespace std;
 
 
 
-PostProcessShader::PostProcessShader(string name) : name(name)
+PostProcessShader::PostProcessShader(string name)
+	: name(name)
 {
 	LoadShader(name);
 }
@@ -22,6 +68,15 @@ string PostProcessShader::GetName()
 
 void PostProcessShader::LoadShader(string name)
 {
+//	if(SDL_GL_MakeCurrent(Screen::GetSDLWindow(), *Screen::GetSDLContextPtr()))
+//	{
+//		throw runtime_error("Unable to set the current OpenGL context!");
+//	}
+//	if(SDL_GL_GetCurrentContext() == NULL)
+//	{
+//		Logger::LogError("SDL_GLGCC is NULL");
+//		Logger::LogError(SDL_GetError());
+//	}
 	Logger::LogError("Loading Shader " + name);
 	shader = Shader(name, false, false);
 	bufferImage = shader.Uniform("bufferTexture");
@@ -93,6 +148,7 @@ GLuint PostProcessShader::GetShader()
 
 bool PostProcessList::HasDuplicate(string name) const
 {
+	Logger::LogError("Checking ofr duplicates");
 	return postProcessList.find(name) != postProcessList.end();
 }
 
@@ -102,7 +158,7 @@ void PostProcessList::AddShader(string name)
 {
 	Logger::LogError("Adding Shader");
 	if(!HasDuplicate(name))
-		postProcessList.insert(make_pair(name, PostProcessShader(name)));
+		postProcessList.insert(pair<string, PostProcessShader>(name, PostProcessShader(name)));
 	else
 		Logger::LogError("Shader already loaded");
 	Logger::LogError("Added Shader");
@@ -113,7 +169,7 @@ void PostProcessList::AddShader(string name)
 void PostProcessList::RemoveShader(string name)
 {
 	Logger::LogError("Removing " + name);
-	postProcessList[name].Delete();
+	postProcessList.at(name).Delete();
 	postProcessList.erase(postProcessList.find(name));
 }
 
@@ -122,7 +178,7 @@ void PostProcessList::RemoveShader(string name)
 void PostProcessList::DrawList(GLuint texture) const
 {
 	Logger::LogError("Drawing list");
-	for(pair<string, PostProcessShader> post : postProcessList)
+	for(pair<const string, PostProcessShader> post : postProcessList)
 	{
 		post.second.Draw(texture);
 	}
@@ -140,9 +196,10 @@ bool PostProcessList::IsEmpty() const
 void PostProcessList::Clear()
 {
 	Logger::LogError("Cleared List");
-	for(pair<string, PostProcessShader> post : postProcessList)
+	for(pair<const string, PostProcessShader> post : postProcessList)
 	{
 		post.second.Delete();
+		Logger::LogError("Deleted " + post.first);
 	}
 	postProcessList.clear();
 }

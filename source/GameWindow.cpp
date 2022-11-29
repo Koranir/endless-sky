@@ -30,8 +30,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace {
-	SDL_Window *mainWindow = nullptr;
-	SDL_GLContext context = nullptr;
 	int width = 0;
 	int height = 0;
 	bool hasSwizzle = false;
@@ -126,10 +124,10 @@ bool GameWindow::Init()
 		flags |= SDL_WINDOW_MAXIMIZED;
 
 	// The main window spawns visibly at this point.
-	mainWindow = SDL_CreateWindow("Endless Sky", SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, flags);
+	Screen::SetSDLWindow(SDL_CreateWindow("Endless Sky", SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, flags));
 
-	if(!mainWindow)
+	if(!Screen::GetSDLWindow())
 	{
 		ExitWithError("Unable to create window!");
 		return false;
@@ -150,14 +148,14 @@ bool GameWindow::Init()
 #endif
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-	context = SDL_GL_CreateContext(mainWindow);
-	if(!context)
+	Screen::SetSDLContext(SDL_GL_CreateContext(Screen::GetSDLWindow()));
+	if(!*Screen::GetSDLContextPtr())
 	{
 		ExitWithError("Unable to create OpenGL context! Check if your system supports OpenGL 3.0.");
 		return false;
 	}
 
-	if(SDL_GL_MakeCurrent(mainWindow, context))
+	if(SDL_GL_MakeCurrent(Screen::GetSDLWindow(), *Screen::GetSDLContextPtr()))
 	{
 		ExitWithError("Unable to set the current OpenGL context!");
 		return false;
@@ -244,12 +242,12 @@ void GameWindow::Quit()
 	// Clean up in the reverse order that everything is launched.
 //#ifndef _WIN32
 	// Under windows, this cleanup code causes intermittent crashes.
-	if(context)
-		SDL_GL_DeleteContext(context);
+	if(*Screen::GetSDLContextPtr())
+		SDL_GL_DeleteContext(*Screen::GetSDLContextPtr());
 //#endif
 
-	if(mainWindow)
-		SDL_DestroyWindow(mainWindow);
+	if(Screen::GetSDLWindow())
+		SDL_DestroyWindow(Screen::GetSDLWindow());
 
 	SDL_Quit();
 }
@@ -258,14 +256,14 @@ void GameWindow::Quit()
 
 void GameWindow::Step()
 {
-	SDL_GL_SwapWindow(mainWindow);
+	SDL_GL_SwapWindow(Screen::GetSDLWindow());
 }
 
 
 
 void GameWindow::SetIcon()
 {
-	if(!mainWindow)
+	if(!Screen::GetSDLWindow())
 		return;
 
 	// Load the icon file.
@@ -280,7 +278,7 @@ void GameWindow::SetIcon()
 		32, 4 * buffer.Width(), 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if(surface)
 	{
-		SDL_SetWindowIcon(mainWindow, surface);
+		SDL_SetWindowIcon(Screen::GetSDLWindow(), surface);
 		SDL_FreeSurface(surface);
 	}
 }
@@ -289,12 +287,12 @@ void GameWindow::SetIcon()
 
 void GameWindow::AdjustViewport()
 {
-	if(!mainWindow)
+	if(!Screen::GetSDLWindow())
 		return;
 
 	// Get the window's size in screen coordinates.
 	int windowWidth, windowHeight;
-	SDL_GetWindowSize(mainWindow, &windowWidth, &windowHeight);
+	SDL_GetWindowSize(Screen::GetSDLWindow(), &windowWidth, &windowHeight);
 
 	// Only save the window size when not in fullscreen mode.
 	if(!GameWindow::IsFullscreen())
@@ -312,7 +310,7 @@ void GameWindow::AdjustViewport()
 	// Find out the drawable dimensions. If this is a high- DPI display, this
 	// may be larger than the window.
 	int drawWidth, drawHeight;
-	SDL_GL_GetDrawableSize(mainWindow, &drawWidth, &drawHeight);
+	SDL_GL_GetDrawableSize(Screen::GetSDLWindow(), &drawWidth, &drawHeight);
 	Screen::SetHighDPI(drawWidth > windowWidth || drawHeight > windowHeight);
 
 	// Set the viewport to go off the edge of the window, if necessary, to get
@@ -328,7 +326,7 @@ void GameWindow::AdjustViewport()
 // if the operation could not be completed successfully.
 bool GameWindow::SetVSync(Preferences::VSync state)
 {
-	if(!context)
+	if(!*Screen::GetSDLContextPtr())
 		return false;
 
 	const int originalState = SDL_GL_GetSwapInterval();
@@ -381,14 +379,14 @@ int GameWindow::Height()
 
 bool GameWindow::IsMaximized()
 {
-	return (SDL_GetWindowFlags(mainWindow) & SDL_WINDOW_MAXIMIZED);
+	return (SDL_GetWindowFlags(Screen::GetSDLWindow()) & SDL_WINDOW_MAXIMIZED);
 }
 
 
 
 bool GameWindow::IsFullscreen()
 {
-	return (SDL_GetWindowFlags(mainWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP);
+	return (SDL_GetWindowFlags(Screen::GetSDLWindow()) & SDL_WINDOW_FULLSCREEN_DESKTOP);
 }
 
 
@@ -399,11 +397,11 @@ void GameWindow::ToggleFullscreen()
 	// no need to adjust the viewport here.
 	if(IsFullscreen())
 	{
-		SDL_SetWindowFullscreen(mainWindow, 0);
-		SDL_SetWindowSize(mainWindow, width, height);
+		SDL_SetWindowFullscreen(Screen::GetSDLWindow(), 0);
+		SDL_SetWindowSize(Screen::GetSDLWindow(), width, height);
 	}
 	else
-		SDL_SetWindowFullscreen(mainWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		SDL_SetWindowFullscreen(Screen::GetSDLWindow(), SDL_WINDOW_FULLSCREEN_DESKTOP);
 }
 
 
