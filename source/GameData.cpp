@@ -202,8 +202,6 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 		PostProcessList::AddShader(name);
 	}
 
-
-
 	background.Init(16384, 4096);
 }
 

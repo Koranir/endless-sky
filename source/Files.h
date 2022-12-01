@@ -65,10 +65,13 @@ public:
 
 	// File IO.
 	static FILE *Open(const std::string &path, bool write = false);
+	static FILE *OpenUpdateBinary(const std::string &path, bool initializeFile);
 	static std::string Read(const std::string &path);
 	static std::string Read(FILE *file);
 	static void Write(const std::string &path, const std::string &data);
 	static void Write(FILE *file, const std::string &data);
+	static void WriteBinary(const std::string &path, const std::vector<unsigned char> &data);
+	static bool ReadBinary(FILE *file, std::vector<unsigned char> &target);
 
 	// Open this user's plugins directory in their native file explorer.
 	static void OpenUserPluginFolder();

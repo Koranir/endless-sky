@@ -58,31 +58,28 @@ namespace {
 
 	bool ReadCache(string path, GLuint program)
 	{
-		FILE *bin;
-		bin = fopen(path.c_str(), "rb");
-		fseek(bin, 0, SEEK_END);
-		size_t size = ftell(bin);
-		fseek(bin, 0, SEEK_SET);
-
-		// Read it into a buffer.
-		char *buffer = new char[size];
-		size_t result = fread(buffer, 1, size, bin);
-		if(result != size)
-		{
-			Logger::LogError("Shader: Cache read failed at " + path + ", Size: " + to_string(size)
-								+ "\n With SizeOf: " + to_string(result));
-			glDeleteProgram(program);
-			program = glCreateProgram();
+		FILE *bin = Files::Open(path, false);
+//		fseek(bin, 0, SEEK_END);
+//		size_t size = ftell(bin);
+//		fseek(bin, 0, SEEK_SET);
+//
+//		// Read it into a buffer.
+//		const char *buffer = new char[size];
+//		buffer = Files::Read(bin).c_str();
+		vector<unsigned char> buffer;
+		if(!Files::ReadBinary(bin, buffer))
 			return false;
-		}
-		fclose(bin);
 
 		// Grab the format from the front of the buffer;
-		GLenum format = *(reinterpret_cast<GLenum*>(buffer));
+		GLenum format;
+		for(int i = 0; static_cast<long long unsigned int>(i) < sizeof(GLenum); i++)
+		{
+			format |= buffer[i] >> 8*i;
+		}
 
 		// Calculate offset to start of the shader binary.
-		void *binaryStart = buffer + sizeof(GLenum);
-		size_t binaryLength = size - sizeof(GLenum);
+		const void *binaryStart = &buffer[sizeof(GLenum)];
+		size_t binaryLength = buffer.size() - sizeof(GLenum);
 
 		// Upload the binary.
 		glProgramBinary(program, format, binaryStart, binaryLength);
@@ -98,19 +95,32 @@ namespace {
 			return false;
 		}
 
-		// Clean up.
-		delete[] buffer;
 		return true;
 	}
 
 
 
-	bool Cache(string path, char *buffer, size_t length)
+//	bool Cache(string path, char *buffer, size_t length)
+//	{
+//		FILE *bin;
+//		bin = fopen(path.c_str(), "w+b");
+//		fwrite(buffer, sizeof(char), length, bin);
+//		fclose(bin);
+//		return true;
+//	}
+
+
+
+	bool Cache(const string &path, vector<unsigned char> &buffer, GLenum format)
 	{
-		FILE *bin;
-		bin = fopen(path.c_str(), "w+b");
-		fwrite(buffer, sizeof(char), length, bin);
-		fclose(bin);
+		Logger::LogError(to_string(buffer.size()));
+		for(int i = 0; static_cast<long long unsigned int>(i) < sizeof(GLenum); i++)
+		{
+			buffer.insert(buffer.begin() + i, static_cast<unsigned char>(format << 8*i));//   lint |= chr << 8*i;
+		}
+
+		Logger::LogError(to_string(buffer.size()));
+		Files::WriteBinary(path, buffer);
 		return true;
 	}
 
@@ -206,18 +216,21 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 		GLint binaryLength = 0;
 		glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
 
-		size_t bufferSize = sizeof(GLenum) + binaryLength;
-		char *binary = new char[sizeof(GLenum) + binaryLength];
+//		char *binary = new char[binaryLength];
+		vector<unsigned char> binary;
+		binary.resize(static_cast<size_t>(binaryLength));
 
 		GLenum binaryFormat;
-		glGetProgramBinary(program, binaryLength, nullptr, &binaryFormat, binary + sizeof(GLenum));
+		glGetProgramBinary(program, binaryLength, nullptr, &binaryFormat, binary.data());
 
-		*(reinterpret_cast<GLint*>(binary)) = binaryFormat;
+		Logger::LogError(name + to_string(binary.size()));
 
-		Cache(Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache", binary, bufferSize);
+		string path = Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache";
+		Cache(path, binary, binaryFormat);
+
 		Logger::LogError("Tried to cache " + name + " shader.");
 
-		delete[] binary;
+//		delete[] binary;
 	}
 	else if(!cached)
 		Logger::LogError("Caching not supoorted. Failed to cache " + name + ".");
@@ -327,6 +340,6 @@ string Shader::ShaderPath(string shader, bool isFragment, bool isInBuilt, bool u
 	path += isInBuilt ? "inbuilt/" : "";
 	path += shader;
 	path += useShaderSwizzle ? "/swizzle/" : "/";
-	path += isFragment ? "FragmentCode.txt" : "VertexCode.txt";
+	path += isFragment ? "fragment.glsl" : "vertex.glsl";
 	return path;
 }

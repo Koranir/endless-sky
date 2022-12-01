@@ -522,6 +522,19 @@ FILE *Files::Open(const string &path, bool write)
 
 
 
+FILE *Files::OpenUpdateBinary(const string &path, bool initializeFile)
+{
+#if defined _WIN32
+	FILE *file = nullptr;
+	_wfopen_s(&file, Utf8::ToUTF16(path).c_str(), initializeFile ? L"wb" : L"ab+");
+	return file;
+#else
+	return fopen(path.c_str(), initializeFile ? "wb" : "ab+");
+#endif
+}
+
+
+
 string Files::Read(const string &path)
 {
 	File file(path);
@@ -570,6 +583,99 @@ void Files::Write(FILE *file, const string &data)
 		return;
 
 	fwrite(&data[0], 1, data.size(), file);
+}
+
+
+#define ts to_string
+void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
+{
+	const size_t BYTES_TO_WRITE_PER_ITERATION = 256;
+	size_t bytesLeft = data.size();
+	size_t totalBytes = 0;
+	size_t bytes;
+	const unsigned char *bufferPtr = data.data();
+
+	FILE *file = Files::OpenUpdateBinary(path, true);
+	fseek(file, 0, SEEK_SET);
+
+	Logger::LogError(to_string(bytesLeft) + ", " + to_string(data.size()));
+
+	Logger::LogError("Starting writing bytes now to " + path);
+
+	bytes = fwrite(bufferPtr, 1, BYTES_TO_WRITE_PER_ITERATION, file);
+	Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
+	totalBytes += bytes;
+	bytesLeft -= bytes;
+	bufferPtr += bytes;
+	fclose(file);
+
+	file = Files::OpenUpdateBinary(path, false);
+	while(bytesLeft > BYTES_TO_WRITE_PER_ITERATION)
+	{
+		fseek(file, totalBytes, SEEK_SET);
+		bytes = fwrite(bufferPtr, 1, BYTES_TO_WRITE_PER_ITERATION, file);
+		totalBytes += bytes;
+		bytesLeft -= bytes;
+		bufferPtr += bytes;
+		Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
+	}
+	fseek(file, totalBytes, SEEK_SET);
+	bytes = fwrite(bufferPtr, 1, bytesLeft, file);
+	Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
+	if(bytesLeft != 0)
+	{
+		Logger::LogError(to_string(bytesLeft));
+	}
+	if(totalBytes != data.size())
+	{
+		Logger::LogError(to_string(totalBytes));
+	}
+//
+//
+//	size_t multi_write(int fd, const char *buffer, size_t bytes)
+//	{
+//		size_t nb = 0;
+//		size_t nleft = nbytes;
+//		size_t tbytes = 0;
+//
+//		while (nleft > 0 && (nb = write(fd, buffer, nleft)) > 0)
+//		{
+//			tbytes += nb;
+//			buffer += nb;
+//			nleft  -= nb;
+//		}
+//		if (tbytes == 0)
+//			tbytes = nb;
+//		return tbytes;
+//	}
+//
+//
+//
+//	Logger::LogError("Writing to binary file, size: " + to_string(data.size()));
+//	int ret = fwrite(data.data(), 1, data.size(), file);
+//	if (static_cast<size_t>(ret) != data.size())
+//	{
+//		Logger::LogError("Stream error indication: " + to_string(ferror(file)) + ", ret is " + to_string(ret));
+//		Logger::LogError("Short item count");
+//	}
+}
+
+
+
+bool Files::ReadBinary(FILE *file, vector<unsigned char> &target)
+{
+	fseek(file, 0, SEEK_END);
+	size_t size = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	target.resize(size);
+	Logger::LogError(to_string(target.size()));
+	Logger::LogError(to_string(target.capacity()));
+	Logger::LogError(to_string(size));
+	size_t bytes = fread(target.data(), 1, size, file);
+	Logger::LogError(to_string(bytes));
+	if(bytes != target.size())
+		return false;
+	return true;
 }
 
 

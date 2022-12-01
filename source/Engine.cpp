@@ -955,10 +955,10 @@ void Engine::Draw() const
 		postProcessBuffer.BindAndClear();
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
+		PostProcessList::DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
 
 		FrameBuffer::ResetFrameBuffer();
-
-		PostProcessList::DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
+		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)
