@@ -34,6 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <cstdlib>
+#include <cerrno>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -529,7 +530,11 @@ FILE *Files::OpenUpdateBinary(const string &path, bool initializeFile)
 	_wfopen_s(&file, Utf8::ToUTF16(path).c_str(), initializeFile ? L"wb" : L"ab+");
 	return file;
 #else
-	return fopen(path.c_str(), initializeFile ? "wb" : "ab+");
+	Logger::LogError("Opening binary for update, path: " + to_string(path));
+	FILE *file = fopen(path.c_str(), initializeFile ? "wb" : "ab+");
+	if(file == nullptr)
+		throw runtime_error("NULL_PTR ERRORNUM: " + strerror(errno));
+	return file;
 #endif
 }
 
@@ -596,9 +601,11 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 	const unsigned char *bufferPtr = data.data();
 
 	FILE *file = Files::OpenUpdateBinary(path, true);
+	if(file == nullptr)
+		throw runtime_error(strerror(errno));
 	fseek(file, 0, SEEK_SET);
 
-	Logger::LogError(to_string(bytesLeft) + ", " + to_string(data.size()));
+	Logger::LogError(to_string(bytesLeft) + ", " + to_string(data.size()) + ", " + ts(BYTES_TO_WRITE_PER_ITERATION));
 
 	Logger::LogError("Starting writing bytes now to " + path);
 
@@ -610,6 +617,8 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 	fclose(file);
 
 	file = Files::OpenUpdateBinary(path, false);
+	if(file == nullptr)
+		throw runtime_error("WTF? The file is NULL??? P2 e.l.t.r booglo.");
 	while(bytesLeft > BYTES_TO_WRITE_PER_ITERATION)
 	{
 		fseek(file, totalBytes, SEEK_SET);
