@@ -19,7 +19,7 @@ public:
 	void Delete();
 	GLuint GetShader();
 	void LoadShader(std::string name);
-	void Draw(GLuint texture);
+	void Draw(GLuint texture, std::vector<std::pair<std::string, std::vector<double>>> uniforms);
 private:
 	Shader shader;
 	GLint bufferImage;
@@ -28,6 +28,17 @@ private:
 	GLuint vbo;
 	bool loaded = false;
 	std::string name;
+//	std::vector<std::pair(std::string, std::vector<double>)> uniforms;
+};
+
+class ShaderData
+{
+public:
+	std::string name;
+	// String is the uniform name.
+	// Double is the value.
+	// String is the switch index for custom inputs.
+	std::vector<std::tuple<std::string, std::vector<double>, std::string>> uniforms;
 };
 
 class PostProcessList
@@ -36,7 +47,8 @@ public:
 	static bool HasDuplicate(std::string name);
 	static void AddShader(std::string name);
 	static void RemoveShader(std::string name);
-	static void DrawList(std::vector<std::string> shaders, GLuint texture);
+	static void DrawList(const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::vector<double>>>>> &shaders
+						, GLuint texture);
 	static bool IsEmpty();
 	static void Clear();
 };

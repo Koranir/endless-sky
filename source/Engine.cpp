@@ -541,6 +541,33 @@ void Engine::Step(bool isActive)
 		}
 	}
 
+	sdfa.clear();
+	for(const ShaderData &data : player.GetSystem()->Shaders())
+	{
+		vector<pair<string, vector<double>>> tsdfam;
+		for(const tuple<string, vector<double>, string> &uform : data.uniforms)
+		{
+			vector<double> fvec;
+			string token = get<2>(uform);
+			if(token == "")
+				fvec = get<1>(uform);
+			else if(token == "center")
+				fvec = vector<double>{center.X(), center.Y()};
+			else if(token == "object")
+			{
+				Angle angle(player.GetDate().DaysSinceEpoch() * (get<1>(uform))[0] + (get<1>(uform))[1]);
+				Point pos = angle.Unit() * (get<1>(uform))[1];
+				fvec = vector<double>{pos.X(), pos.Y()};
+			}
+			else if(token == "zoom")
+				fvec = vector<double>{static_cast<float>(zoom)};
+			else if(token == "resolution")
+				fvec = vector<double>{static_cast<double>(Screen::RawWidth()), static_cast<double>(Screen::RawHeight())};
+			tsdfam.push_back(pair<string, vector<double>>(get<0>(uform), fvec));
+		}
+		sdfa.push_back(pair<string, vector<pair<string, vector<double>>>>(data.name, tsdfam));
+	}
+
 	// Draw a highlight to distinguish the flagship from other ships.
 	if(flagship && !flagship->IsDestroyed() && Preferences::Has("Highlight player's flagship"))
 	{
@@ -969,7 +996,7 @@ void Engine::Draw() const
 
 		FrameBuffer::ResetFrameBuffer();
 		FrameBuffer::Clear();
-		PostProcessList::DrawList(player.GetSystem()->Shaders(), drawLayer.BufferTexture());
+		PostProcessList::DrawList(sdfa, drawLayer.BufferTexture());
 		drawLayer.RemoveFrameBuffer();
 
 //		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());

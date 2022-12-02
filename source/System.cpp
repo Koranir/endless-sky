@@ -339,11 +339,43 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 			haze = SpriteSet::Get(value);
 		else if(key == "shader")
 		{
-			shaders.emplace_back(value);
-			for(const auto &it : shaders)
+			ShaderData sdf;
+			if(node.HasChildren())
 			{
-				Logger::LogError(it);
+				for(const DataNode &grand : child)
+				{
+					if(grand.Token(0) == "uniform")
+					{
+						if(grand.Token(1) == "float")
+						{
+							if(grand.IsNumber(3))
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>{grand.Value(3)}, "");
+							else
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>(0), grand.Token(3));
+						}
+						else if(grand.Token(1) == "vec2")
+						{
+							if(grand.IsNumber(3) && grand.IsNumber(4))
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>{grand.Value(3), grand.Value(4)}, "");
+							else
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>(2), grand.Token(3));
+						}
+						else if(grand.Token(1) == "vec3")
+						{
+							if(grand.IsNumber(3) && grand.IsNumber(4) && grand.IsNumber(5))
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>{grand.Value(3), grand.Value(4), grand.Value(5)}, "");
+							else
+								sdf.uniforms.emplace_back(grand.Token(2), vector<double>(3), grand.Token(3));
+						}
+					}
+					for(const DataNode &great : grand)
+					{
+						(get<1>(sdf.uniforms.back()))[0] = great.Value(1);
+					}
+				}
 			}
+			sdf.name = value;
+			shaders.push_back(sdf);
 		}
 		else if(key == "trade" && child.Size() >= 3)
 			trade[value].SetBase(child.Value(valueIndex + 1));
@@ -781,7 +813,7 @@ const vector<System::Asteroid> &System::Asteroids() const
 
 
 
-const vector<string> &System::Shaders() const
+const vector<ShaderData> &System::Shaders() const
 {
 	return shaders;
 }

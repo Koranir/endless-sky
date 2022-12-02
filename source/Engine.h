@@ -181,6 +181,7 @@ private:
 	std::mutex swapMutex;
 
 	FrameBufferObject postProcessBuffer;
+	std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::vector<double>>>>> sdfa;
 
 	bool calcTickTock = false;
 	bool drawTickTock = false;

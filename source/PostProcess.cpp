@@ -101,7 +101,7 @@ void PostProcessShader::LoadShader(string name)
 
 
 
-void PostProcessShader::Draw(GLuint texture)
+void PostProcessShader::Draw(GLuint texture, vector<pair<string, vector<double>>> uniforms)
 {
 	if(loaded)
 	{
@@ -112,6 +112,20 @@ void PostProcessShader::Draw(GLuint texture)
 		glBindVertexArray(vao);
 
 		glBindTexture(GL_TEXTURE_2D, texture);
+		for(const auto &it : uniforms)
+		{
+			GLint target = shader.Uniform(it.first.c_str());
+			switch(it.second.size())
+			{
+			case 1:
+				glUniform1f(target, static_cast<float>(it.second[0]));
+			case 2:
+				glUniform2f(target, static_cast<float>(it.second[0]), static_cast<float>(it.second[1]));
+			case 3:
+				glUniform3f(target, static_cast<float>(it.second[0]), static_cast<float>(it.second[1]),
+								static_cast<float>(it.second[2]));
+			}
+		}
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 
@@ -164,11 +178,11 @@ void PostProcessList::RemoveShader(string name)
 
 
 
-void PostProcessList::DrawList(vector<string> shaders, GLuint texture)
+void PostProcessList::DrawList(const vector<pair<string, vector<pair<string, vector<double>>>>> &shaders, GLuint texture)
 {
-	for(const string &name : shaders)
+	for(const auto &data : shaders)
 	{
-		postProcessList.at(name).Draw(texture);
+		postProcessList.at(data.first).Draw(texture, data.second);
 	}
 }
 

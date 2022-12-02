@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Hazard.h"
 #include "Point.h"
+#include "PostProcess.h"
 #include "RandomEvent.h"
 #include "Set.h"
 #include "StellarObject.h"
@@ -141,7 +142,7 @@ public:
 	// Get the specification of how many asteroids of each type there are.
 	const std::vector<Asteroid> &Asteroids() const;
 	// Get the postprocessing effects in the system.
-	const std::vector<std::string> &Shaders() const;
+	const std::vector<ShaderData> &Shaders() const;
 	// Get the background haze sprite for this system.
 	const Sprite *Haze() const;
 
@@ -207,7 +208,7 @@ private:
 	// proper position before that object is updated).
 	std::vector<StellarObject> objects;
 	std::vector<Asteroid> asteroids;
-	std::vector<std::string> shaders;
+	std::vector<ShaderData> shaders;
 	const Sprite *haze = nullptr;
 	std::vector<RandomEvent<Fleet>> fleets;
 	std::vector<RandomEvent<Hazard>> hazards;

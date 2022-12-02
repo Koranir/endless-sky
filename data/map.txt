@@ -22874,12 +22874,16 @@ system "Sagittarius A*"
 	hazard "Black Hole Accretion Disk" 1
 	hazard "Black Hole Event Horizon" 1
 	hazard "Black Hole Gravity" 1
-	shader "spacewarp"
+	shader "gravitationlens"
+		uniform vec2 resolution resolution
+		uniform float radius 4.
+		uniform float accredition 2.5
+		uniform float zoom zoom
+		uniform vec2 center center
+		uniform vec2 position object
+			period 1
 	object
-		sprite star/black-hole-core
-		period 1
-	object
-		sprite star/black-hole
+		sprite star/black-hole-circle
 		period 1
 
 system Saiph
