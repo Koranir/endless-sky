@@ -72,15 +72,6 @@ string PostProcessShader::GetName()
 
 void PostProcessShader::LoadShader(string name)
 {
-//	if(SDL_GL_MakeCurrent(Screen::GetSDLWindow(), *Screen::GetSDLContextPtr()))
-//	{
-//		throw runtime_error("Unable to set the current OpenGL context!");
-//	}
-//	if(SDL_GL_GetCurrentContext() == NULL)
-//	{
-//		Logger::LogError("SDL_GLGCC is NULL");
-//		Logger::LogError(SDL_GetError());
-//	}
 	Logger::LogError("Loading Shader " + name);
 	shader = Shader(name, false, false);
 	bufferImage = shader.Uniform("bufferTexture");
@@ -105,7 +96,6 @@ void PostProcessShader::LoadShader(string name)
 	// unbind the VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	Logger::LogError("Loaded Shader");
 	loaded = true;
 }
 
@@ -115,7 +105,6 @@ void PostProcessShader::Draw(GLuint texture)
 {
 	if(loaded)
 	{
-		Logger::LogError("Drawing Shader");
 		if(!shader.Object())
 			throw runtime_error("PostProcess called before Init().");
 
@@ -128,7 +117,6 @@ void PostProcessShader::Draw(GLuint texture)
 
 		glBindVertexArray(0);
 		glUseProgram(0);
-		Logger::LogError("Drew Shader");
 	}
 }
 
@@ -152,7 +140,6 @@ GLuint PostProcessShader::GetShader()
 
 bool PostProcessList::HasDuplicate(string name)
 {
-	Logger::LogError("Checking ofr duplicates");
 	return postProcessList.find(name) != postProcessList.end();
 }
 
@@ -160,12 +147,10 @@ bool PostProcessList::HasDuplicate(string name)
 
 void PostProcessList::AddShader(string name)
 {
-	Logger::LogError("Adding Shader");
 	if(!HasDuplicate(name))
 		postProcessList.insert(pair<string, PostProcessShader>(name, PostProcessShader(name)));
 	else
 		Logger::LogError("Shader already loaded");
-	Logger::LogError("Added Shader");
 }
 
 
@@ -181,14 +166,8 @@ void PostProcessList::RemoveShader(string name)
 
 void PostProcessList::DrawList(vector<string> shaders, GLuint texture)
 {
-	Logger::LogError("Drawing list");
-	for(const auto &it : postProcessList)
-	{
-		Logger::LogError(it.first);
-	}
 	for(const string &name : shaders)
 	{
-		Logger::LogError(name);
 		postProcessList.at(name).Draw(texture);
 	}
 }

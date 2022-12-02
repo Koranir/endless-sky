@@ -934,30 +934,43 @@ list<ShipEvent> &Engine::Events()
 // Draw a frame.
 void Engine::Draw() const
 {
-	GameData::Background().Draw(center, centerVelocity, zoom);
 	static const Set<Color> &colors = GameData::Colors();
 	const Interface *hud = GameData::Interfaces().Get("hud");
-
-	// Draw any active planet labels.
-	for(const PlanetLabel &label : labels)
-		label.Draw();
-
 	// If there are no postprocessing shaders, draw normally.
 	if(player.GetSystem()->Shaders().empty())
 	{
+		GameData::Background().Draw(center, centerVelocity, zoom);
+
+		// Draw any active planet labels.
+		for(const PlanetLabel &label : labels)
+			label.Draw();
+
 		draw[drawTickTock].Draw();
 		batchDraw[drawTickTock].Draw();
 	}
 	else
 	{
+		FrameBufferObject drawLayer;
+		drawLayer.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
+		drawLayer.BindAndClear();
+
+		GameData::Background().Draw(center, centerVelocity, zoom);
+
+		// Draw any active planet labels.
+		for(const PlanetLabel &label : labels)
+			label.Draw();
+
+		draw[drawTickTock].Draw();
+		batchDraw[drawTickTock].Draw();
+
 		// Clear and Bind the Post-Processing buffer
 		postProcessBuffer.UpdateBuffer(Screen::RawWidth(), Screen::RawHeight());
 		postProcessBuffer.BindAndClear();
-		draw[drawTickTock].Draw();
-		batchDraw[drawTickTock].Draw();
-		PostProcessList::DrawList(player.GetSystem()->Shaders(), postProcessBuffer.BufferTexture());
+
+		PostProcessList::DrawList(player.GetSystem()->Shaders(), drawLayer.BufferTexture());
 
 		FrameBuffer::ResetFrameBuffer();
+		FrameBuffer::Clear();
 		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
 	}
 

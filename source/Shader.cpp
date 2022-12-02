@@ -41,12 +41,8 @@ namespace {
 	{
 		bool hasCached = true;
 		string path = Files::Config() + "shadercache/" + name + ".cache";
-		if(GameData::DebugMode())
-			Logger::LogError("Shader: Checking " + path + " for binary.");
 		struct stat buf;
-		Logger::LogError("Inited buf");
 		hasCached &= !stat(path.c_str(), &buf);
-		Logger::LogError("Has @C-Str");
 		if(hasCached)
 			hasCached &= Files::Timestamp(path) > max(Files::Timestamp(Shader::ShaderPath(name, true, isInBuilt)),
 													Files::Timestamp(Shader::ShaderPath(name, false, isInBuilt)));
@@ -59,13 +55,6 @@ namespace {
 	bool ReadCache(string path, GLuint program)
 	{
 		FILE *bin = Files::Open(path, false);
-//		fseek(bin, 0, SEEK_END);
-//		size_t size = ftell(bin);
-//		fseek(bin, 0, SEEK_SET);
-//
-//		// Read it into a buffer.
-//		const char *buffer = new char[size];
-//		buffer = Files::Read(bin).c_str();
 		vector<unsigned char> buffer;
 		if(!Files::ReadBinary(bin, buffer))
 			return false;
@@ -161,7 +150,6 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 
 	if(!program)
 	{
-		Logger::LogError("No Programs?");
 		throw runtime_error("Creating OpenGL shader program failed.");
 	}
 
@@ -169,9 +157,7 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 
 	if(HasCached(name, isInBuilt))
 	{
-		Logger::LogError("Getting path");
 		string path = Files::Config() + "shadercache/" + name + ".cache";
-		Logger::LogError("Atemting Loading Shader from cache");
 		// Get the binary file from the cache.
 		cached = ReadCache(path, program);
 		if(GameData::DebugMode())
@@ -216,14 +202,12 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 		GLint binaryLength = 0;
 		glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
 
-//		char *binary = new char[binaryLength];
 		vector<unsigned char> binary;
 		binary.resize(static_cast<size_t>(binaryLength));
 
 		GLenum binaryFormat;
 		glGetProgramBinary(program, binaryLength, nullptr, &binaryFormat, binary.data());
 
-		Logger::LogError(name + to_string(binary.size()));
 
 		string path = Files::Config() + "shadercache/" + name + ".cache";
 		Cache(path, binary, binaryFormat);

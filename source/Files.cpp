@@ -605,18 +605,12 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 	size_t bytes;
 	const unsigned char *bufferPtr = data.data();
 
-	Logger::LogError("Opening binary for update, path: " + path);
 	FILE *file = Files::OpenUpdateBinary(path, true);
 	if(file == nullptr)
 		throw runtime_error(strerror(errno));
 	fseek(file, 0, SEEK_SET);
 
-	Logger::LogError(to_string(bytesLeft) + ", " + to_string(data.size()) + ", " + ts(BYTES_TO_WRITE_PER_ITERATION));
-
-	Logger::LogError("Starting writing bytes now to " + path);
-
 	bytes = fwrite(bufferPtr, 1, BYTES_TO_WRITE_PER_ITERATION, file);
-	Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
 	totalBytes += bytes;
 	bytesLeft -= bytes;
 	bufferPtr += bytes;
@@ -632,11 +626,9 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 		totalBytes += bytes;
 		bytesLeft -= bytes;
 		bufferPtr += bytes;
-		Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
 	}
 	fseek(file, totalBytes, SEEK_SET);
 	bytes = fwrite(bufferPtr, 1, bytesLeft, file);
-	Logger::LogError("Wrote " + to_string(bytes) + " bytes.");
 	if(bytesLeft != 0)
 	{
 		Logger::LogError(to_string(bytesLeft));
@@ -645,34 +637,6 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 	{
 		Logger::LogError(to_string(totalBytes));
 	}
-//
-//
-//	size_t multi_write(int fd, const char *buffer, size_t bytes)
-//	{
-//		size_t nb = 0;
-//		size_t nleft = nbytes;
-//		size_t tbytes = 0;
-//
-//		while (nleft > 0 && (nb = write(fd, buffer, nleft)) > 0)
-//		{
-//			tbytes += nb;
-//			buffer += nb;
-//			nleft  -= nb;
-//		}
-//		if (tbytes == 0)
-//			tbytes = nb;
-//		return tbytes;
-//	}
-//
-//
-//
-//	Logger::LogError("Writing to binary file, size: " + to_string(data.size()));
-//	int ret = fwrite(data.data(), 1, data.size(), file);
-//	if (static_cast<size_t>(ret) != data.size())
-//	{
-//		Logger::LogError("Stream error indication: " + to_string(ferror(file)) + ", ret is " + to_string(ret));
-//		Logger::LogError("Short item count");
-//	}
 }
 
 
@@ -683,13 +647,9 @@ bool Files::ReadBinary(FILE *file, vector<unsigned char> &target)
 	size_t size = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	target.resize(size);
-	Logger::LogError(to_string(target.size()));
-	Logger::LogError(to_string(target.capacity()));
-	Logger::LogError(to_string(size));
 	size_t bytes = fread(target.data(), 1, size, file);
-	Logger::LogError(to_string(bytes));
 	if(bytes != target.size())
-		return false;
+		throw runtime_error("Failed to read binary file.");
 	return true;
 }
 
