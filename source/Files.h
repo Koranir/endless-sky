@@ -64,6 +64,7 @@ public:
 	static std::string Name(const std::string &path);
 
 	// File IO.
+	static bool MakeDirectory(const std::string &path);
 	static FILE *Open(const std::string &path, bool write = false);
 	static FILE *OpenUpdateBinary(const std::string &path, bool initializeFile);
 	static std::string Read(const std::string &path);

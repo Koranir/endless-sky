@@ -40,7 +40,7 @@ namespace {
 	bool HasCached(const string name, bool isInBuilt)
 	{
 		bool hasCached = true;
-		string path = Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache";
+		string path = Files::Config() + "shadercache/" + name + ".cache";
 		if(GameData::DebugMode())
 			Logger::LogError("Shader: Checking " + path + " for binary.");
 		struct stat buf;
@@ -170,7 +170,7 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 	if(HasCached(name, isInBuilt))
 	{
 		Logger::LogError("Getting path");
-		string path = Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache";
+		string path = Files::Config() + "shadercache/" + name + ".cache";
 		Logger::LogError("Atemting Loading Shader from cache");
 		// Get the binary file from the cache.
 		cached = ReadCache(path, program);
@@ -225,7 +225,7 @@ void Shader::MakeShader(const string name, bool isInBuilt, bool useShaderSwizzle
 
 		Logger::LogError(name + to_string(binary.size()));
 
-		string path = Files::Shaders() + (isInBuilt ? "inbuilt/" : "") + name + "/" + name + ".cache";
+		string path = Files::Config() + "shadercache/" + name + ".cache";
 		Cache(path, binary, binaryFormat);
 
 		Logger::LogError("Tried to cache " + name + " shader.");

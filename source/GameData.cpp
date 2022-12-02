@@ -66,6 +66,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestData.h"
 #include "UniverseObjects.h"
 
+#include "FrameTimer.h"
+
 #include <algorithm>
 #include <iostream>
 #include <utility>
@@ -181,6 +183,7 @@ void GameData::CheckReferences()
 
 void GameData::LoadShaders(bool useShaderSwizzle)
 {
+	FrameTimer time;
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 
@@ -203,6 +206,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	}
 
 	background.Init(16384, 4096);
+	Logger::LogError(to_string(time.Time()));
 }
 
 

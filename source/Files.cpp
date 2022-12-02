@@ -180,6 +180,12 @@ void Files::Init(const char * const *argv)
 			SDL_free(str);
 	}
 
+	{
+		char *str = SDL_GetPrefPath("endless-sky", "shadercache");
+		if(str != nullptr)
+			SDL_free(str);
+	}
+
 	// Check that all the directories exist.
 	if(!Exists(dataPath) || !Exists(imagePath) || !Exists(soundPath) || !Exists(shaderPath))
 		throw runtime_error("Unable to find the resource directories!");
@@ -530,10 +536,9 @@ FILE *Files::OpenUpdateBinary(const string &path, bool initializeFile)
 	_wfopen_s(&file, Utf8::ToUTF16(path).c_str(), initializeFile ? L"wb" : L"ab+");
 	return file;
 #else
-	Logger::LogError("Opening binary for update, path: " + to_string(path));
-	FILE *file = fopen(path.c_str(), initializeFile ? "wb" : "ab+");
-	if(file == nullptr)
-		throw runtime_error("NULL_PTR ERRORNUM: " + strerror(errno));
+	FILE *file = fopen(path.c_str(), initializeFile ? "wb+" : "ab+");
+//	if(file == nullptr)
+//		throw runtime_error("NULL_PTR ERRORNUM: " + strerror(errno));
 	return file;
 #endif
 }
@@ -600,6 +605,7 @@ void Files::WriteBinary(const string &path, const vector<unsigned char> &data)
 	size_t bytes;
 	const unsigned char *bufferPtr = data.data();
 
+	Logger::LogError("Opening binary for update, path: " + path);
 	FILE *file = Files::OpenUpdateBinary(path, true);
 	if(file == nullptr)
 		throw runtime_error(strerror(errno));
