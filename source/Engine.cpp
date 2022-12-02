@@ -964,14 +964,15 @@ void Engine::Draw() const
 		batchDraw[drawTickTock].Draw();
 
 		// Clear and Bind the Post-Processing buffer
-		postProcessBuffer.UpdateBuffer(Screen::RawWidth(), Screen::RawHeight());
-		postProcessBuffer.BindAndClear();
-
-		PostProcessList::DrawList(player.GetSystem()->Shaders(), drawLayer.BufferTexture());
+//		postProcessBuffer.UpdateBuffer(Screen::RawWidth(), Screen::RawHeight());
+//		postProcessBuffer.BindAndClear();
 
 		FrameBuffer::ResetFrameBuffer();
 		FrameBuffer::Clear();
-		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
+		PostProcessList::DrawList(player.GetSystem()->Shaders(), drawLayer.BufferTexture());
+		drawLayer.RemoveFrameBuffer();
+
+//		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)

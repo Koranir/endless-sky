@@ -76,7 +76,6 @@ bool FrameBufferObject::RemoveFrameBuffer()
 {
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteTextures(1, &bufferTexture);
-	Logger::LogError("Tried to remove" + to_string(fbo));
 	return true;
 }
 
