@@ -70,6 +70,7 @@ private:
 	GLuint elongationI;
 	GLuint translateI;
 	GLuint brightnessI;
+	GLuint layerI;
 };
 
 
