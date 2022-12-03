@@ -136,24 +136,12 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 		glBindVertexArray(vao);
 		
 		float length = vel.Length();
-		Point unit = length ? vel.Unit() : Point(1., 0.);
-		
-		GLfloat rotate[4] = {
-		static_cast<float>(unit.Y()), static_cast<float>(-unit.X()),
-		static_cast<float>(unit.X()), static_cast<float>(unit.Y())};
-		glUniformMatrix2fv(rotateI, 1, false, rotate);
+		Point baseUnit = length ? vel.Unit() : Point(1., 0.);
 		
 		// Stars this far beyond the border may still overlap the screen.
 		double borderX = fabs(vel.X()) + 1.;
 		double borderY = fabs(vel.Y()) + 1.;
-		// Find the absolute bounds of the star field we must draw.
-		int minX = pos.X() + (Screen::Left() - borderX) / zoom;
-		int minY = pos.Y() + (Screen::Top() - borderY) / zoom;
-		int maxX = pos.X() + (Screen::Right() + borderX) / zoom;
-		int maxY = pos.Y() + (Screen::Bottom() + borderY) / zoom;
-		// Round down to the start of the nearest tile.
-		minX &= ~(TILE_SIZE - 1l);
-		minY &= ~(TILE_SIZE - 1l);
+
 
 		for(float pass = 0; pass <= layers; pass++)
 		{
@@ -163,15 +151,29 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 			
 			// Don't zoom the stars at the same rate as the field; otherwise, at the
 			// farthest out zoom they are too small to draw well.
-			unit /= pow(zoom, .75);
+			float unit = baseUnit / pow(zoom, .75);
 
 			float baseZoom = static_cast<float>(2. * zoom);
 			GLfloat scale[2] = {baseZoom / Screen::Width(), -baseZoom / Screen::Height()};
 			glUniform2fv(scaleI, 1, scale);
+			
+			GLfloat rotate[4] = {
+			static_cast<float>(unit.Y()), static_cast<float>(-unit.X()),
+			static_cast<float>(unit.X()), static_cast<float>(unit.Y())};
+			glUniformMatrix2fv(rotateI, 1, false, rotate);
 
 			glUniform1f(elongationI, length * zoom);
 			glUniform1f(brightnessI, min(1., pow(zoom, .5) * pass));
 			glUniform1i(layerI, pass);
+			
+			// Find the absolute bounds of the star field we must draw.
+			int minX = pos.X() + (Screen::Left() - borderX) / zoom;
+			int minY = pos.Y() + (Screen::Top() - borderY) / zoom;
+			int maxX = pos.X() + (Screen::Right() + borderX) / zoom;
+			int maxY = pos.Y() + (Screen::Bottom() + borderY) / zoom;
+			// Round down to the start of the nearest tile.
+			minX &= ~(TILE_SIZE - 1l);
+			minY &= ~(TILE_SIZE - 1l);
 
 			for(int gy = minY; gy < maxY; gy += TILE_SIZE)
 			{
