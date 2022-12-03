@@ -22876,12 +22876,13 @@ system "Sagittarius A*"
 	hazard "Black Hole Gravity" 1
 	shader "gravitationlens"
 		uniform vec2 resolution resolution
-		uniform float radius 4.
+		uniform float radius 7.
 		uniform float accredition 2.5
 		uniform float zoom zoom
 		uniform vec2 center center
 		uniform vec2 position object
 			period 1
+	shader "fakeHDR"
 	object
 		sprite star/black-hole-circle
 		period 1

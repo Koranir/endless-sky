@@ -46,7 +46,7 @@ namespace {
 	// This is how fast the crossfading of previous haze and current haze is
 	const double FADE_PER_FRAME = 0.01;
 	// An additional zoom factor applied to stars/haze on top of the base zoom, to simulate parallax.
-	const double STAR_ZOOM = 0.70;
+	const double STAR_ZOOM = 0.35;
 	const double HAZE_ZOOM = 0.90;
 
 	void AddHaze(DrawList &drawList, const std::vector<Body> &haze,
@@ -154,6 +154,7 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 
 		glUniform1f(elongationI, length * zoom);
 		glUniform1f(brightnessI, min(1., pow(zoom, .5)));
+		glUniform1i(parallaxI, Preferences::Has("Parallax background"));
 
 		// Stars this far beyond the border may still overlap the screen.
 		double borderX = fabs(vel.X()) + 1.;
@@ -236,12 +237,14 @@ void StarField::SetUpGraphics()
 	offsetI = shader.Attrib("offset");
 	sizeI = shader.Attrib("size");
 	cornerI = shader.Attrib("corner");
+	depthI = shader.Attrib("depth");
 
 	scaleI = shader.Uniform("scale");
 	rotateI = shader.Uniform("rotate");
 	elongationI = shader.Uniform("elongation");
 	translateI = shader.Uniform("translate");
 	brightnessI = shader.Uniform("brightness");
+	parallaxI = shader.Uniform("parallax");
 }
 
 
@@ -281,6 +284,7 @@ void StarField::MakeStars(int stars, int width)
 
 	int x = Random::Int(width);
 	int y = Random::Int(width);
+
 	for(int i = 0; i < stars; ++i)
 	{
 		for(int j = 0; j < 10; ++j)
@@ -303,8 +307,8 @@ void StarField::MakeStars(int stars, int width)
 	tileIndex.pop_back();
 	partial_sum(tileIndex.begin(), tileIndex.end(), tileIndex.begin());
 
-	// Each star consists of five vertices, each with four data elements.
-	vector<GLfloat> data(6 * 4 * stars, 0.f);
+	// Each star consists of five vertices, each with five data elements.
+	vector<GLfloat> data(6 * 5 * stars, 0.f);
 	for(auto it = temp.begin(); it != temp.end(); )
 	{
 		// Figure out what tile this star is in.
@@ -316,10 +320,11 @@ void StarField::MakeStars(int stars, int width)
 		int random = Random::Int(4096);
 		float fx = (x & (TILE_SIZE - 1)) + (random & 15) * 0.0625f;
 		float fy = (y & (TILE_SIZE - 1)) + (random >> 8) * 0.0625f;
+		float fz = static_cast<float>(Random::Real());
 		float size = (((random >> 4) & 15) + 20) * 0.0625f;
 
 		// Fill in the data array.
-		auto dataIt = data.begin() + 6 * 4 * tileIndex[index]++;
+		auto dataIt = data.begin() + 6 * 5 * tileIndex[index]++;
 		const float CORNER[6] = {
 			static_cast<float>(0. * PI),
 			static_cast<float>(.5 * PI),
@@ -334,6 +339,7 @@ void StarField::MakeStars(int stars, int width)
 			*dataIt++ = fy;
 			*dataIt++ = size;
 			*dataIt++ = corner;
+			*dataIt++ = fz;
 		}
 	}
 	// Adjust the tile indices so that tileIndex[i] is the start of tile i.
@@ -342,7 +348,7 @@ void StarField::MakeStars(int stars, int width)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(data.front()) * data.size(), data.data(), GL_STATIC_DRAW);
 
 	// Connect the xy to the "vert" attribute of the vertex shader.
-	constexpr auto stride = 4 * sizeof(GLfloat);
+	constexpr auto stride = 5 * sizeof(GLfloat);
 	glEnableVertexAttribArray(offsetI);
 	glVertexAttribPointer(offsetI, 2, GL_FLOAT, GL_FALSE,
 		stride, nullptr);
@@ -354,6 +360,10 @@ void StarField::MakeStars(int stars, int width)
 	glEnableVertexAttribArray(cornerI);
 	glVertexAttribPointer(cornerI, 1, GL_FLOAT, GL_FALSE,
 		stride, reinterpret_cast<const GLvoid *>(3 * sizeof(GLfloat)));
+
+	glEnableVertexAttribArray(depthI);
+	glVertexAttribPointer(depthI, 1, GL_FLOAT, GL_FALSE,
+		stride, reinterpret_cast<const GLvoid *>(4 * sizeof(GLfloat)));
 
 	// unbind the VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

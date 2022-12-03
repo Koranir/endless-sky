@@ -180,10 +180,31 @@ void PostProcessList::RemoveShader(string name)
 
 void PostProcessList::DrawList(const vector<pair<string, vector<pair<string, vector<double>>>>> &shaders, GLuint texture)
 {
+	bool flip = false;
+	bool first = true;
+	int drawn = 0;
+	int size = shaders.size();
+	FrameBufferObject fbo;
+	FrameBufferObject fbo2;
+	fbo.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
+	fbo2.CreateFrameBuffer(FrameBuffer::bufferType::frame, Screen::RawWidth(), Screen::RawHeight());
 	for(const auto &data : shaders)
 	{
-		postProcessList.at(data.first).Draw(texture, data.second);
+		drawn++;
+		if(flip)
+			fbo.BindAndClear();
+		else
+			fbo2.BindAndClear();
+
+		if(drawn == size)
+			FrameBuffer::ResetFrameBuffer();
+
+		postProcessList.at(data.first).Draw(first ? texture : flip ? fbo2.BufferTexture() : fbo.BufferTexture(), data.second);
+		first = false;
+		flip = !flip;
 	}
+	fbo.RemoveFrameBuffer();
+	fbo2.RemoveFrameBuffer();
 }
 
 

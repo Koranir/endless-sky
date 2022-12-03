@@ -994,8 +994,8 @@ void Engine::Draw() const
 //		postProcessBuffer.UpdateBuffer(Screen::RawWidth(), Screen::RawHeight());
 //		postProcessBuffer.BindAndClear();
 
-		FrameBuffer::ResetFrameBuffer();
-		FrameBuffer::Clear();
+//		FrameBuffer::ResetFrameBuffer();
+//		FrameBuffer::Clear();
 		PostProcessList::DrawList(sdfa, drawLayer.BufferTexture());
 		drawLayer.RemoveFrameBuffer();
 

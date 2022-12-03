@@ -64,12 +64,14 @@ private:
 	GLuint offsetI;
 	GLuint sizeI;
 	GLuint cornerI;
+	GLuint depthI;
 
 	GLuint scaleI;
 	GLuint rotateI;
 	GLuint elongationI;
 	GLuint translateI;
 	GLuint brightnessI;
+	GLuint parallaxI;
 };
 
 

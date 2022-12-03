@@ -367,6 +367,10 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 							else
 								sdf.uniforms.emplace_back(grand.Token(2), vector<double>(3), grand.Token(3));
 						}
+						else if(grand.Token(1) == "bool")
+						{
+							sdf.uniforms.emplace_back(grand.Token(2), vector<double>(1), grand.Token(3));
+						}
 					}
 					for(const DataNode &great : grand)
 					{
