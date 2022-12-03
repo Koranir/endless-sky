@@ -158,6 +158,7 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 
 			glUniform1f(elongationI, length * zoom);
 			glUniform1f(brightnessI, min(1., pow(zoom, .5) * pass));
+			glUniform1i(layerI, pass);
 
 			// Stars this far beyond the border may still overlap the screen.
 			double borderX = fabs(vel.X()) + 1.;
@@ -252,13 +253,27 @@ void StarField::SetUpGraphics()
 	static const char *fragmentCode =
 		"// fragment starfield shader\n"
 		"precision mediump float;\n"
+		"uniform int layer;\n"
 		"in float fragmentAlpha;\n"
 		"in vec2 coord;\n"
 		"out vec4 finalColor;\n"
 
 		"void main() {\n"
+		"  vec3 color;\n"
+		"  switch(layer)\n"
+		"  {\n"
+		"  case 0:"
+		"    color = vec3(0.8, 0.8, 1);\n"
+		"    break;\n"
+		"  case 2:"
+		"    color = vec3(0.9, 0.9, 0.9);\n"
+		"    break;\n"
+		"  case 3:"
+		"    color = vec3(1, 0.6, 0.6);\n"
+		"    break;\n"
+		"  }\n"
 		"  float alpha = fragmentAlpha * (1. - abs(coord.x) - abs(coord.y));\n"
-		"  finalColor = vec4(1, 1, 1, 1) * alpha;\n"
+		"  finalColor = vec4(color, 1) * alpha;\n"
 		"}\n";
 
 	shader = Shader(vertexCode, fragmentCode);
@@ -280,6 +295,7 @@ void StarField::SetUpGraphics()
 	elongationI = shader.Uniform("elongation");
 	translateI = shader.Uniform("translate");
 	brightnessI = shader.Uniform("brightness");
+	layerI = shader.Uniform("layer");
 }
 
 
