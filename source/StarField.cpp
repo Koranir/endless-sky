@@ -148,7 +148,7 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 			// Modify zoom for the first parallax layer.
 			if(Preferences::Has("Parallax background"))
 				zoom = baseZoom * STAR_ZOOM * pass / layers;
-			
+
 			// Don't zoom the stars at the same rate as the field; otherwise, at the
 			// farthest out zoom they are too small to draw well.
 			float unit = baseUnit / pow(zoom, .75);
@@ -156,10 +156,10 @@ void StarField::Draw(const Point &pos, const Point &vel, double zoom) const
 			float baseZoom = static_cast<float>(2. * zoom);
 			GLfloat scale[2] = {baseZoom / Screen::Width(), -baseZoom / Screen::Height()};
 			glUniform2fv(scaleI, 1, scale);
-			
+
 			GLfloat rotate[4] = {
-			static_cast<float>(unit.Y()), static_cast<float>(-unit.X()),
-			static_cast<float>(unit.X()), static_cast<float>(unit.Y())};
+				static_cast<float>(unit.Y()), static_cast<float>(-unit.X()),
+				static_cast<float>(unit.X()), static_cast<float>(unit.Y())};
 			glUniformMatrix2fv(rotateI, 1, false, rotate);
 
 			glUniform1f(elongationI, length * zoom);
