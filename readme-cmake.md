@@ -24,7 +24,7 @@ Download Visual Studio, and make sure to install the following features:
 - "C++ clang-cl for vXXX build tools", and 
 - "C++ CMake tools for Windows".
 
-Please note that it is recommened to use VS 2022 (or higher) for its better CMake integration.
+Please note that it is recommended to use VS 2022 (or higher) for its better CMake integration.
 
 ### Windows Build Process
 
