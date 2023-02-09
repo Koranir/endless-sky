@@ -38,11 +38,8 @@ namespace {
 	const string name = "sprite";
 
 	Shader shader;
-	GLint scaleI;
-	GLint frameI;
-	GLint frameCountI;
-	GLint positionI;
-	GLint transformI;
+	GLint clipI;
+	GLint alphaI;
 	GLint blurI;
 	GLint clipI;
 	GLint alphaI;

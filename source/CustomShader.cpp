@@ -50,12 +50,11 @@
 using namespace std;
 
 namespace{
-
 }
 
 
 
-PostProcessShader::PostProcessShader(string name)
+CustomShader::CustomShader(string name)
 	: name(name)
 {
 	LoadShader(name);
@@ -63,17 +62,27 @@ PostProcessShader::PostProcessShader(string name)
 
 
 
-string PostProcessShader::GetName()
+string CustomShader::GetName()
 {
 	return name;
 }
 
 
 
-void PostProcessShader::LoadShader(string name)
+void CustomShader::LoadShader(string name)
 {
 	Logger::LogError("Loading Shader " + name);
 	shader = Shader(name, false, false);
+
+	scaleI = shader.Uniform("scale");
+	frameI = shader.Uniform("frame");
+	frameCountI = shader.Uniform("frameCount");
+	positionI = shader.Uniform("position");
+	transformI = shader.Uniform("transform");
+	blurI = shader.Uniform("blur");
+	clipI = shader.Uniform("clip");
+	alphaI = shader.Uniform("alpha");
+
 	bufferImage = shader.Uniform("bufferTexture");
 
 	// Generate the vertex data for drawing sprites.
@@ -84,9 +93,10 @@ void PostProcessShader::LoadShader(string name)
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 	GLfloat vertexData[] = {
-		-1.f, -1.f,
-		 3.f, -1.f,
-		-1.f,  3.f
+		-.5f, -.5f,
+		-.5f,  .5f,
+		 .5f, -.5f,
+		 .5f,  .5f
 	};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 
@@ -101,7 +111,7 @@ void PostProcessShader::LoadShader(string name)
 
 
 
-void PostProcessShader::Draw(GLuint texture, vector<pair<string, vector<double>>> uniforms)
+void CustomShader::Draw(GLuint texture, vector<pair<string, vector<double>>> uniforms)
 {
 	if(loaded)
 	{
@@ -127,7 +137,17 @@ void PostProcessShader::Draw(GLuint texture, vector<pair<string, vector<double>>
 			}
 		}
 
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+		glUniform1f(frameI, item.frame);
+		glUniform1f(frameCountI, item.frameCount);
+		glUniform2fv(positionI, 1, item.position);
+		glUniformMatrix2fv(transformI, 1, false, item.transform);
+		// Special case: check if the blur should be applied or not.
+		static const float UNBLURRED[2] = {0.f, 0.f};
+		glUniform2fv(blurI, 1, withBlur ? item.blur : UNBLURRED);
+		glUniform1f(clipI, item.clip);
+		glUniform1f(alphaI, item.alpha);
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		glBindVertexArray(0);
 		glUseProgram(0);
@@ -136,7 +156,7 @@ void PostProcessShader::Draw(GLuint texture, vector<pair<string, vector<double>>
 
 
 
-void PostProcessShader::Delete()
+void CustomShader::Delete()
 {
 	glDeleteShader(shader.Object());
 	glDeleteBuffers(1, &vbo);
@@ -145,7 +165,7 @@ void PostProcessShader::Delete()
 
 
 
-GLuint PostProcessShader::GetShader()
+GLuint CustomShader::GetShader()
 {
 	return shader.Object();
 }

@@ -52,6 +52,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Random.h"
 #include "RingShader.h"
 #include "Screen.h"
+#include "ShaderList.h"
 #include "Ship.h"
 #include "ShipEvent.h"
 #include "ShipJumpNavigation.h"
@@ -996,10 +997,10 @@ void Engine::Draw() const
 
 //		FrameBuffer::ResetFrameBuffer();
 //		FrameBuffer::Clear();
-		PostProcessList::DrawList(sdfa, drawLayer.BufferTexture());
+		ShaderList::DrawList(sdfa, drawLayer.BufferTexture());
 		drawLayer.RemoveFrameBuffer();
 
-//		PostProcessList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
+//		ShaderList::DrawList(vector<string>({"passthrough"}), postProcessBuffer.BufferTexture());
 	}
 
 	for(const auto &it : statuses)

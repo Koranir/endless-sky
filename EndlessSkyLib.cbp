@@ -109,6 +109,8 @@
 		<Unit filename="source/ConversationPanel.h" />
 		<Unit filename="source/CoreStartData.cpp" />
 		<Unit filename="source/CoreStartData.h" />
+		<Unit filename="source/CustomShader.cpp" />
+		<Unit filename="source/CustomShader.h" />
 		<Unit filename="source/DamageDealt.h" />
 		<Unit filename="source/DamageProfile.cpp" />
 		<Unit filename="source/DamageProfile.h" />
@@ -303,6 +305,8 @@
 		<Unit filename="source/Set.h" />
 		<Unit filename="source/Shader.cpp" />
 		<Unit filename="source/Shader.h" />
+		<Unit filename="source/ShaderList.cpp" />
+		<Unit filename="source/ShaderList.h" />
 		<Unit filename="source/Ship.cpp" />
 		<Unit filename="source/Ship.h" />
 		<Unit filename="source/ShipEvent.cpp" />

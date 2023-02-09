@@ -11,10 +11,10 @@
 #include "opengl.h"
 #include "SDL2/SDL.h"
 
-class PostProcessShader
+class CustomShader
 {
 public:
-	PostProcessShader(std::string name);
+	CustomShader(std::string name);
 	std::string GetName();
 	void Delete();
 	GLuint GetShader();
@@ -23,6 +23,12 @@ public:
 private:
 	Shader shader;
 	GLint bufferImage;
+
+	GLint clipI;
+	GLint alphaI;
+	GLint blurI;
+	GLint clipI;
+	GLint alphaI;
 
 	GLuint vao;
 	GLuint vbo;

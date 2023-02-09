@@ -54,6 +54,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Politics.h"
 #include "Random.h"
 #include "RingShader.h"
+#include "ShaderList.h"
 #include "Ship.h"
 #include "Sprite.h"
 #include "SpriteQueue.h"
@@ -202,7 +203,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 
 	for(const string name : FindShaders())
 	{
-		PostProcessList::AddShader(name);
+		ShaderList::AddShader(name);
 	}
 
 	background.Init(16384, 4096);
