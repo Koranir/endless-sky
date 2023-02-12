@@ -38,21 +38,22 @@ bool ShaderCache::ReadCache(const string &name, GLuint program)
 	fseek(cacheFile, 0, SEEK_SET);
 
 	vector<char> data;
-	data.reserve(cacheFileSize);
+	data.reserve(cacheFileSize * sizeof(char));
 
-	Logger::LogError("Reading cache from file " + cachePath + " with size of " + to_string(cacheFileSize));
-	size_t result = fread(data.data(), 1, cacheFileSize, cacheFile);
+	Logger::LogError("Reading cache from file " + cachePath + " with size of " + to_string(cacheFileSize * sizeof(char)));
+	size_t result = fread(data.data(), sizeof(char), cacheFileSize, cacheFile);
 
 	fclose(cacheFile);
 
 	if(!(cacheFileSize == result))
 	{
-		Logger::LogError("Error reading file " + cachePath);
+		Logger::LogError("Error reading file " + cachePath + " that should have had size of " + to_string(cacheFileSize) + " but had size read of " + to_string(result));
 		return false;
 	}
 
 	// Glenum is 4 bytes
 	GLenum format = *(reinterpret_cast<GLenum *>(data.data()));
+	Logger::LogError(to_string(static_cast<int>(format)));
 
 	glProgramBinary(program, format, data.data() + sizeof(GLenum), cacheFileSize - sizeof(GLenum));
 
@@ -80,6 +81,8 @@ bool ShaderCache::WriteCache(const string &name, GLuint program)
 	
 	glGetProgramBinary(program, programSize, &bytesWritten, &programBinaryFormat, data.data() + sizeof(GLenum));
 
+	Logger::LogError(to_string(static_cast<int>(programBinaryFormat)));
+
 	if(!(bytesWritten == programSize))
 		return false;
 
@@ -92,8 +95,7 @@ bool ShaderCache::WriteCache(const string &name, GLuint program)
 	fseek(cacheFile, 0, SEEK_SET);
 
 	Logger::LogError("Writing cache to file " + cachePath + " with size of " + to_string(programSize + sizeof(char)));
-	fwrite(data.data(), sizeof(char), programSize + sizeof(char), cacheFile);
-	Logger::LogError(data.data());
+	fwrite(data.data(), sizeof(char), programSize + sizeof(GLenum), cacheFile);
 
 
 	fclose(cacheFile);
@@ -110,7 +112,7 @@ GLint ShaderCache::CacheFormats()
 
 bool ShaderCache::CanCache()
 {
-	if(!(CacheFormats() < 1))
+	if((CacheFormats() < 1))
 	{
 		Logger::LogError("Driver does not support binary formats");
 		return false;
