@@ -40,7 +40,8 @@ bool ShaderCache::ReadCache(const string &name, GLuint program)
 	vector<char> data;
 	data.reserve(cacheFileSize * sizeof(char));
 
-	Logger::LogError("Reading cache from file " + cachePath + " with size of " + to_string(cacheFileSize * sizeof(char)));
+	// TODO: Log this when debug mode is enabled.
+	// Logger::LogError("Reading cache from file " + cachePath + " with size of " + to_string(cacheFileSize * sizeof(char)));
 	size_t result = fread(data.data(), sizeof(char), cacheFileSize, cacheFile);
 
 	fclose(cacheFile);
@@ -53,12 +54,16 @@ bool ShaderCache::ReadCache(const string &name, GLuint program)
 
 	// Glenum is 4 bytes
 	GLenum format = *(reinterpret_cast<GLenum *>(data.data()));
-	Logger::LogError(to_string(static_cast<int>(format)));
 
 	glProgramBinary(program, format, data.data() + sizeof(GLenum), cacheFileSize - sizeof(GLenum));
 
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if(status == GL_FALSE)
+	{
+		Logger::LogError("Shader cache at " + cachePath + " failed to link, falling back.");
+		return false;
+	}
 
 	return true;
 }
@@ -81,8 +86,6 @@ bool ShaderCache::WriteCache(const string &name, GLuint program)
 	
 	glGetProgramBinary(program, programSize, &bytesWritten, &programBinaryFormat, data.data() + sizeof(GLenum));
 
-	Logger::LogError(to_string(static_cast<int>(programBinaryFormat)));
-
 	if(!(bytesWritten == programSize))
 		return false;
 
@@ -94,7 +97,9 @@ bool ShaderCache::WriteCache(const string &name, GLuint program)
 	cacheFile = fopen(cachePath.c_str(), "wb");
 	fseek(cacheFile, 0, SEEK_SET);
 
-	Logger::LogError("Writing cache to file " + cachePath + " with size of " + to_string(programSize + sizeof(char)));
+	// TODO: Log this when debug mode is enabled.
+	// Logger::LogError("Writing cache to file " + cachePath + " with size of " + to_string(programSize + sizeof(char)));
+
 	fwrite(data.data(), sizeof(char), programSize + sizeof(GLenum), cacheFile);
 
 
@@ -114,7 +119,6 @@ bool ShaderCache::CanCache()
 {
 	if((CacheFormats() < 1))
 	{
-		Logger::LogError("Driver does not support binary formats");
 		return false;
 	}
 	return true;
