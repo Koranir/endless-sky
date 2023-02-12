@@ -56,13 +56,6 @@ bool ShaderCache::ReadCache(const string &name, GLuint program)
 
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if(status == GL_FALSE)
-	{
-		Logger::LogError("Reading shadercache at " + cachePath + " failed.");
-		glDeleteProgram(program);
-		program = glCreateProgram();
-		return false;
-	}
 
 	return true;
 }
@@ -98,6 +91,8 @@ bool ShaderCache::WriteCache(const string &name, GLuint program)
 
 	Logger::LogError("Writing cache to file " + cachePath + " with size of " + to_string(programSize + sizeof(char)));
 	fwrite(data.data(), sizeof(char), programSize + sizeof(char), cacheFile);
+	Logger::LogError(data.data());
+
 
 	fclose(cacheFile);
 
@@ -113,5 +108,10 @@ GLint ShaderCache::CacheFormats()
 
 bool ShaderCache::CanCache()
 {
-	return (CacheFormats() > 0);
+	if(!(CacheFormats() < 1))
+	{
+		Logger::LogError("Driver does not support binary formats");
+		return false;
+	}
+	return true;
 }
