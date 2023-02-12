@@ -174,6 +174,9 @@ int main(int argc, char *argv[])
 		timeBeginPeriod(1);
 #endif
 
+		clock_t start, end;
+		start = clock();
+
 		Preferences::Load();
 
 		// Load global conditions:
@@ -196,6 +199,11 @@ int main(int argc, char *argv[])
 		{
 			Audio::SetVolume(0);
 		}
+
+		end = clock();
+		double time_taken = static_cast<double>(end - start) / double(CLOCKS_PER_SEC);
+		Logger::LogError("Loaded in " + to_string(time_taken) + " seconds.");
+
 
 		// This is the main loop where all the action begins.
 		GameLoop(player, conversation, testToRunName, debugMode);
