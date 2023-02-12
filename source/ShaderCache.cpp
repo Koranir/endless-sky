@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS true
+
 #include "ShaderCache.h"
 
 #include "Files.h"

@@ -36,6 +36,7 @@ Shader::Shader(const char *vertex, const char *fragment, const string &name)
 
 	if(!ShaderCache::ReadCache(name, program))
 	{
+		Logger::LogError("Shader cache read failed, falling back to compiling.");
 		GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
 		GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
 
@@ -47,7 +48,10 @@ Shader::Shader(const char *vertex, const char *fragment, const string &name)
 		glDetachShader(program, vertexShader);
 		glDetachShader(program, fragmentShader);
 
-		ShaderCache::WriteCache(name, program);
+		if(!ShaderCache::WriteCache(name, program))
+		{
+			Logger::LogError("Shader caching failed");
+		}
 	}
 	
 	GLint status;
