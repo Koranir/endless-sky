@@ -71,7 +71,7 @@ void LineShader::Init()
 		"  finalColor = color * alpha;\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "LineShader");
 	scaleI = shader.Uniform("scale");
 	startI = shader.Uniform("start");
 	lengthI = shader.Uniform("len");

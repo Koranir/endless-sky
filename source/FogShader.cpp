@@ -93,7 +93,7 @@ void FogShader::Init()
 		"}\n";
 
 	// Compile the shader and store indices to its variables.
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "FogShader");
 	cornerI = shader.Uniform("corner");
 	dimensionsI = shader.Uniform("dimensions");
 

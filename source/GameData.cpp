@@ -64,6 +64,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestData.h"
 #include "UniverseObjects.h"
 
+#include <chrono>
+#include "Logger.h"
+#include <string>
+
 #include <algorithm>
 #include <iostream>
 #include <utility>
@@ -169,6 +173,9 @@ void GameData::CheckReferences()
 
 void GameData::LoadShaders(bool useShaderSwizzle)
 {
+	clock_t start, end;
+	start = clock();
+
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 
@@ -184,6 +191,10 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	RingShader::Init();
 	SpriteShader::Init(useShaderSwizzle);
 	BatchShader::Init();
+
+	end = clock();
+	double time_taken = static_cast<double>(end - start) / double(CLOCKS_PER_SEC);
+	Logger::LogError(to_string(time_taken));
 
 	background.Init(16384, 4096);
 }

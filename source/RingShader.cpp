@@ -88,7 +88,7 @@ void RingShader::Init()
 		"  finalColor = color * alpha;\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "RingShader");
 	scaleI = shader.Uniform("scale");
 	positionI = shader.Uniform("position");
 	radiusI = shader.Uniform("radius");

@@ -97,7 +97,8 @@ void Font::Load(const string &imagePath)
 
 	LoadTexture(image);
 	CalculateAdvances(image);
-	SetUpShader(image.Width() / GLYPHS, image.Height());
+	string shaderName = imagePath.substr(imagePath.find_last_of("/\\") + 1);
+	SetUpShader(image.Width() / GLYPHS, image.Height(), shaderName);
 	widthEllipses = WidthRawString("...");
 }
 
@@ -333,12 +334,12 @@ void Font::CalculateAdvances(ImageBuffer &image)
 
 
 
-void Font::SetUpShader(float glyphW, float glyphH)
+void Font::SetUpShader(float glyphW, float glyphH, string name)
 {
 	glyphW *= .5f;
 	glyphH *= .5f;
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, name);
 	glUseProgram(shader.Object());
 	glUniform1i(shader.Uniform("tex"), 0);
 	glUseProgram(0);

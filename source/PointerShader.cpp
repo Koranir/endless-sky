@@ -78,7 +78,7 @@ void PointerShader::Init()
 		"  finalColor = color * alpha;\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "PointerShader");
 	scaleI = shader.Uniform("scale");
 	centerI = shader.Uniform("center");
 	angleI = shader.Uniform("angle");

@@ -115,7 +115,7 @@ void OutlineShader::Init()
 		"  finalColor = color * sqrt(sum / 180.f);\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "OutlineShader");
 	scaleI = shader.Uniform("scale");
 	offI = shader.Uniform("off");
 	transformI = shader.Uniform("transform");

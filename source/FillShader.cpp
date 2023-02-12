@@ -60,7 +60,7 @@ void FillShader::Init()
 		"  finalColor = color;\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "FillShader");
 	scaleI = shader.Uniform("scale");
 	centerI = shader.Uniform("center");
 	sizeI = shader.Uniform("size");

@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Shader.h"
 
+#include "ShaderCache.h"
 #include "Logger.h"
 
 #include <cctype>
@@ -27,23 +28,28 @@ using namespace std;
 
 
 
-Shader::Shader(const char *vertex, const char *fragment)
+Shader::Shader(const char *vertex, const char *fragment, const string &name)
 {
-	GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
-	GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
-
 	program = glCreateProgram();
 	if(!program)
 		throw runtime_error("Creating OpenGL shader program failed.");
 
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
+	if(!ShaderCache::ReadCache(name, program))
+	{
+		GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
+		GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
 
-	glLinkProgram(program);
+		glAttachShader(program, vertexShader);
+		glAttachShader(program, fragmentShader);
 
-	glDetachShader(program, vertexShader);
-	glDetachShader(program, fragmentShader);
+		glLinkProgram(program);
 
+		glDetachShader(program, vertexShader);
+		glDetachShader(program, fragmentShader);
+
+		ShaderCache::WriteCache(name, program);
+	}
+	
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
 	if(status == GL_FALSE)

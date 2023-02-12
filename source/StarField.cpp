@@ -272,7 +272,7 @@ void StarField::SetUpGraphics()
 		"  finalColor = vec4(1, 1, 1, 1) * alpha;\n"
 		"}\n";
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "StarFieldShader");
 
 	// make and bind the VAO
 	glGenVertexArrays(1, &vao);

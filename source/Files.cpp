@@ -49,6 +49,7 @@ namespace {
 	string imagePath;
 	string soundPath;
 	string savePath;
+	string cachePath;
 	string testPath;
 
 	File errorLog;
@@ -154,6 +155,18 @@ void Files::Init(const char * const *argv)
 		if(savePath.back() != '/')
 			savePath += '/';
 		config = savePath.substr(0, savePath.rfind('/', savePath.length() - 2) + 1);
+
+		str = SDL_GetPrefPath("endless-sky", "shadercache");
+		if(!str)
+			throw runtime_error("Unable to get path to shader cache directory!");
+
+		cachePath = str;
+#if defined _WIN32
+		FixWindowsSlashes(cachePath);
+#endif
+		SDL_free(str);
+		if(cachePath.back() != '/')
+			cachePath += '/';
 	}
 	else
 	{
@@ -163,6 +176,7 @@ void Files::Init(const char * const *argv)
 		if(config.back() != '/')
 			config += '/';
 		savePath = config + "saves/";
+		cachePath = config + "shadercache/";
 	}
 
 	// Create the "plugins" directory if it does not yet exist, so that it is
@@ -220,6 +234,11 @@ const string &Files::Sounds()
 const string &Files::Saves()
 {
 	return savePath;
+}
+
+const std::string &Files::Cache()
+{
+	return cachePath;
 }
 
 

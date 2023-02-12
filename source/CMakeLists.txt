@@ -375,4 +375,4 @@ target_sources(EndlessSkyLib PRIVATE
 	text/alignment.hpp
 	text/layout.hpp
 	text/truncate.hpp
-)
+ "ShaderCache.cpp" "ShaderCache.h")

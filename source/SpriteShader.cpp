@@ -258,7 +258,7 @@ void SpriteShader::Init(bool useShaderSwizzle)
 	static const string fragmentCodeString = fragmentCodeStream.str();
 	static const char *fragmentCode = fragmentCodeString.c_str();
 
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "SpriteShader");
 	scaleI = shader.Uniform("scale");
 	frameI = shader.Uniform("frame");
 	frameCountI = shader.Uniform("frameCount");

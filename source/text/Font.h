@@ -63,7 +63,7 @@ private:
 	static int Glyph(char c, bool isAfterSpace) noexcept;
 	void LoadTexture(ImageBuffer &image);
 	void CalculateAdvances(ImageBuffer &image);
-	void SetUpShader(float glyphW, float glyphH);
+	void SetUpShader(float glyphW, float glyphH, std::string name);
 
 	int WidthRawString(const char *str, char after = ' ') const noexcept;
 

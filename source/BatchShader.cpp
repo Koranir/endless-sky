@@ -75,7 +75,7 @@ void BatchShader::Init()
 		"}\n";
 
 	// Compile the shaders.
-	shader = Shader(vertexCode, fragmentCode);
+	shader = Shader(vertexCode, fragmentCode, "BatchShader");
 	// Get the indices of the uniforms and attributes.
 	scaleI = shader.Uniform("scale");
 	frameCountI = shader.Uniform("frameCount");
