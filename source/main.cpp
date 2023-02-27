@@ -128,6 +128,9 @@ int main(int argc, char *argv[])
 	Files::Init(argv);
 
 	try {
+		clock_t start, end;
+		start = clock();
+
 		// Load plugin preferences before game data if any.
 		Plugins::LoadSettings();
 
@@ -177,9 +180,6 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
 		timeBeginPeriod(1);
 #endif
-
-		clock_t start, end;
-		start = clock();
 
 		Preferences::Load();
 

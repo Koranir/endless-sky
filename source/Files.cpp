@@ -47,6 +47,7 @@ namespace {
 
 	string dataPath;
 	string imagePath;
+	string shaderPath;
 	string soundPath;
 	string savePath;
 	string cachePath;
@@ -137,6 +138,7 @@ void Files::Init(const char * const *argv)
 	}
 	dataPath = resources + "data/";
 	imagePath = resources + "images/";
+	shaderPath = resources + "shaders/";
 	soundPath = resources + "sounds/";
 
 	if(config.empty())
@@ -220,6 +222,13 @@ const string &Files::Data()
 const string &Files::Images()
 {
 	return imagePath;
+}
+
+
+
+const string &Files::Shaders()
+{
+	return shaderPath;
 }
 
 
