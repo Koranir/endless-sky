@@ -49,17 +49,16 @@ void FillShader::Init()
 		"  gl_Position = vec4((center + vert * size) * scale, 0, 1);\n"
 		"}\n";
 
-	static const char *fragmentCode = R"V0G0N(
-// fragment fill shader
-precision mediump float;
-uniform vec4 color;
+	static const char *fragmentCode =
+		"// fragment fill shader\n"
+		"precision mediump float;\n"
+		"uniform vec4 color;\n"
 
-out vec4 finalColor;
+		"out vec4 finalColor;\n"
 
-void main() {
-	finalColor = color;
-}
-)V0G0N";
+		"void main() {\n"
+		"  finalColor = color;\n"
+		"}\n";
 
 	shader = Shader(vertexCode, fragmentCode, "FillShader");
 	scaleI = shader.Uniform("scale");
