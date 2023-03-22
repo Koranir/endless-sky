@@ -466,8 +466,13 @@ bool OutfitterPanel::CanBuy(bool checkAlreadyOwned) const
 		return false;
 	cost += licenseCost;
 	// If you have this in your cargo hold or in planetary storage, installing it is free.
-	if(cost > player.Accounts().Credits() && !isAlreadyOwned)
-		return false;
+	if(cost > player.Accounts().Credits())
+	{
+		if(!isAlreadyOwned)
+			return false;
+	}
+	else if(targetDropdownIndex == static_cast<int>(OutfitTarget::STORE))
+		return true;
 
 	if(HasLicense(selectedOutfit->TrueName()))
 		return false;
@@ -476,10 +481,7 @@ bool OutfitterPanel::CanBuy(bool checkAlreadyOwned) const
 	{
 		double mass = selectedOutfit->Mass();
 		return (!mass || player.Cargo().FreePrecise() >= mass);
-	}
-
-	if(targetDropdownIndex == static_cast<int>(OutfitTarget::STORE))
-		return true;
+	}	
 
 	for(const Ship *ship : playerShips)
 		if(ShipCanBuy(ship, selectedOutfit))
