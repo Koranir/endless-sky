@@ -324,47 +324,50 @@ bool ShipyardPanel::CanSell(bool toStorage) const
 
 void ShipyardPanel::Sell(bool toStorage)
 {
-	static const int MAX_LIST = 20;
-
-	int count = playerShips.size();
-	int initialCount = count;
-	string message = "Sell the ";
-	if(count == 1)
-		message += playerShip->Name();
-	else if(count <= MAX_LIST)
+	if(CanSell(toStorage))
 	{
-		auto it = playerShips.begin();
-		message += (*it++)->Name();
-		--count;
+		static const int MAX_LIST = 20;
 
+		int count = playerShips.size();
+		int initialCount = count;
+		string message = "Sell the ";
 		if(count == 1)
-			message += " and ";
+			message += playerShip->Name();
+		else if(count <= MAX_LIST)
+		{
+			auto it = playerShips.begin();
+			message += (*it++)->Name();
+			--count;
+
+			if(count == 1)
+				message += " and ";
+			else
+			{
+				while(count-- > 1)
+					message += ",\n" + (*it++)->Name();
+				message += ",\nand ";
+			}
+			message += (*it)->Name();
+		}
 		else
 		{
-			while(count-- > 1)
-				message += ",\n" + (*it++)->Name();
-			message += ",\nand ";
-		}
-		message += (*it)->Name();
-	}
-	else
-	{
-		auto it = playerShips.begin();
-		message += (*it++)->Name() + ",\n";
-		for(int i = 1; i < MAX_LIST - 1; ++i)
+			auto it = playerShips.begin();
 			message += (*it++)->Name() + ",\n";
+			for(int i = 1; i < MAX_LIST - 1; ++i)
+				message += (*it++)->Name() + ",\n";
 
-		message += "and " + to_string(count - (MAX_LIST - 1)) + " other ships";
+			message += "and " + to_string(count - (MAX_LIST - 1)) + " other ships";
+		}
+		// To allow calculating the sale price of all the ships in the list,
+		// temporarily copy into a shared_ptr vector:
+		vector<shared_ptr<Ship>> toSell;
+		for(const auto &it : playerShips)
+			toSell.push_back(it->shared_from_this());
+		int64_t total = player.FleetDepreciation().Value(toSell, day);
+
+		message += ((initialCount > 2) ? "\nfor " : " for ") + Format::CreditString(total) + "?";
+		GetUI()->Push(new Dialog(this, &ShipyardPanel::SellShip, message, Truncate::MIDDLE));
 	}
-	// To allow calculating the sale price of all the ships in the list,
-	// temporarily copy into a shared_ptr vector:
-	vector<shared_ptr<Ship>> toSell;
-	for(const auto &it : playerShips)
-		toSell.push_back(it->shared_from_this());
-	int64_t total = player.FleetDepreciation().Value(toSell, day);
-
-	message += ((initialCount > 2) ? "\nfor " : " for ") + Format::CreditString(total) + "?";
-	GetUI()->Push(new Dialog(this, &ShipyardPanel::SellShip, message, Truncate::MIDDLE));
 }
 
 

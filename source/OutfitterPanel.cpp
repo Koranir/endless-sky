@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "text/Format.h"
+#include "FillShader.h"
 #include "GameData.h"
 #include "Hardpoint.h"
 #include "text/layout.hpp"
@@ -45,6 +46,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace {
+	static const vector<string> OutfitTargets = { "Install to ship", "Move to cargo", "Move to storage" };
+	static const vector<int> quantityTargets = { 1, 5, 10, 20, 50, 100, 250, 500, 1000, 2500, 5000 };
+
 	// Determine the refillable ammunition a particular ship consumes or stores.
 	set<const Outfit *> GetRefillableAmmunition(const Ship &ship) noexcept
 	{
@@ -94,12 +98,20 @@ OutfitterPanel::OutfitterPanel(PlayerInfo &player)
 
 	if(player.GetPlanet())
 		outfitter = player.GetPlanet()->Outfitter();
+
+	BUTTON_HEIGHT = 90;
 }
 
 
 
 void OutfitterPanel::Step()
 {
+	if(oldMod != Modifier())
+	{
+		quantity = Modifier();
+		oldMod = Modifier();
+	}
+
 	CheckRefill();
 	ShopPanel::Step();
 	ShopPanel::CheckForMissions(Mission::OUTFITTER);
@@ -335,6 +347,102 @@ int OutfitterPanel::DrawDetails(const Point &center)
 	return heightOffset;
 }
 
+void OutfitterPanel::DrawButtons()
+{
+	// The last 70 pixels on the end of the side panel are for the buttons:
+	Point buttonSize(SIDEBAR_WIDTH, BUTTON_HEIGHT);
+	FillShader::Fill(Screen::BottomRight() - .5 * buttonSize, buttonSize,
+		*GameData::Colors().Get("shop side panel background"));
+	FillShader::Fill(
+		Point(Screen::Right() - SIDEBAR_WIDTH / 2, Screen::Bottom() - BUTTON_HEIGHT),
+		Point(SIDEBAR_WIDTH, 1), *GameData::Colors().Get("shop side panel footer"));
+
+	const Font &font = FontSet::Get(14);
+	const Color &bright = *GameData::Colors().Get("bright");
+	const Color &dim = *GameData::Colors().Get("medium");
+	const Color &back = *GameData::Colors().Get("panel background");
+
+	const Point creditsPoint(
+		Screen::Right() - SIDEBAR_WIDTH + 10,
+		Screen::Bottom() - 85);
+	font.Draw("You have:", creditsPoint, dim);
+
+	const auto credits = Format::CreditString(player.Accounts().Credits());
+	font.Draw({ credits, {SIDEBAR_WIDTH - 20, Alignment::RIGHT} }, creditsPoint, bright);
+
+	const Point outfitQuantityPoint(
+		Screen::Right() - SIDEBAR_WIDTH + 10,
+		Screen::Bottom() - 65);
+	font.Draw("Quantity:", outfitQuantityPoint, dim);
+
+	const Point outFitQuantityCenter = outfitQuantityPoint + Point(90, 8);
+	// FillShader::Fill(outFitQuantityCenter, Point(50, 16), dim);
+	FillShader::Fill(outFitQuantityCenter, Point(48, 14), back);
+	AddZone(Rectangle(outFitQuantityCenter, Point(50, 16)), [this](){ QuantityDropdown(-1); });
+	font.Draw({ to_string(quantity), {SIDEBAR_WIDTH - 140, Alignment::RIGHT} }, outfitQuantityPoint, bright);
+
+	const Point outfitTargetCenter = outFitQuantityCenter + Point(86, 0);
+	// FillShader::Fill(outfitTargetCenter, Point(110, 16), targetDropdown ? bright : dim);
+	FillShader::Fill(outfitTargetCenter, Point(108, 14), back);
+	AddZone(Rectangle(outfitTargetCenter, Point(50, 16)), [this](){ TargetDropdown(-1); });
+	font.Draw({ OutfitTargets[targetDropdownIndex], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint, bright);
+
+	if(quantityDropdown)
+	{
+		AddZone(Rectangle(Point(), Screen::Dimensions()), [this](){ QuantityDropdown(quantity); });
+		for(int i = 0; i < quantityTargets.size(); i++)
+		{
+			const Point center = outFitQuantityCenter - Point(0, 15 + (15 * i));
+			// const Point point = outfitQuantityPoint + Point(0, 15)
+			FillShader::Fill(center, Point(50, 16), bright);
+			FillShader::Fill(center, Point(48, 14), back);
+			AddZone(Rectangle(center, Point(50, 16)), [this, i](){ QuantityDropdown(quantityTargets[i]); });
+			font.Draw({ to_string(quantityTargets[i]), {SIDEBAR_WIDTH - 140, Alignment::RIGHT} }, outfitQuantityPoint - Point(0, 15 + (15 * i)), dim);
+		}
+		// TODO: Double-Clicking the quantity box should allow you to manually enter a value.
+	}
+	if(targetDropdown)
+	{
+		AddZone(Rectangle(Point(), Screen::Dimensions()), [this](){ TargetDropdown(targetDropdownIndex); });
+		for(int i = 0; i < OutfitTargets.size(); i++)
+		{
+			const Point center = outfitTargetCenter - Point(0, 15 + (15 * i));
+			// const Point point = outfitQuantityPoint + Point(0, 15)
+			FillShader::Fill(center, Point(110, 16), bright);
+			FillShader::Fill(center, Point(108, 14), back);
+			AddZone(Rectangle(center, Point(110, 16)), [this, i](){ TargetDropdown(i); });
+			font.Draw({ OutfitTargets[i], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint - Point(0, 15 + (15 * i)), dim);
+		}
+		// TODO: Double-Clicking the quantity box should allow you to manually enter a value.
+	}
+
+	const Font &bigFont = FontSet::Get(18);
+	const Color &hover = *GameData::Colors().Get("hover");
+	const Color &active = *GameData::Colors().Get("active");
+	const Color &inactive = *GameData::Colors().Get("inactive");
+
+	const Point buyCenter = Screen::BottomRight() - Point(210, 25);
+	FillShader::Fill(buyCenter, Point(60, 30), back);
+	string BUY = IsAlreadyOwned() ? (playerShip ? "_Install" : "_Cargo") : "_Buy";
+	bigFont.Draw(BUY,
+		buyCenter - .5 * Point(bigFont.Width(BUY), bigFont.Height()),
+		CanBuy() ? hoverButton == 'b' ? hover : active : inactive);
+
+	const Point sellCenter = Screen::BottomRight() - Point(130, 25);
+	FillShader::Fill(sellCenter, Point(60, 30), back);
+	static const string SELL = "_Sell";
+	bigFont.Draw(SELL,
+		sellCenter - .5 * Point(bigFont.Width(SELL), bigFont.Height()),
+		CanSell() ? hoverButton == 's' ? hover : active : inactive);
+
+	const Point leaveCenter = Screen::BottomRight() - Point(45, 25);
+	FillShader::Fill(leaveCenter, Point(70, 30), back);
+	static const string LEAVE = "_Leave";
+	bigFont.Draw(LEAVE,
+		leaveCenter - .5 * Point(bigFont.Width(LEAVE), bigFont.Height()),
+		hoverButton == 'l' ? hover : active);
+}
+
 
 
 bool OutfitterPanel::CanBuy(bool checkAlreadyOwned) const
@@ -364,11 +472,14 @@ bool OutfitterPanel::CanBuy(bool checkAlreadyOwned) const
 	if(HasLicense(selectedOutfit->TrueName()))
 		return false;
 
-	if(!playerShip)
+	if(!playerShip || (targetDropdownIndex == static_cast<int>(OutfitTarget::CARGO)))
 	{
 		double mass = selectedOutfit->Mass();
 		return (!mass || player.Cargo().FreePrecise() >= mass);
 	}
+
+	if(targetDropdownIndex == static_cast<int>(OutfitTarget::STORE))
+		return true;
 
 	for(const Ship *ship : playerShips)
 		if(ShipCanBuy(ship, selectedOutfit))
@@ -391,8 +502,7 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 				playerConditions.Set("license: " + licenseName, true);
 	}
 
-	int modifier = Modifier();
-	for(int i = 0; i < modifier && CanBuy(alreadyOwned); ++i)
+	for(int i = 0; i < quantity && CanBuy(alreadyOwned); ++i)
 	{
 		// Special case: maps.
 		int mapSize = selectedOutfit->Get("map");
@@ -421,7 +531,19 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 		}
 
 		// Buying into cargo, either from storage or from stock/supply.
-		if(!playerShip)
+		if(targetDropdownIndex == static_cast<int>(OutfitTarget::STORE))
+		{
+			CargoHold *storage = player.Storage(true);
+			// Check if the outfit is for sale or in stock so that we can actually buy it.
+			if((!outfitter.Has(selectedOutfit) && player.Stock(selectedOutfit) <= 0 || !storage))
+				continue;
+			storage->Add(selectedOutfit);
+			int64_t price = player.StockDepreciation().Value(selectedOutfit, day);
+			player.Accounts().AddCredits(-price);
+			player.AddStock(selectedOutfit, -1);
+			continue;
+		}
+		else if(!playerShip || targetDropdownIndex == static_cast<int>(OutfitTarget::CARGO))
 		{
 			if(alreadyOwned)
 			{
@@ -640,54 +762,21 @@ bool OutfitterPanel::CanSell(bool toStorage) const
 
 void OutfitterPanel::Sell(bool toStorage)
 {
-	// Retrieve the players storage. If we want to store to storage, then
-	// we also request storage to be created if possible.
-	// Will be nullptr if no storage is available.
-	CargoHold *storage = player.Storage(toStorage);
-
-	if(player.Cargo().Get(selectedOutfit))
+	for(int i = 0; i < quantity && CanSell(toStorage); ++i)
 	{
-		player.Cargo().Remove(selectedOutfit);
-		if(toStorage && storage && storage->Add(selectedOutfit))
-		{
-			// Transfer to planetary storage completed.
-			// The storage->Add() function should never fail as long as
-			// planetary storage has unlimited size.
-		}
-		else
-		{
-			int64_t price = player.FleetDepreciation().Value(selectedOutfit, day);
-			player.Accounts().AddCredits(price);
-			player.AddStock(selectedOutfit, 1);
-		}
-		return;
-	}
+		// Retrieve the players storage. If we want to store to storage, then
+		// we also request storage to be created if possible.
+		// Will be nullptr if no storage is available.
+		CargoHold *storage = player.Storage(toStorage);
 
-	// Get the ships that have the most of this outfit installed.
-	// If there are no ships that have this outfit, then sell from storage.
-	const vector<Ship *> shipsToOutfit = GetShipsToOutfit();
-
-	if(shipsToOutfit.size() > 0)
-	{
-		for(Ship *ship : shipsToOutfit)
+		if(player.Cargo().Get(selectedOutfit))
 		{
-			ship->AddOutfit(selectedOutfit, -1);
-			if(selectedOutfit->Get("required crew"))
-				ship->AddCrew(-selectedOutfit->Get("required crew"));
-			ship->Recharge();
-
+			player.Cargo().Remove(selectedOutfit);
 			if(toStorage && storage && storage->Add(selectedOutfit))
 			{
 				// Transfer to planetary storage completed.
-			}
-			else if(toStorage)
-			{
-				// No storage available; transfer to cargo even if it
-				// would exceed the cargo capacity.
-				int size = player.Cargo().Size();
-				player.Cargo().SetSize(-1);
-				player.Cargo().Add(selectedOutfit);
-				player.Cargo().SetSize(size);
+				// The storage->Add() function should never fail as long as
+				// planetary storage has unlimited size.
 			}
 			else
 			{
@@ -695,39 +784,75 @@ void OutfitterPanel::Sell(bool toStorage)
 				player.Accounts().AddCredits(price);
 				player.AddStock(selectedOutfit, 1);
 			}
+			continue;
+		}
 
-			const Outfit *ammo = selectedOutfit->Ammo();
-			if(ammo && ship->OutfitCount(ammo))
+		// Get the ships that have the most of this outfit installed.
+		// If there are no ships that have this outfit, then sell from storage.
+		const vector<Ship *> shipsToOutfit = GetShipsToOutfit();
+
+		if(shipsToOutfit.size() > 0)
+		{
+			for(Ship *ship : shipsToOutfit)
 			{
-				// Determine how many of this ammo I must sell to also sell the launcher.
-				int mustSell = 0;
-				for(const pair<const char *, double> &it : ship->Attributes().Attributes())
-					if(it.second < 0.)
-						mustSell = max<int>(mustSell, it.second / ammo->Get(it.first));
+				ship->AddOutfit(selectedOutfit, -1);
+				if(selectedOutfit->Get("required crew"))
+					ship->AddCrew(-selectedOutfit->Get("required crew"));
+				ship->Recharge();
 
-				if(mustSell)
+				if(toStorage && storage && storage->Add(selectedOutfit))
 				{
-					ship->AddOutfit(ammo, -mustSell);
-					if(toStorage && storage)
-						mustSell -= storage->Add(ammo, mustSell);
+					// Transfer to planetary storage completed.
+				}
+				else if(toStorage)
+				{
+					// No storage available; transfer to cargo even if it
+					// would exceed the cargo capacity.
+					int size = player.Cargo().Size();
+					player.Cargo().SetSize(-1);
+					player.Cargo().Add(selectedOutfit);
+					player.Cargo().SetSize(size);
+				}
+				else
+				{
+					int64_t price = player.FleetDepreciation().Value(selectedOutfit, day);
+					player.Accounts().AddCredits(price);
+					player.AddStock(selectedOutfit, 1);
+				}
+
+				const Outfit *ammo = selectedOutfit->Ammo();
+				if(ammo && ship->OutfitCount(ammo))
+				{
+					// Determine how many of this ammo I must sell to also sell the launcher.
+					int mustSell = 0;
+					for(const pair<const char *, double> &it : ship->Attributes().Attributes())
+						if(it.second < 0.)
+							mustSell = max<int>(mustSell, it.second / ammo->Get(it.first));
+
 					if(mustSell)
 					{
-						int64_t price = player.FleetDepreciation().Value(ammo, day, mustSell);
-						player.Accounts().AddCredits(price);
-						player.AddStock(ammo, mustSell);
+						ship->AddOutfit(ammo, -mustSell);
+						if(toStorage && storage)
+							mustSell -= storage->Add(ammo, mustSell);
+						if(mustSell)
+						{
+							int64_t price = player.FleetDepreciation().Value(ammo, day, mustSell);
+							player.Accounts().AddCredits(price);
+							player.AddStock(ammo, mustSell);
+						}
 					}
 				}
 			}
+			continue;
 		}
-		return;
-	}
 
-	if(!toStorage && storage && storage->Get(selectedOutfit))
-	{
-		storage->Remove(selectedOutfit);
-		int64_t price = player.FleetDepreciation().Value(selectedOutfit, day);
-		player.Accounts().AddCredits(price);
-		player.AddStock(selectedOutfit, 1);
+		if(!toStorage && storage && storage->Get(selectedOutfit))
+		{
+			storage->Remove(selectedOutfit);
+			int64_t price = player.FleetDepreciation().Value(selectedOutfit, day);
+			player.Accounts().AddCredits(price);
+			player.AddStock(selectedOutfit, 1);
+		}
 	}
 }
 
@@ -876,6 +1001,28 @@ void OutfitterPanel::ToggleCargo()
 	}
 
 	ShopPanel::ToggleCargo();
+}
+
+void OutfitterPanel::QuantityDropdown(int value)
+{
+	if(value == -1)
+		quantityDropdown = true;
+	else
+	{
+		quantityDropdown = false;
+		quantity = value;
+	}
+}
+
+void OutfitterPanel::TargetDropdown(int index)
+{
+	if(index == -1)
+		targetDropdown = true;
+	else
+	{
+		targetDropdown = false;
+		targetDropdownIndex = index;
+	}
 }
 
 

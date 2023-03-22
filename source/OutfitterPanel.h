@@ -40,6 +40,13 @@ class Ship;
 // panel makes an attempt to ensure that you do not leave with a ship that is
 // configured in such a way that it cannot fly (e.g. no engines or steering).
 class OutfitterPanel : public ShopPanel {
+private:
+	enum class OutfitTarget {
+		INSTALL = 0,
+		CARGO,
+		STORE,
+	};
+
 public:
 	explicit OutfitterPanel(PlayerInfo &player);
 
@@ -55,6 +62,7 @@ protected:
 	virtual int DividerOffset() const override;
 	virtual int DetailWidth() const override;
 	virtual int DrawDetails(const Point &center) override;
+	virtual void DrawButtons() override;
 	virtual bool CanBuy(bool checkAlreadyOwned = true) const override;
 	virtual void Buy(bool alreadyOwned = false) override;
 	virtual void FailBuy() const override;
@@ -66,7 +74,8 @@ protected:
 	virtual void ToggleForSale() override;
 	virtual void ToggleStorage() override;
 	virtual void ToggleCargo() override;
-
+	virtual void QuantityDropdown(int value);
+	virtual void TargetDropdown(int index);
 
 
 
@@ -97,6 +106,15 @@ private:
 
 	// Keep track of how many of the outfitter help screens have been shown
 	bool checkedHelp = false;
+
+	bool quantityDropdown = false;
+	bool targetDropdown = false;
+
+	int targetDropdownIndex = 0;
+
+	int quantity = 1;
+
+	int oldMod = 0;
 };
 
 

@@ -48,7 +48,6 @@ public:
 protected:
 	void DrawShipsSidebar();
 	void DrawDetailsSidebar();
-	void DrawButtons();
 	void DrawMain();
 
 	void DrawShip(const Ship &ship, const Point &center, bool isSelected);
@@ -64,6 +63,7 @@ protected:
 	virtual int DividerOffset() const = 0;
 	virtual int DetailWidth() const = 0;
 	virtual int DrawDetails(const Point &center) = 0;
+	virtual void DrawButtons();
 	virtual bool CanBuy(bool checkAlreadyOwned = true) const = 0;
 	virtual void Buy(bool alreadyOwned = false) = 0;
 	virtual void FailBuy() const = 0;
@@ -116,10 +116,10 @@ protected:
 	static const int SIDEBAR_WIDTH = 250;
 	static const int INFOBAR_WIDTH = 300;
 	static const int SIDE_WIDTH = SIDEBAR_WIDTH + INFOBAR_WIDTH;
-	static const int BUTTON_HEIGHT = 70;
 	static const int SHIP_SIZE = 250;
 	static const int OUTFIT_SIZE = 183;
 
+	int BUTTON_HEIGHT = 70;
 
 protected:
 	PlayerInfo &player;

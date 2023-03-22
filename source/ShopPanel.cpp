@@ -639,9 +639,7 @@ bool ShopPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 			FailSell(toStorage);
 		else
 		{
-			int modifier = CanSellMultiple() ? Modifier() : 1;
-			for(int i = 0; i < modifier && CanSell(toStorage); ++i)
-				Sell(toStorage);
+			Sell(toStorage);
 			player.UpdateCargoCapacities();
 		}
 	}
