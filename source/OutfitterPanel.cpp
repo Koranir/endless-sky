@@ -394,7 +394,6 @@ void OutfitterPanel::DrawButtons()
 		for(int i = 0; i < quantityTargets.size(); i++)
 		{
 			const Point center = outFitQuantityCenter - Point(0, 15 + (15 * i));
-			// const Point point = outfitQuantityPoint + Point(0, 15)
 			FillShader::Fill(center, Point(50, 16), bright);
 			FillShader::Fill(center, Point(48, 14), back);
 			AddZone(Rectangle(center, Point(50, 16)), [this, i](){ QuantityDropdown(quantityTargets[i]); });
@@ -408,13 +407,11 @@ void OutfitterPanel::DrawButtons()
 		for(int i = 0; i < OutfitTargets.size(); i++)
 		{
 			const Point center = outfitTargetCenter - Point(0, 15 + (15 * i));
-			// const Point point = outfitQuantityPoint + Point(0, 15)
 			FillShader::Fill(center, Point(110, 16), bright);
 			FillShader::Fill(center, Point(108, 14), back);
 			AddZone(Rectangle(center, Point(110, 16)), [this, i](){ TargetDropdown(i); });
 			font.Draw({ OutfitTargets[i], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint - Point(0, 15 + (15 * i)), bright);
 		}
-		// TODO: Double-Clicking the quantity box should allow you to manually enter a value.
 	}
 
 	const Font &bigFont = FontSet::Get(18);
