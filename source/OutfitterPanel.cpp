@@ -47,7 +47,7 @@ using namespace std;
 
 namespace {
 	static const vector<string> OutfitTargets = { "Install to ship", "Move to cargo", "Move to storage" };
-	static const vector<int> quantityTargets = { 1, 5, 10, 20, 50, 100, 250, 500, 1000, 2500, 5000 };
+	static const vector<int> quantityTargets = { 1, 5, 20, 100, 500, 2500, 10000, 50000 };
 
 	// Determine the refillable ammunition a particular ship consumes or stores.
 	set<const Outfit *> GetRefillableAmmunition(const Ship &ship) noexcept
@@ -360,6 +360,7 @@ void OutfitterPanel::DrawButtons()
 	const Font &font = FontSet::Get(14);
 	const Color &bright = *GameData::Colors().Get("bright");
 	const Color &dim = *GameData::Colors().Get("medium");
+	const Color &dimmer = *GameData::Colors().Get("dimmer");
 	const Color &back = *GameData::Colors().Get("panel background");
 
 	const Point creditsPoint(
@@ -376,13 +377,13 @@ void OutfitterPanel::DrawButtons()
 	font.Draw("Quantity:", outfitQuantityPoint, dim);
 
 	const Point outFitQuantityCenter = outfitQuantityPoint + Point(90, 8);
-	// FillShader::Fill(outFitQuantityCenter, Point(50, 16), dim);
+	FillShader::Fill(outFitQuantityCenter, Point(50, 16), quantityDropdown ? dim : dimmer);
 	FillShader::Fill(outFitQuantityCenter, Point(48, 14), back);
 	AddZone(Rectangle(outFitQuantityCenter, Point(50, 16)), [this](){ QuantityDropdown(-1); });
 	font.Draw({ to_string(quantity), {SIDEBAR_WIDTH - 140, Alignment::RIGHT} }, outfitQuantityPoint, bright);
 
 	const Point outfitTargetCenter = outFitQuantityCenter + Point(86, 0);
-	// FillShader::Fill(outfitTargetCenter, Point(110, 16), targetDropdown ? bright : dim);
+	FillShader::Fill(outfitTargetCenter, Point(110, 16), targetDropdown ? dim : dimmer);
 	FillShader::Fill(outfitTargetCenter, Point(108, 14), back);
 	AddZone(Rectangle(outfitTargetCenter, Point(50, 16)), [this](){ TargetDropdown(-1); });
 	font.Draw({ OutfitTargets[targetDropdownIndex], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint, bright);
@@ -397,7 +398,7 @@ void OutfitterPanel::DrawButtons()
 			FillShader::Fill(center, Point(50, 16), bright);
 			FillShader::Fill(center, Point(48, 14), back);
 			AddZone(Rectangle(center, Point(50, 16)), [this, i](){ QuantityDropdown(quantityTargets[i]); });
-			font.Draw({ to_string(quantityTargets[i]), {SIDEBAR_WIDTH - 140, Alignment::RIGHT} }, outfitQuantityPoint - Point(0, 15 + (15 * i)), dim);
+			font.Draw({ to_string(quantityTargets[i]), {SIDEBAR_WIDTH - 140, Alignment::RIGHT} }, outfitQuantityPoint - Point(0, 15 + (15 * i)), bright);
 		}
 		// TODO: Double-Clicking the quantity box should allow you to manually enter a value.
 	}
@@ -411,7 +412,7 @@ void OutfitterPanel::DrawButtons()
 			FillShader::Fill(center, Point(110, 16), bright);
 			FillShader::Fill(center, Point(108, 14), back);
 			AddZone(Rectangle(center, Point(110, 16)), [this, i](){ TargetDropdown(i); });
-			font.Draw({ OutfitTargets[i], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint - Point(0, 15 + (15 * i)), dim);
+			font.Draw({ OutfitTargets[i], {SIDEBAR_WIDTH - 22, Alignment::RIGHT}}, outfitQuantityPoint - Point(0, 15 + (15 * i)), bright);
 		}
 		// TODO: Double-Clicking the quantity box should allow you to manually enter a value.
 	}
