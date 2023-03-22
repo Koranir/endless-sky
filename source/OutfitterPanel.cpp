@@ -421,7 +421,7 @@ void OutfitterPanel::DrawButtons()
 
 	const Point buyCenter = Screen::BottomRight() - Point(210, 25);
 	FillShader::Fill(buyCenter, Point(60, 30), back);
-	string BUY = IsAlreadyOwned() ? (playerShip ? "_Install" : "_Cargo") : "_Buy";
+	string BUY = (IsAlreadyOwned() && !targetDropdownIndex) ? (playerShip ? "_Install" : "_Cargo") : "_Buy";
 	bigFont.Draw(BUY,
 		buyCenter - .5 * Point(bigFont.Width(BUY), bigFont.Height()),
 		CanBuy() ? hoverButton == 'b' ? hover : active : inactive);
@@ -545,14 +545,14 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 		}
 		else if(!playerShip || targetDropdownIndex == static_cast<int>(OutfitTarget::CARGO))
 		{
-			if(alreadyOwned)
+			/*if(alreadyOwned)
 			{
 				if(!player.Storage() || !player.Storage()->Get(selectedOutfit))
 					continue;
 				player.Cargo().Add(selectedOutfit);
 				player.Storage()->Remove(selectedOutfit);
 			}
-			else
+			else*/
 			{
 				// Check if the outfit is for sale or in stock so that we can actually buy it.
 				if(!outfitter.Has(selectedOutfit) && player.Stock(selectedOutfit) <= 0)
@@ -573,9 +573,9 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 			if(!CanBuy(alreadyOwned))
 				return;
 
-			if(player.Cargo().Get(selectedOutfit))
+			if(player.Cargo().Get(selectedOutfit) && !targetDropdownIndex)
 				player.Cargo().Remove(selectedOutfit);
-			else if(player.Storage() && player.Storage()->Get(selectedOutfit))
+			else if(player.Storage() && player.Storage()->Get(selectedOutfit) && !targetDropdownIndex)
 				player.Storage()->Remove(selectedOutfit);
 			else if(alreadyOwned || !(player.Stock(selectedOutfit) > 0 || outfitter.Has(selectedOutfit)))
 				break;
@@ -769,7 +769,7 @@ void OutfitterPanel::Sell(bool toStorage)
 		// Will be nullptr if no storage is available.
 		CargoHold *storage = player.Storage(toStorage);
 
-		if(player.Cargo().Get(selectedOutfit))
+		if(player.Cargo().Get(selectedOutfit) && (toStorage || (targetDropdownIndex == static_cast<int>(OutfitTarget::CARGO))))
 		{
 			player.Cargo().Remove(selectedOutfit);
 			if(toStorage && storage && storage->Add(selectedOutfit))
@@ -846,12 +846,21 @@ void OutfitterPanel::Sell(bool toStorage)
 			continue;
 		}
 
-		if(!toStorage && storage && storage->Get(selectedOutfit))
+		bool shipHasSellable = false;
+		for(const Ship *ship : playerShips)
+			if(ShipCanSell(ship, selectedOutfit))
+				shipHasSellable = true;
+
+		if(!toStorage && ((targetDropdownIndex == static_cast<int>(OutfitTarget::STORE)) || !shipHasSellable))
 		{
-			storage->Remove(selectedOutfit);
+			if(storage && storage->Get(selectedOutfit))
+				storage->Remove(selectedOutfit);
+			else
+				player.Cargo().Remove(selectedOutfit);
 			int64_t price = player.FleetDepreciation().Value(selectedOutfit, day);
 			player.Accounts().AddCredits(price);
 			player.AddStock(selectedOutfit, 1);
+
 		}
 	}
 }

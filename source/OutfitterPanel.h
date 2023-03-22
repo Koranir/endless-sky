@@ -41,7 +41,7 @@ class Ship;
 // configured in such a way that it cannot fly (e.g. no engines or steering).
 class OutfitterPanel : public ShopPanel {
 private:
-	enum class OutfitTarget {
+	enum class OutfitTarget : int{
 		INSTALL = 0,
 		CARGO,
 		STORE,
