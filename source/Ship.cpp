@@ -1535,28 +1535,20 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 	if(!fuel || !(navigation.HasHyperdrive() || navigation.HasJumpDrive()))
 		hyperspaceSystem = nullptr;
 
-	{
-		int i = 0;
-		while(true)
+	for(int i = 0; i < futureFunctions.size(); i++) {
+		auto &it = futureFunctions[i];
+		if(it.second.second <= 0)
 		{
-			if(i < futureFunctions.size())
-			{
-				auto &it = futureFunctions[i];
-				if(it.second.second <= 0)
-				{
-					auto &func = it.first;
-					func(it.second.first);
-					futureFunctions.erase(futureFunctions.begin() + i);
-				}
-				else
-				{
-					it.second.second--;
-					i++;
-				}
-			}
-			else
-				break;
-		}}
+			auto &func = it.first;
+			func(it.second.first);
+			futureFunctions.erase(futureFunctions.begin() + i);
+			--i;
+		}
+		else
+		{
+			it.second.second--;
+		}
+	}
 
 	// Adjust the error in the pilot's targeting.
 	personality.UpdateConfusion(firingCommands.IsFiring());
