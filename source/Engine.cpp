@@ -74,6 +74,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <string>
 
 using namespace std;
@@ -322,6 +323,11 @@ void Engine::Place()
 	// Add NPCs to the list of ships. Fighters have to be assigned to carriers,
 	// and all but "uninterested" ships should follow the player.
 	shared_ptr<Ship> flagship = player.FlagshipPtr();
+
+	function<void(void *)> func = [](void *data) {
+		Messages::Add(static_cast<Ship*>(data)->Name());
+	};
+	flagship->AddFunction(func, 60, flagship.get());
 
 	// Update the active NPCs for missions based on the player's conditions.
 	player.UpdateMissionNPCs();

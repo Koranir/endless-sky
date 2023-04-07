@@ -30,11 +30,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ship/ShipAICache.h"
 #include "ShipJumpNavigation.h"
 
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class DamageDealt;
@@ -454,6 +456,10 @@ public:
 	std::shared_ptr<Ship> GetParent() const;
 	const std::vector<std::weak_ptr<Ship>> &GetEscorts() const;
 
+	// Add a function to be called <howLongFrames> frames in the future.
+	// The function should call delete[] on the data with the correct type.
+	void AddFunction(std::function<void(void*)> func, int howLongFrames = 0, void *data = nullptr);
+
 
 private:
 	// Add or remove a ship from this ship's list of escorts.
@@ -635,6 +641,8 @@ private:
 	std::weak_ptr<Ship> parent;
 
 	bool removeBays = false;
+
+	std::vector<std::pair<std::function<void(void *)>, std::pair<void *, int>>> futureFunctions;
 };
 
 

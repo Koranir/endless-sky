@@ -1535,6 +1535,29 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 	if(!fuel || !(navigation.HasHyperdrive() || navigation.HasJumpDrive()))
 		hyperspaceSystem = nullptr;
 
+	{
+		int i = 0;
+		while(true)
+		{
+			if(i < futureFunctions.size())
+			{
+				auto &it = futureFunctions[i];
+				if(it.second.second <= 0)
+				{
+					auto &func = it.first;
+					func(it.second.first);
+					futureFunctions.erase(futureFunctions.begin() + i);
+				}
+				else
+				{
+					it.second.second--;
+					i++;
+				}
+			}
+			else
+				break;
+		}}
+
 	// Adjust the error in the pilot's targeting.
 	personality.UpdateConfusion(firingCommands.IsFiring());
 
@@ -4375,4 +4398,11 @@ double Ship::CalculateDeterrence() const
 			tempDeterrence += .12 * strength / weapon->Reload();
 		}
 	return tempDeterrence;
+}
+
+
+
+void Ship::AddFunction(function<void(void*)> func, int howLongFrames, void *data)
+{
+	futureFunctions.push_back(make_pair(func, pair<void *, int>(data, howLongFrames)));
 }
