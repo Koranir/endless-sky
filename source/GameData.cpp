@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Command.h"
 #include "ConditionsStore.h"
 #include "Conversation.h"
+#include "Cursor.h"
 #include "DataFile.h"
 #include "DataNode.h"
 #include "DataWriter.h"
@@ -204,6 +205,7 @@ void GameData::LoadShaders(bool useShaderSwizzle)
 	Command::LoadSettings(Files::Resources() + "keys.txt");
 	Command::LoadSettings(Files::Config() + "keys.txt");
 
+	Cursor::Init();
 	FillShader::Init();
 	FogShader::Init();
 	LineShader::Init();

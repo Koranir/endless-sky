@@ -66,6 +66,8 @@ target_sources(EndlessSkyLib PRIVATE
 	ConversationPanel.h
 	CoreStartData.cpp
 	CoreStartData.h
+	Cursor.cpp
+	Cursor.h
 	DamageDealt.h
 	DamageProfile.cpp
 	DamageProfile.h

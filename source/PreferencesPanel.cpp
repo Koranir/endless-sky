@@ -547,6 +547,7 @@ void PreferencesPanel::DrawSettings()
 		TURRET_TRACKING,
 		"\t",
 		"Other",
+		"Use hardware cursor",
 		"Clickable radar display",
 		"Hide unexplored map regions",
 		REACTIVATE_HELP,

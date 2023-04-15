@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Command.h"
 #include "Conversation.h"
 #include "ConversationPanel.h"
+#include "Cursor.h"
 #include "DataFile.h"
 #include "DataNode.h"
 #include "DataWriter.h"
@@ -338,6 +339,11 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			SDL_ShowCursor(showCursor);
 		}
 
+		if(!Preferences::Has("Use hardware cursor"))
+			SDL_ShowCursor(SDL_DISABLE);
+		else
+			SDL_ShowCursor(showCursor);
+
 		// Switch off fast-forward if the player is not in flight or flight-related screen
 		// (for example when the boarding dialog shows up or when the player lands). The player
 		// can switch fast-forward on again when flight is resumed.
@@ -413,6 +419,14 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 		(menuPanels.IsEmpty() ? gamePanels : menuPanels).DrawAll();
 		if(isFastForward)
 			SpriteShader::Draw(SpriteSet::Get("ui/fast forward"), Screen::TopLeft() + Point(10., 10.));
+
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+		Point cursorRel(static_cast<double>(x) / GameWindow::Width(),
+			static_cast<double>(y) / GameWindow::Height());
+		Cursor::UpdatePosition(2. * cursorRel - 2 * Point(0.5, 0.5));
+		if(showCursor && !Preferences::Has("Use hardware cursor"))
+			Cursor::Draw();
 
 		GameWindow::Step();
 
