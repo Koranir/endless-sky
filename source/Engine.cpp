@@ -1078,9 +1078,9 @@ void Engine::Draw() const
 	{
 		messageLine.Wrap(it->message);
 		messagePoint.Y() -= messageLine.Height();
-		if(messagePoint.Y() < messageBox.Top() - 1000)
+		if(messagePoint.Y() < messageBox.Top())
 			break;
-		float alpha = (it->step + 1000 - step) * .01f;
+		float alpha = (it->step + 1000 - step) * .001f;
 		const Color *color = nullptr;
 		switch(it->importance)
 		{
@@ -1277,10 +1277,10 @@ void Engine::EnterSystem()
 	const StellarObject *usedWormhole = nullptr;
 	for(const StellarObject &object : system->Objects())
 	{
-		object.GetSprite()->Preload();
+		Sprite::CheckedPreload(object.GetSprite());
 		if(object.HasValidPlanet())
 		{
-			GameData::Preload(object.GetPlanet()->Landscape());
+			Sprite::CheckedPreload(object.GetPlanet()->Landscape());
 			if(object.GetPlanet()->IsWormhole() && !usedWormhole
 				&& flagship->Position().Distance(object.Position()) < 1.)
 				usedWormhole = &object;
