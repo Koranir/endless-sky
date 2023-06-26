@@ -178,7 +178,7 @@ void Sprite::Preload() const
 {
 	if(toLoad)
 		return;
-	// Messages::Add("Adding " + name + " to loaded textures.");
+	// Messages::Add("Loading " + name + ".");
 	GameData::Preload(this);
 	toLoad = true;
 }

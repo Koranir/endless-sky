@@ -72,6 +72,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 #include <vector>
 
+#include "Messages.h"
+
 using namespace std;
 
 namespace {
@@ -293,6 +295,7 @@ void GameData::Unload(const Sprite *sprite)
 {
 	if(!ImageSet::IsDeferred(sprite->Name()))
 		return;
+	Messages::Add("Unloading" + sprite->Name() + ".");
 	spriteQueue.Unload(sprite->Name());
 	preloaded.erase(sprite);
 }

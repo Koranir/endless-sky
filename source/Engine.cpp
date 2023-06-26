@@ -1492,7 +1492,10 @@ void Engine::CalculateStep()
 					wormholeEntry = true;
 					player.Visit(*it.GetPlanet());
 				}
-
+		for(const auto &object : playerSystem->Objects())
+		{
+			Sprite::CheckedUnload(object.GetSprite());
+		}
 		player.SetSystemEntry(wormholeEntry ? SystemEntry::WORMHOLE :
 			flagship->IsUsingJumpDrive() ? SystemEntry::JUMP :
 			SystemEntry::HYPERDRIVE);

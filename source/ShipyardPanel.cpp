@@ -376,8 +376,9 @@ bool ShipyardPanel::CanSellMultiple() const
 void ShipyardPanel::LoadItem(const std::string &name)
 {
 	const Ship *ship = GameData::Ships().Get(name);
+	Sprite::CheckedPreload(ship->Thumbnail());
 	if(ship->Thumbnail())
-		ship->Thumbnail()->Preload();
+		removeLater.emplace_back(ship->Thumbnail());
 }
 
 
