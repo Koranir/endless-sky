@@ -125,7 +125,10 @@ namespace {
 		for(auto it = objects.begin(); it != objects.end(); )
 		{
 			if((*it)->ShouldBeRemoved())
+			{
+				Sprite::CheckedUnload((*it)->GetSprite());
 				it = objects.erase(it);
+			}
 			else
 				++it;
 		}

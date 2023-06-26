@@ -63,7 +63,8 @@ public:
 	void Preload() const;
 	void BlockingLoad() const;
 
-	inline static void CheckedPreload(const Sprite *sprite) { if(sprite) { sprite->Preload(); } }
+	static void CheckedPreload(const Sprite *sprite) { if(sprite) { sprite->Preload(); } }
+	static void CheckedUnload(const Sprite *sprite);
 
 private:
 	std::string name;

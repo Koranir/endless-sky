@@ -192,3 +192,11 @@ void Sprite::BlockingLoad() const
 	GameData::Preload(this);
 	GameData::FinishLoadingSprites();
 }
+
+
+
+void Sprite::CheckedUnload(const Sprite *sprite)
+{
+	if(sprite)
+		GameData::Unload(sprite);
+} 
