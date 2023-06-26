@@ -107,6 +107,8 @@ void ShopPanel::Step()
 
 void ShopPanel::Draw()
 {
+	GameData::ProcessSprites();
+
 	const double oldSelectedTopY = selectedTopY;
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -524,7 +526,9 @@ void ShopPanel::DrawShip(const Ship &ship, const Point &center, bool isSelected)
 	const Sprite *sprite = ship.GetSprite();
 	int swizzle = ship.CustomSwizzle() >= 0 ? ship.CustomSwizzle() : GameData::PlayerGovernment()->GetSwizzle();
 	if(thumbnail)
+	{
 		SpriteShader::Draw(thumbnail, center + Point(0., 10.), 1., swizzle);
+	}
 	else if(sprite)
 	{
 		// Make sure the ship sprite leaves 10 pixels padding all around.
@@ -621,6 +625,31 @@ void ShopPanel::ToggleStorage()
 void ShopPanel::ToggleCargo()
 {
 	sameSelectedTopY = true;
+}
+
+
+
+void ShopPanel::LoadItem(const std::string &name)
+{
+}
+
+
+
+void ShopPanel::Preload()
+{
+	for(const auto &cat : categories)
+	{
+		const string &category = cat.Name();
+		map<string, vector<string>>::const_iterator it = catalog.find(category);
+
+		if(it == catalog.end())
+			continue;
+
+		for(const auto &item : it->second)
+			LoadItem(item);
+	}
+	// GameData::ProcessSprites();
+	// GameData::FinishLoadingSprites();
 }
 
 

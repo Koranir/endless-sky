@@ -201,6 +201,14 @@ MapPanel::MapPanel(PlayerInfo &player, int commodity, const System *special)
 		playerJumpDistance = systemRange ? systemRange : playerRange;
 
 	CenterOnSystem(selectedSystem, true);
+
+	for(const auto &it : GameData::Galaxies())
+		if(it.second.GetSprite())
+		{
+			it.second.GetSprite()->Preload();
+			removeLater.push_back(it.second.GetSprite());
+		}
+	GameData::ProcessSprites();
 }
 
 

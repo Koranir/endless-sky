@@ -87,6 +87,8 @@ OutfitterPanel::OutfitterPanel(PlayerInfo &player)
 
 	if(player.GetPlanet())
 		outfitter = player.GetPlanet()->Outfitter();
+
+	Preload();
 }
 
 
@@ -157,6 +159,7 @@ bool OutfitterPanel::HasItem(const string &name) const
 void OutfitterPanel::DrawItem(const string &name, const Point &point, int scrollY)
 {
 	const Outfit *outfit = GameData::Outfits().Get(name);
+
 	zones.emplace_back(point, Point(OUTFIT_SIZE, OUTFIT_SIZE), outfit, scrollY);
 	if(point.Y() + OUTFIT_SIZE / 2 < Screen::Top() || point.Y() - OUTFIT_SIZE / 2 > Screen::Bottom())
 		return;
@@ -828,6 +831,18 @@ void OutfitterPanel::ToggleCargo()
 	}
 
 	ShopPanel::ToggleCargo();
+}
+
+
+
+void OutfitterPanel::LoadItem(const std::string &name)
+{
+	const Outfit *outfit = GameData::Outfits().Get(name);
+	if(outfit && outfit->Thumbnail())
+	{
+		outfit->Thumbnail()->Preload();
+		removeLater.emplace_back(outfit->Thumbnail());
+	}
 }
 
 

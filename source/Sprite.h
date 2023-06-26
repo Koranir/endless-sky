@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Point.h"
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -56,6 +57,11 @@ public:
 	uint32_t Texture() const;
 	uint32_t Texture(bool isHighDPI) const;
 
+	// Check if this sprite has been loaded
+	bool Loaded() const;
+	void Load() const;
+	void Preload() const;
+	void BlockingLoad() const;
 
 private:
 	std::string name;
@@ -65,6 +71,9 @@ private:
 	float width = 0.f;
 	float height = 0.f;
 	int frames = 0;
+
+	mutable bool toLoad = false;
+	bool loaded = false;
 };
 
 

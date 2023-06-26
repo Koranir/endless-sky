@@ -86,6 +86,7 @@ public:
 	// Begin loading a sprite that was previously deferred. Currently this is
 	// done with all landscapes to speed up the program's startup.
 	static void Preload(const Sprite *sprite);
+	static void Unload(const Sprite *sprite);
 	static void ProcessSprites();
 	// Wait until all pending sprite uploads are completed.
 	static void FinishLoadingSprites();

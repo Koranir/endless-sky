@@ -253,10 +253,19 @@ Engine::Engine(PlayerInfo &player)
 	if(!player.IsLoaded() || !player.GetSystem())
 		return;
 
-	// Preload any landscapes for this system.
+	// Preload any landscapes and sprites for this system.
 	for(const StellarObject &object : player.GetSystem()->Objects())
-		if(object.HasSprite() && object.HasValidPlanet())
-			GameData::Preload(object.GetPlanet()->Landscape());
+		if(object.GetSprite())
+			object.GetSprite()->Preload();
+
+	for(const auto &it : player.Ships())
+		it->GetSprite()->Preload();
+
+	for(const StellarObject &object : player.GetSystem()->Objects())
+		if(object.HasSprite() && object.HasValidPlanet() && object.GetPlanet()->Landscape())
+			object.GetPlanet()->Landscape()->Preload();
+
+	GameData::FinishLoadingSprites();
 
 	// Figure out what planet the player is landed on, if any.
 	const StellarObject *object = player.GetStellarObject();
@@ -315,8 +324,29 @@ void Engine::Place()
 	// Add the player's flagship and escorts to the list of ships. The TakeOff()
 	// code already took care of loading up fighters and assigning parents.
 	for(const shared_ptr<Ship> &ship : player.Ships())
+	{
+		for(const auto &it : ship->Outfits())
+		{
+			auto outfit = it.first;
+			for(const auto &it : outfit->FlareSprites())
+				if(it.first.GetSprite())
+					it.first.GetSprite()->Preload();
+			for(const auto &it : outfit->ReverseFlareSprites())
+				if(it.first.GetSprite())
+					it.first.GetSprite()->Preload();
+			for(const auto &it : outfit->SteeringFlareSprites())
+				if(it.first.GetSprite())
+					it.first.GetSprite()->Preload();
+			if(outfit->HardpointSprite().GetSprite())
+				outfit->HardpointSprite().GetSprite()->Preload();
+			if(outfit->FlotsamSprite())
+				outfit->FlotsamSprite()->Preload();
+			if(outfit->WeaponSprite().GetSprite())
+				outfit->WeaponSprite().GetSprite()->Preload();
+		}
 		if(!ship->IsParked() && ship->GetSystem())
 			ships.push_back(ship);
+	}
 
 	// Add NPCs to the list of ships. Fighters have to be assigned to carriers,
 	// and all but "uninterested" ships should follow the player.
@@ -1048,9 +1078,9 @@ void Engine::Draw() const
 	{
 		messageLine.Wrap(it->message);
 		messagePoint.Y() -= messageLine.Height();
-		if(messagePoint.Y() < messageBox.Top())
+		if(messagePoint.Y() < messageBox.Top() - 1000)
 			break;
-		float alpha = (it->step + 1000 - step) * .001f;
+		float alpha = (it->step + 1000 - step) * .01f;
 		const Color *color = nullptr;
 		switch(it->importance)
 		{
@@ -1246,13 +1276,16 @@ void Engine::EnterSystem()
 	// (It is allowed for a wormhole's exit point to have no sprite.)
 	const StellarObject *usedWormhole = nullptr;
 	for(const StellarObject &object : system->Objects())
+	{
+		object.GetSprite()->Preload();
 		if(object.HasValidPlanet())
 		{
 			GameData::Preload(object.GetPlanet()->Landscape());
 			if(object.GetPlanet()->IsWormhole() && !usedWormhole
-					&& flagship->Position().Distance(object.Position()) < 1.)
+				&& flagship->Position().Distance(object.Position()) < 1.)
 				usedWormhole = &object;
 		}
+	}
 
 	// Advance the positions of every StellarObject and update politics.
 	// Remove expired bribes, clearance, and grace periods from past fines.
@@ -1424,9 +1457,13 @@ void Engine::CalculateStep()
 	// Keep track of the flagship to see if it jumps or enters a wormhole this turn.
 	const Ship *flagship = player.Flagship();
 	bool wasHyperspacing = (flagship && flagship->IsEnteringHyperspace());
-	// Move all the ships.
+	// Move all the ships and Load their sprites if needed.
 	for(const shared_ptr<Ship> &it : ships)
+	{
 		MoveShip(it);
+		it->GetSprite()->Preload();
+		it->RecalculateSprite();
+	}
 	// If the flagship just began jumping, play the appropriate sound.
 	if(!wasHyperspacing && flagship && flagship->IsEnteringHyperspace())
 	{

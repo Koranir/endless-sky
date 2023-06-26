@@ -23,6 +23,7 @@ using namespace std;
 
 void Information::SetSprite(const string &name, const Sprite *sprite, const Point &unit, float frame)
 {
+	sprite->Load();
 	sprites[name] = sprite;
 	spriteUnits[name] = unit;
 	spriteFrames[name] = frame;

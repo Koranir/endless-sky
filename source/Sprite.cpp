@@ -15,9 +15,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Sprite.h"
 
+#include "GameData.h"
 #include "ImageBuffer.h"
 #include "Preferences.h"
 #include "Screen.h"
+
+#include "Messages.h"
 
 #include "opengl.h"
 #include <SDL2/SDL.h>
@@ -81,6 +84,8 @@ void Sprite::AddFrames(ImageBuffer &buffer, bool is2x)
 
 	// Free the ImageBuffer memory.
 	buffer.Clear();
+
+	loaded = true;
 }
 
 
@@ -88,12 +93,17 @@ void Sprite::AddFrames(ImageBuffer &buffer, bool is2x)
 // Free up all textures loaded for this sprite.
 void Sprite::Unload()
 {
+	// Messages::Add("Removing " + name + " from loaded textures.");
+
 	glDeleteTextures(2, texture);
 	texture[0] = texture[1] = 0;
 
 	width = 0.f;
 	height = 0.f;
 	frames = 0;
+
+	loaded = false;
+	toLoad = false;
 }
 
 
@@ -143,4 +153,42 @@ uint32_t Sprite::Texture() const
 uint32_t Sprite::Texture(bool isHighDPI) const
 {
 	return (isHighDPI && texture[1]) ? texture[1] : texture[0];
+}
+
+
+
+bool Sprite::Loaded() const
+{
+	return loaded;
+}
+
+
+
+void Sprite::Load() const
+{
+	if(loaded)
+		return;
+	Preload();
+	GameData::ProcessSprites();
+}
+
+
+
+void Sprite::Preload() const
+{
+	if(toLoad)
+		return;
+	// Messages::Add("Adding " + name + " to loaded textures.");
+	GameData::Preload(this);
+	toLoad = true;
+}
+
+
+
+void Sprite::BlockingLoad() const
+{
+	if(loaded)
+		return;
+	GameData::Preload(this);
+	GameData::FinishLoadingSprites();
 }

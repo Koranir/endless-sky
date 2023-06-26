@@ -836,6 +836,13 @@ void Ship::FinishLoading(bool isNewInstance)
 
 
 
+void Ship::RecalculateSprite()
+{
+	isInvisible = !HasSprite();
+}
+
+
+
 // Check if this ship (model) and its outfits have been defined.
 bool Ship::IsValid() const
 {

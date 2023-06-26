@@ -65,6 +65,7 @@ protected:
 	virtual void ToggleForSale() override;
 	virtual void ToggleStorage() override;
 	virtual void ToggleCargo() override;
+	virtual void LoadItem(const std::string &name) override;
 
 
 

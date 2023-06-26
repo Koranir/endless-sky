@@ -132,6 +132,8 @@ public:
 	// When loading a ship, some of the outfits it lists may not have been
 	// loaded yet. So, wait until everything has been loaded, then call this.
 	void FinishLoading(bool isNewInstance);
+	// If we deferred loaded the ship's sprite, recalculate some values.
+	void RecalculateSprite();
 	// Check that this ship model and all its outfits have been loaded.
 	bool IsValid() const;
 	// Save a full description of this ship, as currently configured.

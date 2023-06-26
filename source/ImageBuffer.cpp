@@ -71,6 +71,11 @@ void ImageBuffer::Allocate(int width, int height)
 	pixels = new uint32_t[width * height * frames];
 	this->width = width;
 	this->height = height;
+
+	if(!pixels)
+	{
+		throw runtime_error("Failed to allocate buffer for pixels");
+	}
 }
 
 
@@ -357,6 +362,8 @@ namespace {
 		for(int y = 0; y < buffer.Height(); ++y)
 		{
 			uint32_t *it = buffer.Begin(y, frame);
+			if(!it)
+				throw runtime_error("Failed to get buffer beginning");
 
 			for(uint32_t *end = it + buffer.Width(); it != end; ++it)
 			{

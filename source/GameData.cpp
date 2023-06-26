@@ -1,3 +1,4 @@
+#include "GameData.h"
 /* GameData.cpp
 Copyright (c) 2014 by Michael Zahniser
 
@@ -284,6 +285,14 @@ void GameData::Preload(const Sprite *sprite)
 	// Now, load all the files for this sprite.
 	preloaded[sprite] = 0;
 	spriteQueue.Add(dit->second);
+}
+
+
+
+void GameData::Unload(const Sprite *sprite)
+{
+	spriteQueue.Unload(sprite->Name());
+	preloaded.erase(sprite);
 }
 
 

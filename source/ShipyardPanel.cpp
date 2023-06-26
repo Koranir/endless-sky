@@ -97,6 +97,8 @@ ShipyardPanel::ShipyardPanel(PlayerInfo &player)
 
 	if(player.GetPlanet())
 		shipyard = player.GetPlanet()->Shipyard();
+
+	Preload();
 }
 
 
@@ -367,6 +369,15 @@ void ShipyardPanel::Sell(bool toStorage)
 bool ShipyardPanel::CanSellMultiple() const
 {
 	return false;
+}
+
+
+
+void ShipyardPanel::LoadItem(const std::string &name)
+{
+	const Ship *ship = GameData::Ships().Get(name);
+	if(ship->Thumbnail())
+		ship->Thumbnail()->Preload();
 }
 
 

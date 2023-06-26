@@ -1,3 +1,4 @@
+#include "Panel.h"
 /* Panel.cpp
 Copyright (c) 2014 by Michael Zahniser
 
@@ -27,6 +28,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "UI.h"
 
 using namespace std;
+
+
+
+Panel::~Panel()
+{
+	// Very hacky, but whatever.
+	for(auto sprite : removeLater)
+		GameData::Unload(sprite);
+	removeLater.clear();
+}
 
 
 

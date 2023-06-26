@@ -17,10 +17,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define PANEL_H_
 
 #include "Rectangle.h"
+#include "Sprite.h"
 
 #include <functional>
 #include <list>
 #include <string>
+#include <vector>
 
 #include <SDL2/SDL.h>
 
@@ -39,7 +41,7 @@ class UI;
 class Panel {
 public:
 	// Make the destructor virtual just in case any derived class needs it.
-	virtual ~Panel() = default;
+	virtual ~Panel();
 
 	// Move the state of this panel forward one game step.
 	virtual void Step();
@@ -106,6 +108,8 @@ protected:
 	// Display the given help message if it has not yet been shown. Return true
 	// if the message was displayed.
 	bool DoHelp(const std::string &name) const;
+
+	std::vector<const Sprite *> removeLater;
 
 
 private:
