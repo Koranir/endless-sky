@@ -37,6 +37,7 @@ Panel::~Panel()
 	for(auto sprite : removeLater)
 		GameData::Unload(sprite);
 	removeLater.clear();
+	GameData::ProcessSprites();
 }
 
 

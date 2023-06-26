@@ -162,14 +162,13 @@ string ImageSet::Name(const string &path)
 // should be deferred until needed.
 bool ImageSet::IsDeferred(const string &path)
 {
-	if(path.length() >= 5 && !path.compare(0, 5, "land/"))
-		return true;
-
 	if(path.length() >= 3 && !path.compare(0, 3, "ui/"))
 		return false;
-	if(path.length() >= 6 && !path.compare(0, 6, "_menu/"))
-		return false;
 	if(path.length() >= 5 && !path.compare(0, 5, "font/"))
+		return false;
+	if(path.length() >= 5 && !path.compare(0, 5, "icon/"))
+		return false;
+	if(path.length() >= 6 && !path.compare(0, 6, "_menu/"))
 		return false;
 
 	return true;

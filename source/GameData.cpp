@@ -291,6 +291,8 @@ void GameData::Preload(const Sprite *sprite)
 
 void GameData::Unload(const Sprite *sprite)
 {
+	if(!ImageSet::IsDeferred(sprite->Name()))
+		return;
 	spriteQueue.Unload(sprite->Name());
 	preloaded.erase(sprite);
 }

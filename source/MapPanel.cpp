@@ -206,9 +206,8 @@ MapPanel::MapPanel(PlayerInfo &player, int commodity, const System *special)
 		if(it.second.GetSprite())
 		{
 			it.second.GetSprite()->Preload();
-			removeLater.push_back(it.second.GetSprite());
+			removeLater.emplace_back(it.second.GetSprite());
 		}
-	GameData::ProcessSprites();
 }
 
 
@@ -229,6 +228,8 @@ void MapPanel::Step()
 
 void MapPanel::Draw()
 {
+	GameData::ProcessSprites();
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	for(const auto &it : GameData::Galaxies())
