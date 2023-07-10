@@ -13,6 +13,9 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef FRAME_BUFFER_H_
+#define FRAME_BUFFER_H_
+
 #include <string>
 
 #include "opengl.h"
@@ -37,16 +40,21 @@ class FrameBuffer
 {
 public:
 	// Creates a framebuffer for color.
-	static int CreateFrameBuffer();
-	// Create a texture for a color framebuffer.
-	static int CreateTextureAttachment(int width, int height);
+	FrameBuffer(int width, int height);
+	~FrameBuffer();
 	// Bind a framebuffer (haha unneccessary comment)
-	static void BindFrameBuffer(int buffer, int width, int height);
+	void Bind();
 	// Unbinds any active framebuffer, making the screen drawspace again
-	static void UnbindCurrentFrameBuffer();
-	// Clears up memory of the buffer and the texture, only do after using the texture
-	static void DestroyBuffer(GLuint buffer, GLuint texture);
+	static void Unbind();
 
-	static void StoreTexture(std::string id, int texture);
-	static int GetTexture(std::string id);
+	void Blit();
+
+	GLuint Texture();
+private:
+	GLuint buffer = 0;
+	GLuint texture = 0;
+	int width = 0;
+	int height = 0;
 };
+
+#endif

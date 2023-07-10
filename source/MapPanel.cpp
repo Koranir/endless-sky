@@ -166,6 +166,7 @@ const float MapPanel::LINK_OFFSET = 7.f;
 
 MapPanel::MapPanel(PlayerInfo &player, int commodity, const System *special)
 	: player(player), distance(player),
+	backBuffer(Screen::Width(), Screen::Height()),
 	playerSystem(*player.GetSystem()),
 	selectedSystem(special ? special : player.GetSystem()),
 	specialSystem(special),
@@ -225,15 +226,11 @@ void MapPanel::Draw()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	int buffer = FrameBuffer::CreateFrameBuffer();
-	uint32_t bufferTex = FrameBuffer::CreateTextureAttachment(Screen::Width(), Screen::Height());
-	FrameBuffer::BindFrameBuffer(buffer, Screen::Width(), Screen::Height());
+	backBuffer.Bind();
 	for(const auto &it : GameData::Galaxies())
 		SpriteShader::Draw(it.second.GetSprite(), Zoom() * (center + it.second.Position()), Zoom());
-	FrameBuffer::UnbindCurrentFrameBuffer();
-	FrameBuffer::StoreTexture("mapBack", bufferTex);
-	GameWindow::AdjustViewport();
-	SpriteShader::DrawBuffer(bufferTex, static_cast<float>(Screen::Width()), -static_cast<float>(Screen::Height()));
+	backBuffer.Unbind();
+	backBuffer.Blit();
 
 	if(Preferences::Has("Hide unexplored map regions"))
 		FogShader::Draw(center, Zoom(), player);
@@ -265,7 +262,6 @@ void MapPanel::Draw()
 	DrawSystems();
 	DrawNames();
 	DrawMissions();
-	FrameBuffer::DestroyBuffer(buffer, bufferTex);
 }
 
 
@@ -1258,7 +1254,7 @@ void MapPanel::DrawNames()
 	const Font &font = FontSet::Get(useBigFont ? 18 : 14);
 	Point offset(useBigFont ? 8. : 6., -.5 * font.Height());
 	for(const Node &node : nodes)
-		font.Draw(node.name, zoom * (node.position + center) + offset, node.nameColor, true);
+		font.Draw(node.name, zoom * (node.position + center) + offset, node.nameColor, true, backBuffer.Texture());
 }
 
 

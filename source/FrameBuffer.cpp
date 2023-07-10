@@ -15,31 +15,19 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "FrameBuffer.h"
 
-#include <map>
+#include "GameWindow.h"
+#include "SpriteShader.h"
 
 
 
-namespace {
-	std::map<std::string, int> textureStorage;
-}
-
-
-
-int FrameBuffer::CreateFrameBuffer()
+FrameBuffer::FrameBuffer(int width, int height)
+	: width(width), height(height)
 {
-	GLuint frameBuffer;
-	glGenFramebuffers(1, &frameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+	glGenFramebuffers(1, &buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
 	const GLenum buffers[] { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, buffers);
-	return frameBuffer;
-}
 
-
-
-int FrameBuffer::CreateTextureAttachment(int width, int height)
-{
-	GLuint texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, // target, mipmap level, internal format,
@@ -48,28 +36,11 @@ int FrameBuffer::CreateTextureAttachment(int width, int height)
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture, 0, 0);
-	return texture;
 }
 
 
 
-void FrameBuffer::BindFrameBuffer(int buffer, int width, int height)
-{
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
-	glViewport(0, 0, width, height);
-}
-
-
-
-void FrameBuffer::UnbindCurrentFrameBuffer()
-{
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-
-void FrameBuffer::DestroyBuffer(GLuint buffer, GLuint texture)
+FrameBuffer::~FrameBuffer()
 {
 	glDeleteFramebuffers(1, &buffer);
 	glDeleteTextures(1, &texture);
@@ -77,14 +48,42 @@ void FrameBuffer::DestroyBuffer(GLuint buffer, GLuint texture)
 
 
 
-void FrameBuffer::StoreTexture(std::string id, int texture)
+void FrameBuffer::Bind()
 {
-	textureStorage[id] = texture;
+	glBindFramebuffer(GL_FRAMEBUFFER, buffer);
+	glViewport(0, 0, width, height);
 }
 
 
 
-int FrameBuffer::GetTexture(std::string id)
+void FrameBuffer::Unbind()
 {
-	return textureStorage[id];
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GameWindow::AdjustViewport();
+}
+
+
+
+GLuint FrameBuffer::Texture()
+{
+	return texture;
+}
+
+
+
+void FrameBuffer::Blit()
+{
+	SpriteShader::Item item;
+	item.texture = texture;
+	item.frame = 0;
+	item.frameCount = 1;
+	item.position[0] = 0.f;
+	item.position[1] = 0.f;
+	item.transform[0] = width;
+	item.transform[3] = -height;
+	item.swizzle = 0;
+
+	SpriteShader::Bind();
+	SpriteShader::Add(item);
+	SpriteShader::Unbind();
 }

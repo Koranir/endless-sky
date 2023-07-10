@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Color.h"
 #include "DistanceMap.h"
+#include "FrameBuffer.h"
 #include "Point.h"
 #include "text/WrappedText.h"
 
@@ -118,6 +119,8 @@ protected:
 	PlayerInfo &player;
 
 	DistanceMap distance;
+
+	FrameBuffer backBuffer;
 
 	// The system in which the player is located.
 	const System &playerSystem;

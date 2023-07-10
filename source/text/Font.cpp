@@ -142,24 +142,24 @@ void Font::DrawAliased(const DisplayText &text, double x, double y, const Color 
 
 
 
-void Font::Draw(const string &str, const Point &point, const Color &color, bool matchBack) const
+void Font::Draw(const string &str, const Point &point, const Color &color, bool matchBack, GLuint backBuffer) const
 {
-	DrawAliased(str, round(point.X()), round(point.Y()), color, matchBack);
+	DrawAliased(str, round(point.X()), round(point.Y()), color, matchBack, backBuffer);
 }
 
 
 
-void Font::DrawAliased(const string &str, double x, double y, const Color &color, bool matchBack) const
+void Font::DrawAliased(const string &str, double x, double y, const Color &color, bool matchBack, GLuint backBuffer) const
 {
 	glUseProgram(shader.Object());
 	glUniform1i(texI, 0);
 	glUniform1i(backgroundI, 1);
-	glActiveTexture(GL_TEXTURE0 + 0);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	if(matchBack)
 	{
-		glActiveTexture(GL_TEXTURE0 + 1);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, FrameBuffer::GetTexture("mapBack"));
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, backBuffer);
 	}
 	glBindVertexArray(vao);
 
