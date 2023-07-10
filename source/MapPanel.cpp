@@ -24,8 +24,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "text/Format.h"
+#include "FrameBuffer.h"
 #include "Galaxy.h"
 #include "GameData.h"
+#include "GameWindow.h"
 #include "Government.h"
 #include "Information.h"
 #include "Interface.h"
@@ -223,8 +225,15 @@ void MapPanel::Draw()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	int buffer = FrameBuffer::CreateFrameBuffer();
+	uint32_t bufferTex = FrameBuffer::CreateTextureAttachment(Screen::Width(), Screen::Height());
+	FrameBuffer::BindFrameBuffer(buffer, Screen::Width(), Screen::Height());
 	for(const auto &it : GameData::Galaxies())
 		SpriteShader::Draw(it.second.GetSprite(), Zoom() * (center + it.second.Position()), Zoom());
+	FrameBuffer::UnbindCurrentFrameBuffer();
+	FrameBuffer::StoreTexture("mapBack", bufferTex);
+	GameWindow::AdjustViewport();
+	SpriteShader::DrawBuffer(bufferTex, static_cast<float>(Screen::Width()), -static_cast<float>(Screen::Height()));
 
 	if(Preferences::Has("Hide unexplored map regions"))
 		FogShader::Draw(center, Zoom(), player);
@@ -256,6 +265,7 @@ void MapPanel::Draw()
 	DrawSystems();
 	DrawNames();
 	DrawMissions();
+	FrameBuffer::DestroyBuffer(buffer, bufferTex);
 }
 
 
@@ -858,7 +868,7 @@ void MapPanel::UpdateCache()
 	// Draw the circles for the systems, colored based on the selected criterion,
 	// which may be government, services, or commodity prices.
 	const Color &closeNameColor = *GameData::Colors().Get("map name");
-	const Color &farNameColor = closeNameColor.Transparent(.5);
+	const Color &farNameColor = closeNameColor.Transparent(.8);
 	for(const auto &it : GameData::Systems())
 	{
 		const System &system = it.second;
@@ -1248,7 +1258,7 @@ void MapPanel::DrawNames()
 	const Font &font = FontSet::Get(useBigFont ? 18 : 14);
 	Point offset(useBigFont ? 8. : 6., -.5 * font.Height());
 	for(const Node &node : nodes)
-		font.Draw(node.name, zoom * (node.position + center) + offset, node.nameColor);
+		font.Draw(node.name, zoom * (node.position + center) + offset, node.nameColor, true);
 }
 
 
