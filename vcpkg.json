@@ -31,7 +31,10 @@
             "wayland"
           ],
           "platform": "linux"
-        }
+        },
+        "vulkan",
+        "vulkan-headers",
+        "vulkan-memory-allocator"
       ]
     },
     "flatpak-libs": {

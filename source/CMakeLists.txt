@@ -325,6 +325,8 @@ target_sources(EndlessSkyLib PRIVATE
 	Variant.h
 	Visual.cpp
 	Visual.h
+	vk.cpp
+	vk.h
 	Weapon.cpp
 	Weapon.h
 	Weather.cpp

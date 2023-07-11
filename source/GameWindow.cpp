@@ -21,11 +21,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Screen.h"
 
 #include "opengl.h"
+#include "vk.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
 
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -118,7 +121,10 @@ bool GameWindow::Init()
 	}
 
 	// Settings that must be declared before the window creation.
-	Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+	Uint32 flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+
+	// If Vulkan is supported, use that.
+	flags |= SDL_WINDOW_VULKAN;
 
 	if(Preferences::ScreenModeSetting() == "fullscreen")
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -131,89 +137,12 @@ bool GameWindow::Init()
 
 	if(!mainWindow)
 	{
-		ExitWithError("Unable to create window!");
+		string err(SDL_GetError());
+		ExitWithError("Unable to create window!\n"+err);
 		return false;
 	}
 
-	// Settings that must be declared before the context creation.
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-#ifdef _WIN32
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
-#ifdef ES_GLES
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-#else
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-#endif
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-
-	context = SDL_GL_CreateContext(mainWindow);
-	if(!context)
-	{
-		ExitWithError("Unable to create OpenGL context! Check if your system supports OpenGL 3.0.");
-		return false;
-	}
-
-	if(SDL_GL_MakeCurrent(mainWindow, context))
-	{
-		ExitWithError("Unable to set the current OpenGL context!");
-		return false;
-	}
-
-	// Initialize GLEW.
-#if !defined(__APPLE__) && !defined(ES_GLES)
-	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-#ifdef GLEW_ERROR_NO_GLX_DISPLAY
-	if(err != GLEW_OK && err != GLEW_ERROR_NO_GLX_DISPLAY)
-#else
-	if(err != GLEW_OK)
-#endif
-	{
-		ExitWithError("Unable to initialize GLEW!");
-		return false;
-	}
-#endif
-
-	// Check that the OpenGL version is high enough.
-	const char *glVersion = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-	if(!glVersion || !*glVersion)
-	{
-		ExitWithError("Unable to query the OpenGL version!");
-		return false;
-	}
-
-	const char *glslVersion = reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION));
-	if(!glslVersion || !*glslVersion)
-	{
-		ostringstream out;
-		out << "Unable to query the GLSL version. OpenGL version is " << glVersion << ".";
-		ExitWithError(out.str());
-		return false;
-	}
-
-	if(*glVersion < '3')
-	{
-		ostringstream out;
-		out << "Endless Sky requires OpenGL version 3.0 or higher." << endl;
-		out << "Your OpenGL version is " << glVersion << ", GLSL version " << glslVersion << "." << endl;
-		out << "Please update your graphics drivers.";
-		ExitWithError(out.str());
-		return false;
-	}
-
-	// OpenGL settings
-	glClearColor(0.f, 0.f, 0.0f, 1.f);
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-	// Check for support of various graphical features.
-	hasSwizzle = OpenGL::HasSwizzleSupport();
-	supportsAdaptiveVSync = OpenGL::HasAdaptiveVSyncSupport();
+	Vulkan::Initialize(mainWindow);
 
 	// Enable the user's preferred VSync state, otherwise update to an available
 	// value (e.g. if an external program is forcing a particular VSync state).
