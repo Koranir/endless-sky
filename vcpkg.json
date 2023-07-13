@@ -23,12 +23,19 @@
           ],
           "platform": "linux"
         },
-        "sdl2",
+        {
+          "name": "sdl2",
+          "features": [
+            "vulkan"
+          ],
+          "platform": "!linux"
+        },
         {
           "name": "sdl2",
           "features": [
             "x11",
-            "wayland"
+            "wayland",
+            "vulkan"
           ],
           "platform": "linux"
         },

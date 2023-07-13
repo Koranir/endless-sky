@@ -325,8 +325,6 @@ target_sources(EndlessSkyLib PRIVATE
 	Variant.h
 	Visual.cpp
 	Visual.h
-	vk.cpp
-	vk.h
 	Weapon.cpp
 	Weapon.h
 	Weather.cpp
@@ -335,8 +333,6 @@ target_sources(EndlessSkyLib PRIVATE
 	Wormhole.cpp
 	Wormhole.h
 	WormholeStrategy.h
-	opengl.cpp
-	opengl.h
 	pi.h
 	shift.h
 	comparators/ByGivenOrder.h
@@ -361,4 +357,11 @@ target_sources(EndlessSkyLib PRIVATE
 	text/alignment.hpp
 	text/layout.hpp
 	text/truncate.hpp
+
+	renderer/api/opengl.cpp
+	renderer/api/opengl.h
+	renderer/api/vulkan.cpp
+	renderer/api/vulkan.h
+
+	renderer/TripleBuffer.h
 )
