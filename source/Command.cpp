@@ -51,6 +51,8 @@ const Command Command::MENU(ONE << 0, "Show main menu");
 const Command Command::FORWARD(ONE << 1, "Forward thrust");
 const Command Command::LEFT(ONE << 2, "Turn left");
 const Command Command::RIGHT(ONE << 3, "Turn right");
+const Command Command::STRAFE_RIGHT(ONE << 35, "Strafe Right");
+const Command Command::STRAFE_LEFT(ONE << 36, "Strafe Left");
 const Command Command::BACK(ONE << 4, "Reverse");
 const Command Command::MOUSE_TURNING_HOLD(ONE << 5, "Mouse turning (hold)");
 const Command Command::PRIMARY(ONE << 6, "Fire primary weapon");
@@ -81,6 +83,7 @@ const Command Command::AUTOSTEER(ONE << 30, "Auto steer");
 const Command Command::WAIT(ONE << 31, "");
 const Command Command::STOP(ONE << 32, "");
 const Command Command::SHIFT(ONE << 33, "");
+const Command Command::CTRL(ONE << 34, "");
 
 
 
@@ -123,6 +126,8 @@ void Command::ReadKeyboard()
 	// Check whether the `Shift` modifier key was pressed for this step.
 	if(SDL_GetModState() & KMOD_SHIFT)
 		*this |= SHIFT;
+	if(SDL_GetModState() & KMOD_CTRL)
+		*this |= CTRL;
 }
 
 
@@ -259,6 +264,8 @@ void Command::Load(const DataNode &node)
 			{"forward", Command::FORWARD},
 			{"left", Command::LEFT},
 			{"right", Command::RIGHT},
+			{"strafe left", Command::STRAFE_LEFT},
+			{"strafe right", Command::STRAFE_RIGHT},
 			{"back", Command::BACK},
 			{"primary", Command::PRIMARY},
 			{"secondary", Command::SECONDARY},

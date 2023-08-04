@@ -1894,11 +1894,11 @@ void Engine::HandleKeyboardInputs()
 
 	// Certain commands are always sent when the corresponding key is depressed.
 	static const Command maneuveringCommands = Command::AFTERBURNER | Command::BACK |
-		Command::FORWARD | Command::LEFT | Command::RIGHT;
+		Command::FORWARD | Command::LEFT | Command::RIGHT | Command::STRAFE_LEFT | Command::STRAFE_RIGHT;
 
 	// Transfer all commands that need to be active as long as the corresponding key is pressed.
 	activeCommands |= keyHeld.And(Command::PRIMARY | Command::SECONDARY | Command::SCAN |
-		maneuveringCommands | Command::SHIFT | Command::MOUSE_TURNING_HOLD);
+		maneuveringCommands | Command::SHIFT | Command::CTRL | Command::MOUSE_TURNING_HOLD);
 
 	// Certain commands (e.g. LAND, BOARD) are debounced, allowing the player to toggle between
 	// navigable destinations in the system.
@@ -1939,6 +1939,22 @@ void Engine::HandleKeyboardInputs()
 		}
 		else if(keyHeld.Has(Command::JUMP))
 			activeCommands |= Command::FLEET_JUMP;
+	}
+	if(keyHeld.Has(Command::CTRL))
+	{
+		if(Preferences::Has("Strafe with Ctrl + Turn"))
+		{
+			if(keyHeld.Has(Command::LEFT))
+			{
+				activeCommands |= Command::STRAFE_RIGHT;
+				activeCommands.Clear(Command::LEFT);
+			}
+			if(keyHeld.Has(Command::RIGHT))
+			{
+				activeCommands |= Command::STRAFE_LEFT;
+				activeCommands.Clear(Command::RIGHT);
+			}
+		}
 	}
 
 	if(keyHeld.Has(Command::AUTOSTEER) && !activeCommands.Turn()

@@ -4171,6 +4171,10 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player, Command &activeCommand
 			else if(!activeCommands.Has(Command::RIGHT | Command::LEFT | Command::AUTOSTEER))
 				command.SetTurn(TurnBackward(ship));
 		}
+		if(activeCommands.Has(Command::STRAFE_LEFT))
+			command |= Command::STRAFE_LEFT;
+		if(activeCommands.Has(Command::STRAFE_RIGHT))
+			command |= Command::STRAFE_RIGHT;
 
 		if(activeCommands.Has(Command::PRIMARY))
 		{

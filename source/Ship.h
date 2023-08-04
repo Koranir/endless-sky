@@ -543,6 +543,7 @@ private:
 	bool hasBoarded = false;
 	bool isFleeing = false;
 	bool isThrusting = false;
+	bool isStrafing = false;
 	bool isReversing = false;
 	bool isSteering = false;
 	double steeringDirection = 0.;
@@ -617,6 +618,7 @@ private:
 	int hullDelay = 0;
 	// Acceleration can be created by engines, firing weapons, or weapon impacts.
 	Point acceleration;
+	int strafeFrames = 0;
 
 	int crew = 0;
 	int pilotError = 0;

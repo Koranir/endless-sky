@@ -37,6 +37,8 @@ public:
 	static const Command FORWARD;
 	static const Command LEFT;
 	static const Command RIGHT;
+	static const Command STRAFE_RIGHT;
+	static const Command STRAFE_LEFT;
 	static const Command AUTOSTEER;
 	static const Command BACK;
 	static const Command MOUSE_TURNING_HOLD;
@@ -76,9 +78,10 @@ public:
 	// This command from the AI tells a ship that if possible, it should apply
 	// less than its full thrust in order to come to a complete stop.
 	static const Command STOP;
-	// Modifier command, usually triggered by shift-key. Changes behavior of
-	// other commands like NEAREST, TARGET, HAIL and BOARD.
+	// Modifier commands. Changes behavior of other commands like
+	// NEAREST, TARGET, HAIL, BOARD, and TURN.
 	static const Command SHIFT;
+	static const Command CTRL;
 
 
 public:

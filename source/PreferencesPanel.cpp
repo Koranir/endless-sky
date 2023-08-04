@@ -403,7 +403,6 @@ void PreferencesPanel::DrawControls()
 
 	static const string CATEGORIES[] = {
 		"Keyboard Navigation",
-		"Interface",
 		"Targeting",
 		"Weapons",
 		"Interface",
@@ -415,14 +414,13 @@ void PreferencesPanel::DrawControls()
 		Command::FORWARD,
 		Command::LEFT,
 		Command::RIGHT,
+		Command::STRAFE_LEFT,
+		Command::STRAFE_RIGHT,
 		Command::BACK,
 		Command::AFTERBURNER,
 		Command::AUTOSTEER,
 		Command::LAND,
 		Command::JUMP,
-		Command::NONE,
-		Command::MAP,
-		Command::INFO,
 		Command::NONE,
 		Command::NEAREST,
 		Command::TARGET,
@@ -438,6 +436,8 @@ void PreferencesPanel::DrawControls()
 		Command::MOUSE_TURNING_HOLD,
 		Command::NONE,
 		Command::MENU,
+		Command::MAP,
+		Command::INFO,
 		Command::FULLSCREEN,
 		Command::FASTFORWARD,
 		Command::NONE,
@@ -448,7 +448,7 @@ void PreferencesPanel::DrawControls()
 		Command::AMMO,
 		Command::HARVEST
 	};
-	static const Command *BREAK = &COMMANDS[19];
+	static const Command *BREAK = &COMMANDS[18];
 	for(const Command &command : COMMANDS)
 	{
 		// The "BREAK" line is where to go to the next column.
@@ -581,6 +581,7 @@ void PreferencesPanel::DrawSettings()
 		"\n",
 		"Gameplay",
 		"Control ship with mouse",
+		"Strafe with Ctrl + Turn",
 		AUTO_AIM_SETTING,
 		AUTO_FIRE_SETTING,
 		TURRET_TRACKING,

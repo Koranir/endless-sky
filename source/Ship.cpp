@@ -3392,6 +3392,7 @@ bool Ship::StepFlags()
 	isReversing = false;
 	isSteering = false;
 	steeringDirection = 0.;
+	isStrafing = false;
 	if((!isSpecial && forget >= 1000) || !currentSystem)
 	{
 		MarkForRemoval();
@@ -4253,6 +4254,66 @@ void Ship::DoMovement(bool &isUsingAfterburner)
 				}
 			}
 		}
+		double strafeCommand = commands.Has(Command::STRAFE_RIGHT) - commands.Has(Command::STRAFE_LEFT);
+		double strafe = 0;
+		if(strafeCommand)
+		{
+			double scaling = 1.;
+
+			// Check if we are able to apply this thrust.
+			double cost = attributes.Get("thrusting energy") * scaling;
+			if(cost > 0. && energy < cost)
+				strafeCommand *= energy / cost;
+
+			cost = attributes.Get("thrusting shields") * scaling;
+			if(cost > 0. && shields < cost)
+				strafeCommand *= shields / cost;
+
+			cost = attributes.Get("thrusting hull") * scaling;
+			if(cost > 0. && hull < cost)
+				strafeCommand *= hull / cost;
+
+			cost = attributes.Get("thrusting fuel") * scaling;
+			if(cost > 0. && fuel < cost)
+				strafeCommand *= fuel / cost;
+
+			cost = -attributes.Get("thrusting heat") * scaling;
+			if(cost > 0. && heat < cost)
+				strafeCommand *= heat / cost;
+
+			if(strafeCommand)
+			{
+				isStrafing = (strafeCommand > 0.);
+				strafe = attributes.Get("thrust");
+				if(strafe)
+				{
+					double scale = fabs(strafeCommand) * scaling;
+
+					shields -= scale * attributes.Get("thrusting shields");
+					hull -= scale * attributes.Get("thrusting hull");
+					energy -= scale * attributes.Get("thrusting energy");
+					fuel -= scale * attributes.Get("thrusting fuel");
+					heat += scale * attributes.Get("thrusting heat");
+					discharge += scale * attributes.Get("thrusting discharge");
+					corrosion += scale * attributes.Get("thrusting corrosion");
+					ionization += scale * attributes.Get("thrusting ion");
+					scrambling += scale * attributes.Get("thrusting scramble");
+					leakage += scale * attributes.Get("thrusting leakage");
+					burning += scale * attributes.Get("thrusting burn");
+					slowness += scale * attributes.Get("thrusting slowing");
+					disruption += scale * attributes.Get("thrusting disruption");
+
+					auto strafeAngle = (angle - 90 * strafeCommand).Unit();
+					velocity += strafeAngle * strafe * scale / mass;
+				}
+			}
+
+			strafeFrames = min(strafeFrames + 1, 1);
+		}
+		else
+		{
+			strafeFrames = max(0, strafeFrames - 1);
+		}
 		bool applyAfterburner = (commands.Has(Command::AFTERBURNER) || (thrustCommand > 0. && !thrust))
 				&& !CannotAct();
 		if(applyAfterburner)
@@ -4327,6 +4388,7 @@ void Ship::DoMovement(bool &isUsingAfterburner)
 				if((aNormal > 0.) != (vNormal > 0.) && fabs(aNormal) > fabs(vNormal))
 					dragAcceleration = -vNormal * angle.Unit();
 			}
+			velocity = ((velocity.Unit() + (dragAcceleration.Unit() - velocity.Unit()) * 0.016)) * velocity.Length();
 			velocity += dragAcceleration;
 		}
 		acceleration = Point();
@@ -4424,6 +4486,16 @@ void Ship::DoEngineVisuals(vector<Visual> &visuals, bool isUsingAfterburner)
 				for(int i = 0; i < it.second; ++i)
 					visuals.emplace_back(*it.first, pos, effectVelocity, angle);
 		}
+	if(strafeFrames)
+	{
+		for(int i = 0; i < 1 - strafeFrames; i++)
+		{
+			auto rand = Random::Int() % enginePoints.size();
+			Point pos = angle.Rotate(enginePoints[rand]) * Zoom() + position;
+			Point effectVelocity = velocity - Angle(Random::Real()).Unit();
+			visuals.emplace_back(*GameData::Effects().Get("smoke"), pos, effectVelocity, angle);
+		}
+	}
 }
 
 
