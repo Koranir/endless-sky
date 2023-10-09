@@ -21,6 +21,7 @@ x64/
 Debug/
 install/
 Release/
+zig-cache/
 *.layout
 *.depend
 scons-local*
