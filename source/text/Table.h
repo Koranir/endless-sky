@@ -18,7 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "../Color.h"
 #include "DisplayText.h"
-#include "layout.h"
+#include "layout.hpp"
 #include "../Point.h"
 
 #include <string>

@@ -16,7 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef ES_TEXT_DISPLAYTEXT_H_
 #define ES_TEXT_DISPLAYTEXT_H_
 
-#include "layout.h"
+#include "layout.hpp"
 
 #include <string>
 
