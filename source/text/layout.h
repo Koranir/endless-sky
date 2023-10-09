@@ -16,8 +16,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef ES_TEXT_LAYOUT_H_
 #define ES_TEXT_LAYOUT_H_
 
-#include "alignment.hpp"
-#include "truncate.hpp"
+#include "alignment.h"
+#include "truncate.h"
 
 
 

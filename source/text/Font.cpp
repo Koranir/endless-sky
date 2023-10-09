@@ -15,14 +15,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Font.h"
 
-#include "alignment.hpp"
+#include "alignment.h"
 #include "../Color.h"
 #include "DisplayText.h"
 #include "../ImageBuffer.h"
 #include "../Point.h"
 #include "../Preferences.h"
 #include "../Screen.h"
-#include "truncate.hpp"
+#include "truncate.h"
 
 #include <algorithm>
 #include <cmath>

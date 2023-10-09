@@ -22,6 +22,7 @@ Debug/
 install/
 Release/
 zig-cache/
+vcpkg_installed/
 *.layout
 *.depend
 scons-local*
