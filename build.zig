@@ -6,13 +6,10 @@ pub fn build(b: *std.Build) !void {
     const opt_level = b.standardOptimizeOption(.{});
     _ = opt_level;
     const target = b.standardTargetOptions(.{});
-    
-    try vcpkg_bootstrap.bootstrap_vcpkg(b, .{
-        .vcpkg_dir = "vcpkg2",
-    });
-    
+
+    try vcpkg_bootstrap.bootstrap_vcpkg(b, .{});
+
     try vcpkg_bootstrap.install_vcpkg(b, .{
-        .vcpkg_dir = "vcpkg2",
         .target = target,
         .manifest_features = &.{
             "system-libs",
@@ -40,7 +37,6 @@ pub fn build(b: *std.Build) !void {
     //         try vcpkg_manifest_features.append("macos-libs");
     //     }
 
-        
     // }
 
     // const link_libs = [_][]const u8{
