@@ -57,6 +57,7 @@ pub fn bootstrap_vcpkg(b: *std.Build, cfg: BootstrapConfig) !void {
 
     const vcpkg_github_url = "https://github.com/Microsoft/vcpkg";
     const vcpkg_dir = try join_p(b, cwd, cfg.vcpkg_dir);
+    b.vcpkg_root = .{ .found = vcpkg_dir };
 
     const vcpkg_git_path = try join_p(b, vcpkg_dir, ".git");
     const needs_clone = !try exists(vcpkg_git_path);
@@ -124,7 +125,7 @@ pub fn install_vcpkg(b: *std.Build, cfg: InstallConfig) !void {
     const vcpkg_exe_path = try join_p(b, vcpkg_dir, if (b.host.target.os.tag == .windows) "vcpkg.exe" else "vcpkg");
 
     var vcpkg_args = std.ArrayList([]const u8).init(b.allocator);
-    try vcpkg_args.appendSlice(&.{ vcpkg_exe_path, "install" });
+    try vcpkg_args.appendSlice(&.{ vcpkg_exe_path, "install", "--no-print-usage" });
 
     for (cfg.manifest_features) |feat| {
         try vcpkg_args.append(try std.fmt.allocPrint(b.allocator, "--x-feature={s}", .{feat}));
@@ -134,12 +135,12 @@ pub fn install_vcpkg(b: *std.Build, cfg: InstallConfig) !void {
         try vcpkg_args.append("--x-no-default-features");
     }
 
-    try vcpkg_args.append(std.fs.path.join(b.allocator, &.{
+    try vcpkg_args.append(try join_s(b, "--x-install-root=", try std.fs.path.join(b.allocator, &.{
         cwd,
         cfg.vcpkg_install_dir,
-    }));
+    })));
 
-    vcpkg_args.appendSlice(cfg.additional_arguments);
+    try vcpkg_args.appendSlice(cfg.additional_arguments);
 
     const triplet = try cfg.target.vcpkgTriplet(b.allocator, .Dynamic);
     std.log.info("Building for triplet: {s}", .{triplet});
