@@ -107,7 +107,7 @@ pub fn bootstrap_vcpkg(b: *std.Build, cfg: BootstrapConfig) !void {
         try spawn_and_pipe(b, &.{
             cfg.git_executable,
             "clean",
-            "qfd",
+            "-qfd",
             // baseline_sha,
         }, vcpkg_dir, null, null);
     }
