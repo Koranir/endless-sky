@@ -14,7 +14,7 @@ pub const InstallConfig = struct {
     /// Directory of the vcpkg executable. Relative to the cwd. Defaults to [cwd]/vcpkg
     vcpkg_dir: []const u8 = "vcpkg",
     vcpkg_install_dir: []const u8 = "vcpkg/installed",
-    target: std.zig.CrossTarget,
+    target: []const u8,
     manifest_features: []const []const u8 = &.{},
     default_features: bool = true,
     additional_arguments: []const []const u8 = &.{},
@@ -108,7 +108,7 @@ pub fn bootstrap_vcpkg(b: *std.Build, cfg: BootstrapConfig) !void {
             cfg.git_executable,
             "clean",
             "qfd",
-            baseline_sha,
+            // baseline_sha,
         }, vcpkg_dir, null, null);
     }
 
@@ -142,9 +142,9 @@ pub fn install_vcpkg(b: *std.Build, cfg: InstallConfig) !void {
 
     try vcpkg_args.appendSlice(cfg.additional_arguments);
 
-    const triplet = try cfg.target.vcpkgTriplet(b.allocator, .Dynamic);
-    std.log.info("Building for triplet: {s}", .{triplet});
-    try vcpkg_args.append(try std.fmt.allocPrint(b.allocator, "--triplet={s}", .{triplet}));
+    // const triplet = try cfg.target.vcpkgTriplet(b.allocator, .Dynamic);
+    std.log.info("Building for triplet: {s}", .{cfg.target});
+    try vcpkg_args.append(try std.fmt.allocPrint(b.allocator, "--triplet={s}", .{cfg.target}));
 
     std.log.info("Running Vcpkg Install", .{});
     try spawn_and_pipe(b, vcpkg_args.items, cwd, null, null);
