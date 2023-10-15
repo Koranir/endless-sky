@@ -1,6 +1,5 @@
 const std = @import("std");
 const vcpkg_bootstrap = @import("utils/vcpkg_bootstrap.zig");
-const vcpkg_install = @import("utils/vcpkg_install.zig");
 
 const source_files = [_][]const u8{
     "source/AI.cpp",
