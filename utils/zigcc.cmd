@@ -1,0 +1,2 @@
+@echo on
+zig cc %*

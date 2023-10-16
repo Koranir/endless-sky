@@ -27,6 +27,7 @@ scons-local*
 .sconsign.dblite
 /*.d
 /vcpkg/
+zig-cache/
 
 # Test Reports
 test-report.xml
