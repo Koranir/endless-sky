@@ -197,17 +197,32 @@ pub fn getBuildSettings(b: *std.Build) BuildSettings {
 pub fn build(b: *std.Build) !void {
     const settings = getBuildSettings(b);
 
-    const link_libraries = [_][]const u8{
-        "SDL2",
-        if (settings.target.isWindows()) "glew32" else "glew",
-        if (settings.target.isWindows()) "OpenAL32" else "OpenAL",
-        "jpeg",
-        if (settings.target.isWindows()) "libpng16" else "png16",
-        "mad",
-        "jpeg",
-        "zlib",
-        "uuid",
-    };
+    const link_libraries: []const []const u8 = if (settings.target.isWindows())
+        &.{
+            "SDL2",
+            "glew32",
+            "OpenGL32",
+            "OpenAL32",
+            "jpeg",
+            "libpng16",
+            "mad",
+            "jpeg",
+            "zlib",
+            "manual-link/SDL2main",
+        }
+    else
+        &.{
+            "SDL2",
+            "glew",
+            "OpenGL32",
+            "OpenAL",
+            "jpeg",
+            "png16",
+            "mad",
+            "jpeg",
+            "zlib",
+            "uuid",
+        };
 
     const use_vcpkg = settings.use_vcpkg;
     std.log.info("Settings: {}", .{settings});
@@ -219,7 +234,7 @@ pub fn build(b: *std.Build) !void {
             if (settings.flatpak) "flatpak-libs" else if (settings.steam) "steam-libs" else if (settings.apple) "macos-libs" else "",
         },
         .additional_arguments = &.{"--overlay-triplets=./overlays"},
-        .target = try settings.target.vcpkgTriplet(b.allocator, .Dynamic),
+        .target = "zig-x86_64-windows",
     });
 
     const create_lib = b.step("check", "Only builds the static library, without building and linking the executable. Use to check for compiler errors.");
