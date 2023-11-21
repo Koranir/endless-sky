@@ -1180,6 +1180,8 @@ void Engine::Draw() const
 		font.Draw(loadString,
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
+
+	const auto a = "튼헤요";
 }
 
 
