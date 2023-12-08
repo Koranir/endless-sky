@@ -63,6 +63,33 @@ project("Endless Sky" VERSION 0.10.5
 	HOMEPAGE_URL https://endless-sky.github.io/
 	LANGUAGES CXX)
 
+# Setup ccosmic_text
+execute_process(
+	COMMAND cargo build --release
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ccosmic_text
+	ERROR_VARIABLE _cargo_build_error
+	RESULT_VARIABLE _cargo_build_has_err
+)
+if(NOT _cargo_build_has_err STREQUAL "0")
+	message(FATAL_ERROR "Could not build ccosmic_text library, is Rust installed on your system?\n${_cargo_build_error}")
+endif()
+set(CCOSMIC_TEXT_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ccosmic_text/lib")
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/ccosmic_text/target/release/${CMAKE_STATIC_LIBRARY_PREFIX}ccosmic_text${CMAKE_STATIC_LIBRARY_SUFFIX}
+	${CCOSMIC_TEXT_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ccosmic_text${CMAKE_STATIC_LIBRARY_SUFFIX}
+	USE_SOURCE_PERMISSIONS COPYONLY
+)
+
+execute_process(
+	COMMAND cbindgen -c cbindgen.toml --cpp-compat --crate ccosmic-text -l c -o ../source/text/ccosmic_text.h
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ccosmic_text
+	ERROR_VARIABLE _cbindgen_error
+	RESULT_VARIABLE _cbindgen_has_err
+)
+if(NOT _cargo_build_has_err STREQUAL "0")
+	message(FATAL_ERROR "Could not execute cbindgen, try running `cargo install cbindgen`\n${_cbindgen_error}")
+endif()
+
 # Find the needed library dependencies.
 find_package(SDL2 CONFIG REQUIRED)
 find_package(PNG REQUIRED)
@@ -119,7 +146,9 @@ endif()
 
 # Link with the general libraries.
 target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL
-	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>")
+	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>"
+	${CCOSMIC_TEXT_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ccosmic_text${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
 
 # Link the needed OS-specific dependencies, if any.
 if(WIN32)

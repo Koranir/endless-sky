@@ -1,0 +1,11 @@
+[package]
+name = "ccosmic-text"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+cosmic-text = "0.10.0"
+paste = "1.0.14"

@@ -1,0 +1,13 @@
+include_guard = "CCOSMIC_TEXT_H_"
+
+include_version = true
+
+style = "type"
+
+usize_is_size_t = true
+
+[parse.expand]
+crates = ["ccosmic-text"]
+
+[fn]
+args = "vertical"
