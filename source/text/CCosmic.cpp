@@ -2,7 +2,6 @@
 
 #include "../Files.h"
 
-#include "ccosmic_text_gl.h"
 #include <SDL_video.h>
 
 using namespace std;
@@ -34,4 +33,9 @@ string CCosmicText::Debug()
     auto str = string(ptr);
     ctrDeinitDebug(ptr);
     return str;
+}
+
+CtrBuffer CCosmicText::CreateBuffer(float fontSize, float lineHeight)
+{
+    return ctrCreateBuffer(ctr, fontSize, lineHeight);
 }

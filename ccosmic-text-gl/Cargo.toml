@@ -13,6 +13,7 @@ crate-type = ["cdylib"]
 cew = "0.1.0"
 cosmic-text = "0.10.0"
 glow = "0.13.0"
+guillotiere = "0.6.2"
 
 [build-dependencies]
 cbindgen = "0.26.0"

@@ -4,12 +4,16 @@
 #include <string>
 #include <vector>
 
+#include <ccosmic_text_gl.h>
+
 
 
 class CCosmicText {
 public:
     static void Init(const std::vector<const char *> &fonts);
     static std::string Debug();
+
+    static CtrBuffer CreateBuffer(float fontSize, float lineHeight);
 
 };
 
