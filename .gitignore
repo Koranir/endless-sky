@@ -27,6 +27,9 @@ scons-local*
 .sconsign.dblite
 /*.d
 /vcpkg/
+/ccosmic-text-gl/Cargo.lock
+/ccosmic-text-gl/bindings.h
+/ccosmic-text-gl/target/
 
 # Test Reports
 test-report.xml

@@ -1,7 +1,7 @@
 add_library(EndlessSkyLib OBJECT)
 
 # Set the appropriate compiler flags.
-target_include_directories(EndlessSkyLib PUBLIC "${LIBMAD_INCLUDE_DIR}")
+target_include_directories(EndlessSkyLib PUBLIC "${LIBMAD_INCLUDE_DIR}" "${CCOSMIC_DIR}")
 if(MSVC)
 	target_compile_options(EndlessSkyLib PUBLIC "/W3" "/permissive-" "/sdl" "/GR-" "/analyze-"
 		"-Wno-nonportable-include-path" "$<$<CONFIG:Release>:/Gy;/Oi>")
@@ -348,6 +348,8 @@ target_sources(EndlessSkyLib PRIVATE
 	comparators/BySeriesAndIndex.h
 	ship/ShipAICache.cpp
 	ship/ShipAICache.h
+	text/CCosmic.cpp
+	text/CCosmic.h
 	text/DisplayText.cpp
 	text/DisplayText.h
 	text/Font.cpp

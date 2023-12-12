@@ -29,6 +29,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "FogShader.h"
+#include "Logger.h"
+#include "text/CCosmic.h"
 #include "text/FontSet.h"
 #include "FormationPattern.h"
 #include "Galaxy.h"
@@ -198,6 +200,8 @@ void GameData::CheckReferences()
 
 void GameData::LoadShaders()
 {
+	CCosmicText::Init({(Files::Fonts() + "Ubuntu/Ubuntu-Regular.ttf").c_str()});
+	Logger::LogError(CCosmicText::Debug());
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 

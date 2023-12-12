@@ -46,6 +46,7 @@ namespace {
 	string config;
 
 	string dataPath;
+	string fontPath;
 	string imagePath;
 	string soundPath;
 	string savePath;
@@ -135,6 +136,7 @@ void Files::Init(const char * const *argv)
 		resources.erase(pos + 1);
 	}
 	dataPath = resources + "data/";
+	fontPath = resources + "fonts/";
 	imagePath = resources + "images/";
 	soundPath = resources + "sounds/";
 
@@ -192,6 +194,13 @@ const string &Files::Config()
 const string &Files::Data()
 {
 	return dataPath;
+}
+
+
+
+const string &Files::Fonts()
+{
+	return fontPath;
 }
 
 

@@ -63,6 +63,15 @@ project("Endless Sky" VERSION 0.10.5
 	HOMEPAGE_URL https://endless-sky.github.io/
 	LANGUAGES CXX)
 
+# Build the text renderer
+set(CCOSMIC_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ccosmic-text-gl)
+set(CCOSMIC_DIR ${CMAKE_BINARY_DIR}/ccosmic)
+set(CCOSMIC_LIB ${CCOSMIC_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ccosmic_text_gl${CMAKE_SHARED_LIBRARY_SUFFIX})
+execute_process(WORKING_DIRECTORY ${CCOSMIC_SRC_DIR}
+	COMMAND cargo build)
+configure_file(${CCOSMIC_SRC_DIR}/bindings.h ${CCOSMIC_DIR}/ccosmic_text_gl.h COPYONLY)
+configure_file(${CCOSMIC_SRC_DIR}/target/debug/${CMAKE_SHARED_LIBRARY_PREFIX}ccosmic_text_gl${CMAKE_SHARED_LIBRARY_SUFFIX} ${CCOSMIC_LIB} COPYONLY)
+
 # Find the needed library dependencies.
 find_package(SDL2 CONFIG REQUIRED)
 find_package(PNG REQUIRED)
@@ -119,7 +128,7 @@ endif()
 
 # Link with the general libraries.
 target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL
-	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>")
+	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>" "${CCOSMIC_LIB}")
 
 # Link the needed OS-specific dependencies, if any.
 if(WIN32)
