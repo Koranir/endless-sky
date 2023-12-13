@@ -1,3 +1,5 @@
+#![feature(array_chunks)]
+
 use std::{
     ffi::{c_char, c_void, CStr, CString},
     path::PathBuf,
@@ -16,9 +18,18 @@ pub struct CCosmicTextRenderer {
     font_system: cosmic_text::FontSystem,
     cache: cosmic_text::SwashCache,
     atlas: guillotiere::AtlasAllocator,
-    hashmap: std::collections::HashMap<cosmic_text::CacheKey, guillotiere::Allocation>,
+    hashmap: std::collections::HashMap<
+        cosmic_text::CacheKey,
+        (Option<guillotiere::Allocation>, cosmic_text::Placement),
+    >,
     framebuffer: glow::NativeFramebuffer,
     texture: glow::NativeTexture,
+}
+impl Drop for CCosmicTextRenderer {
+    fn drop(&mut self) {
+        unsafe { self.gl.delete_texture(self.texture) };
+        unsafe { self.gl.delete_framebuffer(self.framebuffer) };
+    }
 }
 
 impl CCosmicTextRenderer {
@@ -32,14 +43,31 @@ impl CCosmicTextRenderer {
         let font_system = cosmic_text::FontSystem::new_with_fonts(fonts);
         let cache = cosmic_text::SwashCache::new();
 
-        let atlas = guillotiere::AtlasAllocator::new(guillotiere::Size::new(1024, 1024));
+        let atlas = guillotiere::AtlasAllocator::new(guillotiere::Size::new(4096, 4096));
+        dbg!(atlas.size());
         let texture = gl.create_framebuffer().unwrap();
         gl.bind_framebuffer(glow::FRAMEBUFFER, Some(texture));
         let tex = gl.create_texture().unwrap();
         gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-        gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, 1024, 1024, 0, glow::RGBA, glow::UNSIGNED_BYTE, None);
+        gl.tex_image_2d(
+            glow::TEXTURE_2D,
+            0,
+            glow::RGBA as i32,
+            4096,
+            4096,
+            0,
+            glow::RGBA,
+            glow::UNSIGNED_BYTE,
+            Some(&[0xFF; 4 * 4096 * 4096]),
+        );
         gl.bind_texture(glow::TEXTURE_2D, None);
-        gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(tex), 0);
+        gl.framebuffer_texture_2d(
+            glow::FRAMEBUFFER,
+            glow::COLOR_ATTACHMENT0,
+            glow::TEXTURE_2D,
+            Some(tex),
+            0,
+        );
         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
 
         Self {
@@ -64,9 +92,7 @@ pub struct CtrBuffer(*mut c_void);
 impl CtrBuffer {
     pub unsafe fn new(ctr: FfiCtr, value: cosmic_text::Buffer) -> Self {
         let boxed = Box::new(value);
-        Self(
-            Box::into_raw(boxed) as *mut c_void
-        )
+        Self(Box::into_raw(boxed) as *mut c_void)
     }
 
     pub fn get(self) -> &'static mut cosmic_text::Buffer {
@@ -75,9 +101,9 @@ impl CtrBuffer {
 }
 
 #[repr(C)]
-pub struct Rect {
-    center: (f32, f32),
-    dimensions: (f32, f32),
+pub struct CtrRect {
+    min: [i32; 2],
+    max: [i32; 2],
 }
 
 #[repr(transparent)]
@@ -92,6 +118,31 @@ impl From<CCosmicTextRenderer> for FfiCtr {
 impl FfiCtr {
     pub fn get(self) -> &'static mut CCosmicTextRenderer {
         unsafe { &mut *(self.0 as *mut _) }
+    }
+}
+
+fn mulcol(a: u8, b: u8) -> u8 {
+    ((a as f32 * b as f32) / (225.)) as u8
+}
+
+#[repr(i32)]
+#[derive(Clone, Copy)]
+pub enum CtrAlign {
+    CENTER = 1,
+    JUSTIFIED = 2,
+    LEFT = 3,
+    RIGHT = 4,
+    END = 5,
+}
+impl From<CtrAlign> for cosmic_text::Align {
+    fn from(value: CtrAlign) -> Self {
+        match value {
+            CtrAlign::CENTER => Self::Center,
+            CtrAlign::JUSTIFIED => Self::Justified,
+            CtrAlign::LEFT => Self::Left,
+            CtrAlign::RIGHT => Self::Right,
+            CtrAlign::END => Self::End,
+        }
     }
 }
 
@@ -170,17 +221,28 @@ impl FfiCtr {
         text_ptr: *const u8,
         text_len: usize,
     ) {
+        let str =
+            std::str::from_utf8(unsafe { std::slice::from_raw_parts(text_ptr, text_len) }).unwrap();
         buf.get().set_text(
             &mut self.get().font_system,
-            std::str::from_utf8(unsafe { std::slice::from_raw_parts(text_ptr, text_len) }).unwrap(),
-            Attrs::new(),
+            str,
+            Attrs::new().family(cosmic_text::Family::Serif),
             cosmic_text::Shaping::Advanced,
-        )
+        );
+    }
+
+    #[no_mangle]
+    #[export_name = "ctrSetBufferSize"]
+    pub extern "C" fn set_buffer_size(self, buf: CtrBuffer, x: f32, y: f32) {
+        buf.get().set_size(&mut self.get().font_system, x, y)
     }
 
     #[no_mangle]
     #[export_name = "ctrShapeBuffer"]
-    pub extern "C" fn shape_buffer(self, buf: CtrBuffer) {
+    pub extern "C" fn shape_buffer(self, buf: CtrBuffer, align: CtrAlign) {
+        for line in buf.get().lines.iter_mut() {
+            line.set_align(Some(align.into()));
+        }
         buf.get().shape_until_scroll(&mut self.get().font_system);
     }
 
@@ -201,31 +263,54 @@ impl FfiCtr {
         );
     }
 
+    /// # Safety
+    /// A whole lotta gl
     #[no_mangle]
     #[export_name = "ctrDrawBuffer"]
-    pub unsafe extern "C" fn draw_buffer(self, buf: CtrBuffer, color: u32, rect: Rect) {
+    pub unsafe extern "C" fn draw_buffer(self, buf: CtrBuffer, color: u32, rect: CtrRect) {
         let gl = &self.get().gl;
 
+        // dbg!("{:#?}", buf.get());
+
         for run in buf.get().layout_runs() {
+            // dbg!("{run:?}");
             for glyph in run.glyphs.iter() {
                 let physical_glyph = glyph.physical((0., 0.), 1.0);
 
                 let al = match self.get().hashmap.get(&physical_glyph.cache_key) {
                     Some(alloc) => *alloc,
                     None => {
+                        eprintln!("None: {:?}", physical_glyph.cache_key.glyph_id);
                         let glyph_color = match glyph.color_opt {
                             Some(some) => some,
                             None => cosmic_text::Color(color),
                         };
 
-                        let img = self.get().cache.get_image_uncached(&mut self.get().font_system, physical_glyph.cache_key).unwrap();
-                        let sz = guillotiere::size2(img.placement.width as i32, img.placement.height as i32);
+                        let img = self
+                            .get()
+                            .cache
+                            .get_image_uncached(
+                                &mut self.get().font_system,
+                                physical_glyph.cache_key,
+                            )
+                            .unwrap();
+                        let sz = guillotiere::size2(
+                            img.placement.width as i32,
+                            img.placement.height as i32,
+                        );
+
+                        if sz.area() == 0 {
+                            self.get()
+                                .hashmap
+                                .insert(physical_glyph.cache_key, (None, img.placement));
+                            continue;
+                        }
 
                         let al = match self.get().atlas.allocate(sz) {
                             Some(al) => al,
                             None => {
                                 panic!("Ran out of atlas space")
-                            },
+                            }
                         };
 
                         let temp_buf = gl.create_framebuffer().unwrap();
@@ -234,43 +319,137 @@ impl FfiCtr {
                         gl.bind_texture(glow::TEXTURE_2D, Some(temp_tex));
 
                         match img.content {
-                            cosmic_text::SwashContent::Mask => gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, sz.width, sz.height, 0, glow::R8, glow::UNSIGNED_BYTE, Some(&img.data)),
+                            cosmic_text::SwashContent::Mask => {
+                                let pix: Vec<_> = img
+                                    .data
+                                    .chunks(sz.width as usize)
+                                    .rev()
+                                    .flat_map(|wor| {
+                                        wor.iter().flat_map(|&alpha| {
+                                            [
+                                                mulcol(alpha, ((color & 0xFF000000) >> 24) as u8),
+                                                mulcol(alpha, ((color & 0x00FF0000) >> 16) as u8),
+                                                mulcol(alpha, ((color & 0x0000FF00) >> 8) as u8),
+                                                mulcol(alpha, (color & 0x000000FF) as u8),
+                                            ]
+                                        })
+                                    })
+                                    .collect();
+                                gl.tex_image_2d(
+                                    glow::TEXTURE_2D,
+                                    0,
+                                    glow::RGBA as i32,
+                                    sz.width,
+                                    sz.height,
+                                    0,
+                                    glow::RGBA,
+                                    glow::UNSIGNED_BYTE,
+                                    Some(&pix),
+                                )
+                            }
                             cosmic_text::SwashContent::SubpixelMask => panic!("Subpixel mask"),
-                            cosmic_text::SwashContent::Color => gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, sz.width, sz.height, 0, glow::RGBA8, glow::UNSIGNED_BYTE, Some(&img.data)),
-                        }
-                        gl.bind_texture(glow::TEXTURE_2D, None);
-                        gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(temp_tex), 0);
+                            cosmic_text::SwashContent::Color => {
+                                let pix: Vec<_> = img
+                                    .data
+                                    .chunks(sz.width as usize * 4)
+                                    .map(|ch| {
+                                        ch.array_chunks::<4>().flat_map(|ch| {
+                                            [
+                                                mulcol(ch[0], ch[3]),
+                                                mulcol(ch[1], ch[3]),
+                                                mulcol(ch[2], ch[3]),
+                                                ch[3],
+                                            ]
+                                        })
+                                    })
+                                    .rev()
+                                    .flatten()
+                                    .collect();
 
+                                gl.tex_image_2d(
+                                    glow::TEXTURE_2D,
+                                    0,
+                                    glow::RGBA as i32,
+                                    sz.width,
+                                    sz.height,
+                                    0,
+                                    glow::RGBA,
+                                    glow::UNSIGNED_BYTE,
+                                    Some(&pix),
+                                )
+                            }
+                        }
+                        gl.framebuffer_texture_2d(
+                            glow::FRAMEBUFFER,
+                            glow::COLOR_ATTACHMENT0,
+                            glow::TEXTURE_2D,
+                            Some(temp_tex),
+                            0,
+                        );
+                        gl.bind_texture(glow::TEXTURE_2D, None);
+                        gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+
+                        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(temp_buf));
                         gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, Some(self.get().framebuffer));
 
-                        gl.blit_framebuffer(0, 0, sz.width, sz.height, al.rectangle.min.x, al.rectangle.min.y, al.rectangle.max.x, al.rectangle.max.y, glow::COLOR_BUFFER_BIT, glow::NEAREST);
-
+                        gl.blit_framebuffer(
+                            0,
+                            0,
+                            sz.width,
+                            sz.height,
+                            al.rectangle.min.x,
+                            al.rectangle.min.y,
+                            al.rectangle.max.x,
+                            al.rectangle.max.y,
+                            glow::COLOR_BUFFER_BIT,
+                            glow::NEAREST,
+                        );
                         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
 
                         gl.delete_texture(temp_tex);
                         gl.delete_framebuffer(temp_buf);
 
-                        al
-                    },
+                        self.get()
+                            .hashmap
+                            .insert(physical_glyph.cache_key, (Some(al), img.placement));
+
+                        (Some(al), img.placement)
+                    }
                 };
 
-                
+                let (al, pl) = if let (Some(al), pl) = al {
+                    (al, pl)
+                } else {
+                    continue;
+                };
 
-                // cache.with_pixels(
-                //     font_system,
-                //     physical_glyph.cache_key,
-                //     glyph_color,
-                //     |x, y, color| {
-                //         f(
-                //             physical_glyph.x + x,
-                //             run.line_y as i32 + physical_glyph.y + y,
-                //             1,
-                //             1,
-                //             color,
-                //         );
-                //     },
-                // );
+                let left = physical_glyph.x + pl.left;
+                let bottom = physical_glyph.y - run.line_y as i32 + pl.top - pl.height as i32;
+                let right = physical_glyph.x + pl.left + pl.width as i32;
+                let top = physical_glyph.y - run.line_y as i32 + pl.top;
+
+                // dbg!(left, bottom, right, top);
+
+                gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
+
+                gl.blit_framebuffer(
+                    al.rectangle.min.x,
+                    al.rectangle.min.y,
+                    al.rectangle.max.x,
+                    al.rectangle.max.y,
+                    rect.min[0] + left,
+                    rect.min[1] + bottom,
+                    rect.min[0] + right,
+                    rect.min[1] + top,
+                    glow::COLOR_BUFFER_BIT,
+                    glow::NEAREST,
+                );
+
+                gl.bind_framebuffer(glow::FRAMEBUFFER, None);
             }
         }
+
+        // gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
+        // gl.blit_framebuffer(0, 0, 4096, 4096, 0, 0, 3840, 2160, glow::COLOR_BUFFER_BIT, glow::NEAREST);
     }
 }

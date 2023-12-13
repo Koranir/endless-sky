@@ -1,6 +1,9 @@
 #ifndef CCOSMIC_TEXT_H_
 #define CCOSMIC_TEXT_H_
 
+#include "alignment.hpp"
+#include "../Color.h"
+
 #include <string>
 #include <vector>
 
@@ -14,6 +17,8 @@ public:
     static std::string Debug();
 
     static CtrBuffer CreateBuffer(float fontSize, float lineHeight);
+
+    static void DrawText(CtrBuffer buf, const std::string &text, CtrRect where, const Color &col, Alignment align);
 
 };
 

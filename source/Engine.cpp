@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Audio.h"
 #include "CategoryList.h"
 #include "CategoryTypes.h"
+#include "Color.h"
 #include "CoreStartData.h"
 #include "DamageDealt.h"
 #include "DamageProfile.h"
@@ -26,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
+#include "text/CCosmic.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "text/Format.h"
@@ -69,6 +71,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Weather.h"
 #include "Wormhole.h"
 #include "text/WrappedText.h"
+#include "text/alignment.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -1185,6 +1188,11 @@ void Engine::Draw() const
 		font.Draw(loadString,
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
+
+	auto buf = CCosmicText::CreateBuffer(38.0, 40.0);
+	Messages::Add("💯💯💯 X:" + to_string(static_cast<int32_t>(center.X())) + ", Y: " + to_string(static_cast<int32_t>(center.Y())) + " 💯💯💯");
+	if(!Messages::Get(step).empty())
+		CCosmicText::DrawText(buf, Messages::Get(step).back().message, CtrRect{{0, 100}, {Screen::RawWidth(), Screen::RawHeight()}}, Color(1.0, 0.9, 0.9, 0.7), Alignment::CENTER);
 }
 
 

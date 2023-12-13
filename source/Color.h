@@ -16,6 +16,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef ES_COLOR_H_
 #define ES_COLOR_H_
 
+#include <cstdint>
+
 
 
 // Class representing an RGBA color (for use by OpenGL). The specified colors
@@ -39,6 +41,8 @@ public:
 	bool IsLoaded() const;
 	// Get the color as a float vector, suitable for use by OpenGL.
 	const float *Get() const;
+
+	uint32_t Rgba8() const;
 
 	// Get this color, but entirely opaque. That is, this is the color you would
 	// get if drawing this color on top of opaque black.

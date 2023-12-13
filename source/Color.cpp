@@ -14,6 +14,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "Color.h"
+#include <cstdint>
 
 
 
@@ -75,6 +76,18 @@ bool Color::IsLoaded() const
 const float *Color::Get() const
 {
 	return color;
+}
+
+
+
+uint32_t Color::Rgba8() const
+{
+	uint32_t ret = 0;
+	ret |= static_cast<uint32_t>(color[0] * 255.) << 24;
+	ret |= static_cast<uint32_t>(color[1] * 255.) << 16;
+	ret |= static_cast<uint32_t>(color[2] * 255.) << 8;
+	ret |= static_cast<uint32_t>(color[3] * 255.);
+	return ret;
 }
 
 

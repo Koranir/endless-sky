@@ -201,7 +201,7 @@ void GameData::CheckReferences()
 void GameData::LoadShaders()
 {
 	CCosmicText::Init({(Files::Fonts() + "Ubuntu/Ubuntu-Regular.ttf").c_str()});
-	Logger::LogError(CCosmicText::Debug());
+	// Logger::LogError(CCosmicText::Debug());
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 

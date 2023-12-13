@@ -1,8 +1,11 @@
 #include "CCosmic.h"
 
 #include "../Files.h"
+#include "../Screen.h"
+#include "alignment.hpp"
 
 #include <SDL_video.h>
+#include <cstdint>
 
 using namespace std;
 
@@ -38,4 +41,27 @@ string CCosmicText::Debug()
 CtrBuffer CCosmicText::CreateBuffer(float fontSize, float lineHeight)
 {
     return ctrCreateBuffer(ctr, fontSize, lineHeight);
+}
+
+void CCosmicText::DrawText(CtrBuffer buf, const std::string &text, CtrRect where, const Color &col, Alignment align)
+{
+    ctrSetBufferSize(ctr, buf, where.max[0] - where.min[0], where.max[1] - where.min[1]);
+    ctrSetBufferContents(ctr, buf, reinterpret_cast<const uint8_t *>(text.data()), text.size());
+    CtrAlign alignc;
+    switch (align) {
+    case Alignment::CENTER:
+        alignc = CtrAlign::CENTER;
+        break;
+    case Alignment::JUSTIFIED:
+        alignc = CtrAlign::JUSTIFIED;
+        break;
+    case Alignment::LEFT:
+        alignc = CtrAlign::LEFT;
+        break;
+    case Alignment::RIGHT:
+        alignc = CtrAlign::RIGHT;
+        break;
+    }
+    ctrShapeBuffer(ctr, buf, alignc);
+    ctrDrawBuffer(ctr, buf, col.Rgba8(), where);
 }
