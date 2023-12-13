@@ -63,5 +63,5 @@ void CCosmicText::DrawText(CtrBuffer buf, const std::string &text, CtrRect where
         break;
     }
     ctrShapeBuffer(ctr, buf, alignc);
-    ctrDrawBuffer(ctr, buf, col.Rgba8(), where);
+    ctrDrawBuffer(ctr, buf, col.Rgba8(), where, Screen::RawWidth(), Screen::RawHeight());
 }

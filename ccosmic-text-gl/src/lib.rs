@@ -2,6 +2,7 @@
 
 use std::{
     ffi::{c_char, c_void, CStr, CString},
+    ops::Div,
     path::PathBuf,
 };
 
@@ -12,6 +13,16 @@ use glow::HasContext;
 // fn cpp_cwd() -> &'static Path {
 //     unsafe { CPP_CWD.as_ref() }.unwrap().as_path()
 // }
+
+pub struct Uniforms {
+    source_pos: glow::UniformLocation,
+    source_size: glow::UniformLocation,
+
+    dest_pos: glow::UniformLocation,
+    dest_size: glow::UniformLocation,
+
+    tex: glow::UniformLocation,
+}
 
 pub struct CCosmicTextRenderer {
     gl: glow::Context,
@@ -24,6 +35,11 @@ pub struct CCosmicTextRenderer {
     >,
     framebuffer: glow::NativeFramebuffer,
     texture: glow::NativeTexture,
+    shader: (
+        glow::NativeProgram,
+        Uniforms,
+        (glow::NativeBuffer, glow::NativeVertexArray),
+    ),
 }
 impl Drop for CCosmicTextRenderer {
     fn drop(&mut self) {
@@ -70,6 +86,81 @@ impl CCosmicTextRenderer {
         );
         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
 
+        let shader = gl.create_program().unwrap();
+        let vertex = gl.create_shader(glow::VERTEX_SHADER).unwrap();
+        let fragment = gl.create_shader(glow::FRAGMENT_SHADER).unwrap();
+
+        gl.shader_source(vertex, VERTEX_GLSL);
+        gl.shader_source(fragment, FRAGMENT_GLSL);
+
+        gl.compile_shader(vertex);
+        gl.compile_shader(fragment);
+
+        if !gl.get_shader_compile_status(vertex) {
+            panic!(
+                "Failed to compile vertex shader: {}",
+                gl.get_shader_info_log(vertex)
+            );
+        }
+        if !gl.get_shader_compile_status(fragment) {
+            panic!(
+                "Failed to link fragment shader: {}",
+                gl.get_shader_info_log(fragment),
+            );
+        }
+
+        gl.attach_shader(shader, vertex);
+        gl.attach_shader(shader, fragment);
+
+        gl.link_program(shader);
+
+        if !gl.get_program_link_status(shader) {
+            panic!(
+                "Failed to link shader program: {}",
+                gl.get_program_info_log(shader)
+            );
+        }
+
+        gl.delete_shader(vertex);
+        gl.delete_shader(fragment);
+
+        let uniforms = Uniforms {
+            source_pos: gl.get_uniform_location(shader, "source_pos").unwrap(),
+            source_size: gl.get_uniform_location(shader, "source_size").unwrap(),
+
+            dest_pos: gl.get_uniform_location(shader, "dest_pos").unwrap(),
+            dest_size: gl.get_uniform_location(shader, "dest_size").unwrap(),
+
+            tex: gl.get_uniform_location(shader, "tex").unwrap(),
+        };
+
+        let vao = gl.create_vertex_array().unwrap();
+        gl.bind_vertex_array(Some(vao));
+        let buf = gl.create_buffer().unwrap();
+        gl.bind_buffer(glow::ARRAY_BUFFER, Some(buf));
+        gl.buffer_data_u8_slice(
+            glow::ARRAY_BUFFER,
+            bytemuck::cast_slice(&[
+                -0.5f32, -0.5f32, -0.5f32, 0.5f32, 0.5f32, -0.5f32, 0.5f32, 0.5f32,
+            ]),
+            glow::STATIC_DRAW,
+        );
+
+        let vert_id = gl.get_attrib_location(shader, "vert").unwrap();
+
+        gl.vertex_attrib_pointer_f32(
+            vert_id,
+            2,
+            glow::FLOAT,
+            false,
+            std::mem::size_of::<[f32; 2]>() as i32,
+            0,
+        );
+        gl.enable_vertex_attrib_array(vert_id);
+
+        gl.bind_vertex_array(None);
+        gl.bind_buffer(glow::ARRAY_BUFFER, None);
+
         Self {
             texture: tex,
             framebuffer: texture,
@@ -78,6 +169,7 @@ impl CCosmicTextRenderer {
             cache,
             atlas,
             hashmap: std::collections::HashMap::new(),
+            shader: (dbg!(shader), uniforms, (buf, vao)),
         }
     }
 
@@ -263,14 +355,45 @@ impl FfiCtr {
         );
     }
 
+    unsafe fn bind(self) {
+        let gl = &self.get().gl;
+        let uniforms = &self.get().shader.1;
+
+        gl.use_program(Some(self.get().shader.0));
+
+        gl.bind_vertex_array(Some(self.get().shader.2.1));
+
+        gl.active_texture(glow::TEXTURE0);
+        gl.bind_texture(glow::TEXTURE_2D, Some(self.get().texture));
+
+        gl.uniform_1_i32(Some(&uniforms.tex), 0);
+    }
+
+    unsafe fn unbind(self) {
+        let gl = &self.get().gl;
+
+        gl.active_texture(glow::TEXTURE0);
+        gl.bind_texture(glow::TEXTURE_2D, None);
+
+        gl.bind_vertex_array(None);
+        gl.use_program(None);
+    }
+
     /// # Safety
     /// A whole lotta gl
     #[no_mangle]
     #[export_name = "ctrDrawBuffer"]
-    pub unsafe extern "C" fn draw_buffer(self, buf: CtrBuffer, color: u32, rect: CtrRect) {
+    pub unsafe extern "C" fn draw_buffer(
+        self,
+        buf: CtrBuffer,
+        color: u32,
+        rect: CtrRect,
+        screen_width: f32,
+        screen_height: f32,
+    ) {
         let gl = &self.get().gl;
 
-        // dbg!("{:#?}", buf.get());
+        let uniforms = &self.get().shader.1;
 
         for run in buf.get().layout_runs() {
             // dbg!("{run:?}");
@@ -327,10 +450,10 @@ impl FfiCtr {
                                     .flat_map(|wor| {
                                         wor.iter().flat_map(|&alpha| {
                                             [
-                                                mulcol(alpha, ((color & 0xFF000000) >> 24) as u8),
-                                                mulcol(alpha, ((color & 0x00FF0000) >> 16) as u8),
-                                                mulcol(alpha, ((color & 0x0000FF00) >> 8) as u8),
-                                                mulcol(alpha, (color & 0x000000FF) as u8),
+                                                glyph_color.r(),
+                                                glyph_color.g(),
+                                                glyph_color.b(),
+                                                mulcol(glyph_color.a(), alpha),
                                             ]
                                         })
                                     })
@@ -355,10 +478,10 @@ impl FfiCtr {
                                     .map(|ch| {
                                         ch.array_chunks::<4>().flat_map(|ch| {
                                             [
-                                                mulcol(ch[0], ch[3]),
-                                                mulcol(ch[1], ch[3]),
-                                                mulcol(ch[2], ch[3]),
-                                                ch[3],
+                                                mulcol(ch[0], glyph_color.r()),
+                                                mulcol(ch[1], glyph_color.g()),
+                                                mulcol(ch[2], glyph_color.b()),
+                                                mulcol(ch[3], glyph_color.a()),
                                             ]
                                         })
                                     })
@@ -423,33 +546,41 @@ impl FfiCtr {
                     continue;
                 };
 
-                let left = physical_glyph.x + pl.left;
-                let bottom = physical_glyph.y - run.line_y as i32 + pl.top - pl.height as i32;
-                let right = physical_glyph.x + pl.left + pl.width as i32;
-                let top = physical_glyph.y - run.line_y as i32 + pl.top;
+                dbg!(pl);
 
-                // dbg!(left, bottom, right, top);
+                self.bind();
 
-                gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
-
-                gl.blit_framebuffer(
-                    al.rectangle.min.x,
-                    al.rectangle.min.y,
-                    al.rectangle.max.x,
-                    al.rectangle.max.y,
-                    rect.min[0] + left,
-                    rect.min[1] + bottom,
-                    rect.min[0] + right,
-                    rect.min[1] + top,
-                    glow::COLOR_BUFFER_BIT,
-                    glow::NEAREST,
+                gl.uniform_2_f32(
+                    Some(&uniforms.dest_pos),
+                    ((physical_glyph.x + pl.left) as f32 + (pl.width as f32 / 2.0f32)) / screen_width,
+                    ((physical_glyph.y + pl.top) as f32 - (pl.height as f32 / 2.0f32) - run.line_y)
+                        / screen_height,
+                );
+                gl.uniform_2_f32(
+                    Some(&uniforms.dest_size),
+                    pl.width as f32 / screen_width,
+                    pl.height as f32 / screen_height,
                 );
 
-                gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                gl.uniform_2_f32(
+                    Some(&uniforms.source_pos),
+                    al.rectangle.center().x as f32 / self.get().atlas.size().width as f32,
+                    al.rectangle.center().y as f32 / self.get().atlas.size().height as f32,
+                );
+                gl.uniform_2_f32(
+                    Some(&uniforms.source_size),
+                    al.rectangle.size().width as f32 / self.get().atlas.size().width as f32,
+                    al.rectangle.size().height as f32 / self.get().atlas.size().height as f32,
+                );
+
+                gl.draw_arrays(glow::TRIANGLE_STRIP, 0, 4);
+
+                self.unbind();
             }
         }
-
-        // gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
-        // gl.blit_framebuffer(0, 0, 4096, 4096, 0, 0, 3840, 2160, glow::COLOR_BUFFER_BIT, glow::NEAREST);
     }
 }
+
+// Am OpenGL Shader that blits a rect from a texture atlas to a rectangle on the screen.
+const VERTEX_GLSL: &str = include_str!("blit.vert");
+const FRAGMENT_GLSL: &str = include_str!("blit.frag");
