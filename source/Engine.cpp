@@ -1192,7 +1192,7 @@ void Engine::Draw() const
 	auto buf = CCosmicText::CreateBuffer(38.0, 40.0);
 	Messages::Add("💯💯💯 X:" + to_string(static_cast<int32_t>(center.X())) + ", Y: " + to_string(static_cast<int32_t>(center.Y())) + " 💯💯💯");
 	if(!Messages::Get(step).empty())
-		CCosmicText::DrawText(buf, Messages::Get(step).back().message, CtrRect{{0, 100}, {Screen::RawWidth(), Screen::RawHeight()}}, Color(1.0, 0.9, 0.9, 0.7), Alignment::CENTER);
+		CCosmicText::DrawText(buf, Messages::Get(step).back().message, CtrRect{{0, 0}, {Screen::RawWidth(), Screen::RawHeight() - 100}}, Color(1.0, 0.9, 0.9, 0.7), Alignment::CENTER);
 }
 
 

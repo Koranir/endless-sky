@@ -74,9 +74,10 @@ impl CCosmicTextRenderer {
             0,
             glow::RGBA,
             glow::UNSIGNED_BYTE,
-            Some(&[0xFF; 4 * 4096 * 4096]),
+            None,
         );
-        gl.bind_texture(glow::TEXTURE_2D, None);
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
         gl.framebuffer_texture_2d(
             glow::FRAMEBUFFER,
             glow::COLOR_ATTACHMENT0,
@@ -84,6 +85,9 @@ impl CCosmicTextRenderer {
             Some(tex),
             0,
         );
+
+        gl.bind_texture(glow::TEXTURE_2D, None);
+
         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
 
         let shader = gl.create_program().unwrap();
@@ -214,7 +218,7 @@ impl FfiCtr {
 }
 
 fn mulcol(a: u8, b: u8) -> u8 {
-    ((a as f32 * b as f32) / (225.)) as u8
+    ((a as u32 * b as u32) as f32 / 255.) as u8
 }
 
 #[repr(i32)]
@@ -318,7 +322,7 @@ impl FfiCtr {
         buf.get().set_text(
             &mut self.get().font_system,
             str,
-            Attrs::new().family(cosmic_text::Family::Serif),
+            Attrs::new().family(cosmic_text::Family::Name("ubuntu")),
             cosmic_text::Shaping::Advanced,
         );
     }
@@ -359,6 +363,13 @@ impl FfiCtr {
         let gl = &self.get().gl;
         let uniforms = &self.get().shader.1;
 
+        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
+
+        let stat = gl.check_framebuffer_status(glow::READ_FRAMEBUFFER);
+        if stat != glow::FRAMEBUFFER_COMPLETE {
+            panic!("{stat}");
+        }
+
         gl.use_program(Some(self.get().shader.0));
 
         gl.bind_vertex_array(Some(self.get().shader.2.1));
@@ -367,6 +378,8 @@ impl FfiCtr {
         gl.bind_texture(glow::TEXTURE_2D, Some(self.get().texture));
 
         gl.uniform_1_i32(Some(&uniforms.tex), 0);
+
+        gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA)
     }
 
     unsafe fn unbind(self) {
@@ -377,6 +390,10 @@ impl FfiCtr {
 
         gl.bind_vertex_array(None);
         gl.use_program(None);
+
+        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, None);
+
+        gl.blend_func(glow::ONE, glow::ONE_MINUS_SRC_ALPHA)
     }
 
     /// # Safety
@@ -453,7 +470,7 @@ impl FfiCtr {
                                                 glyph_color.r(),
                                                 glyph_color.g(),
                                                 glyph_color.b(),
-                                                mulcol(glyph_color.a(), alpha),
+                                                mulcol(alpha, glyph_color.a()),
                                             ]
                                         })
                                     })
@@ -546,15 +563,15 @@ impl FfiCtr {
                     continue;
                 };
 
-                dbg!(pl);
+                // dbg!(pl);
 
                 self.bind();
 
                 gl.uniform_2_f32(
                     Some(&uniforms.dest_pos),
                     ((physical_glyph.x + pl.left) as f32 + (pl.width as f32 / 2.0f32)) / screen_width,
-                    ((physical_glyph.y + pl.top) as f32 - (pl.height as f32 / 2.0f32) - run.line_y)
-                        / screen_height,
+                    ((physical_glyph.y + pl.top) as f32 - (pl.height as f32 / 2.0f32) - run.line_y - (screen_height - rect.max[1] as f32))
+                        / screen_height + 1f32,
                 );
                 gl.uniform_2_f32(
                     Some(&uniforms.dest_size),
