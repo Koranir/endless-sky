@@ -190,7 +190,7 @@ impl CCosmicTextRenderer {
             cache,
             atlas,
             hashmap: std::collections::HashMap::new(),
-            shader: (dbg!(shader), uniforms, (buf, vao)),
+            shader: (shader, uniforms, (buf, vao)),
         }
     }
 
