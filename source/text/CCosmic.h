@@ -3,6 +3,7 @@
 
 #include "alignment.hpp"
 #include "../Color.h"
+#include "../Rectangle.h"
 
 #include <string>
 #include <vector>
@@ -19,6 +20,8 @@ public:
     static CtrBuffer CreateBuffer(float fontSize, float lineHeight);
 
     static void DrawText(CtrBuffer buf, const std::string &text, CtrRect where, const Color &col, Alignment align);
+
+    static void DirectDrawText(const std::string &text, Rectangle where, float fontSize, float lineHeight, const Color &col, Alignment align);
 
 };
 

@@ -65,3 +65,31 @@ void CCosmicText::DrawText(CtrBuffer buf, const std::string &text, CtrRect where
     ctrShapeBuffer(ctr, buf, alignc);
     ctrDrawBuffer(ctr, buf, col.Rgba8(), where, Screen::RawWidth(), Screen::RawHeight());
 }
+
+void CCosmicText::DirectDrawText(const std::string &text, Rectangle where, float fontSize, float lineHeight, const Color &col, Alignment align)
+{
+    auto buf = ctrCreateBuffer(ctr, fontSize, lineHeight);
+    ctrSetBufferSize(ctr, buf, where.Width(), where.Height());
+    ctrSetBufferContents(ctr, buf, reinterpret_cast<const uint8_t *>(text.data()), text.size());
+    CtrAlign alignc;
+    switch (align) {
+    case Alignment::CENTER:
+        alignc = CtrAlign::CENTER;
+        break;
+    case Alignment::JUSTIFIED:
+        alignc = CtrAlign::JUSTIFIED;
+        break;
+    case Alignment::LEFT:
+        alignc = CtrAlign::LEFT;
+        break;
+    case Alignment::RIGHT:
+        alignc = CtrAlign::RIGHT;
+        break;
+    }
+    ctrShapeBuffer(ctr, buf, alignc);
+
+    ctrDrawBuffer(ctr, buf, col.Rgba8(), CtrRect {
+        {static_cast<int32_t>(where.Left()), static_cast<int32_t>(where.Bottom())},
+        {static_cast<int32_t>(where.Right()), static_cast<int32_t>(where.Top())}
+    }, Screen::Width(), Screen::Height());
+}

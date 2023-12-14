@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
+#include "Rectangle.h"
 #include "text/CCosmic.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
@@ -1189,10 +1190,14 @@ void Engine::Draw() const
 			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
 	}
 
-	auto buf = CCosmicText::CreateBuffer(38.0, 40.0);
-	Messages::Add("💯💯💯 X:" + to_string(static_cast<int32_t>(center.X())) + ", Y: " + to_string(static_cast<int32_t>(center.Y())) + " 💯💯💯");
-	if(!Messages::Get(step).empty())
-		CCosmicText::DrawText(buf, Messages::Get(step).back().message, CtrRect{{0, 0}, {Screen::RawWidth(), Screen::RawHeight() - 100}}, Color(1.0, 0.9, 0.9, 0.7), Alignment::CENTER);
+	CCosmicText::DirectDrawText(
+		"<should be centered>", 
+		Rectangle::WithCorners(Screen::BottomLeft(), Screen::TopRight()), 
+		18.0, 
+		19.0, 
+		*GameData::Colors().Get("medium"), 
+		Alignment::CENTER
+	);
 }
 
 
