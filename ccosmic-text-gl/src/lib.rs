@@ -75,8 +75,16 @@ impl CCosmicTextRenderer {
             glow::UNSIGNED_BYTE,
             None,
         );
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MIN_FILTER,
+            glow::NEAREST as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MAG_FILTER,
+            glow::NEAREST as i32,
+        );
         gl.framebuffer_texture_2d(
             glow::FRAMEBUFFER,
             glow::COLOR_ATTACHMENT0,
@@ -99,30 +107,27 @@ impl CCosmicTextRenderer {
         gl.compile_shader(vertex);
         gl.compile_shader(fragment);
 
-        if !gl.get_shader_compile_status(vertex) {
-            panic!(
-                "Failed to compile vertex shader: {}",
-                gl.get_shader_info_log(vertex)
-            );
-        }
-        if !gl.get_shader_compile_status(fragment) {
-            panic!(
-                "Failed to link fragment shader: {}",
-                gl.get_shader_info_log(fragment),
-            );
-        }
+        assert!(
+            gl.get_shader_compile_status(vertex),
+            "Failed to compile vertex shader: {}",
+            gl.get_shader_info_log(vertex)
+        );
+        assert!(
+            gl.get_shader_compile_status(fragment),
+            "Failed to link fragment shader: {}",
+            gl.get_shader_info_log(fragment),
+        );
 
         gl.attach_shader(shader, vertex);
         gl.attach_shader(shader, fragment);
 
         gl.link_program(shader);
 
-        if !gl.get_program_link_status(shader) {
-            panic!(
-                "Failed to link shader program: {}",
-                gl.get_program_info_log(shader)
-            );
-        }
+        assert!(
+            gl.get_program_link_status(shader),
+            "Failed to link shader program: {}",
+            gl.get_program_info_log(shader)
+        );
 
         gl.delete_shader(vertex);
         gl.delete_shader(fragment);
@@ -187,13 +192,15 @@ pub struct CtrBuffer(*mut c_void);
 impl CtrBuffer {
     /// # Safety
     /// None
+    #[must_use]
     pub unsafe fn new(value: cosmic_text::Buffer) -> Self {
         let boxed = Box::new(value);
-        Self(Box::into_raw(boxed) as *mut c_void)
+        Self(Box::into_raw(boxed).cast::<c_void>())
     }
 
+    #[must_use]
     pub fn get(self) -> &'static mut cosmic_text::Buffer {
-        unsafe { &mut *(self.0 as *mut _) }
+        unsafe { &mut *self.0.cast() }
     }
 }
 
@@ -210,17 +217,18 @@ pub struct FfiCtr(*mut c_void);
 impl From<CCosmicTextRenderer> for FfiCtr {
     fn from(value: CCosmicTextRenderer) -> Self {
         let boxed = Box::new(value);
-        Self(Box::into_raw(boxed) as *mut c_void)
+        Self(Box::into_raw(boxed).cast::<c_void>())
     }
 }
 impl FfiCtr {
+    #[must_use]
     pub fn get(self) -> &'static mut CCosmicTextRenderer {
-        unsafe { &mut *(self.0 as *mut _) }
+        unsafe { &mut *self.0.cast() }
     }
 }
 
 fn mulcol(a: u8, b: u8) -> u8 {
-    ((a as u32 * b as u32) as f32 / 255.) as u8
+    ((u32::from(a) * u32::from(b)) as f32 / 255.) as u8
 }
 
 #[repr(i32)]
@@ -275,7 +283,7 @@ impl FfiCtr {
     #[no_mangle]
     #[export_name = "ctrDeinit"]
     pub unsafe extern "C" fn deinit(self) {
-        drop(Box::from_raw(self.0 as *mut CCosmicTextRenderer))
+        drop(Box::from_raw(self.0.cast::<CCosmicTextRenderer>()));
     }
 
     /// # Safety
@@ -283,6 +291,7 @@ impl FfiCtr {
     /// Callee must deinitialize the resultant string
     #[no_mangle]
     #[export_name = "ctrDebug"]
+    #[must_use]
     pub unsafe extern "C" fn debug(self) -> *mut c_char {
         CString::new(self.get().dbg()).unwrap().into_raw()
     }
@@ -292,24 +301,23 @@ impl FfiCtr {
     #[no_mangle]
     #[export_name = "ctrDeinitDebug"]
     pub unsafe extern "C" fn deinit_debug(str: *mut c_char) {
-        drop(CString::from_raw(str))
+        drop(CString::from_raw(str));
     }
 
     #[no_mangle]
     #[export_name = "ctrCreateBuffer"]
+    #[must_use]
     pub extern "C" fn create_buffer(self, font_size: f32, line_height: f32) -> CtrBuffer {
         unsafe {
-            CtrBuffer::new(
-                cosmic_text::Buffer::new(
-                    &mut self.get().font_system,
-                    Metrics::new(font_size, line_height),
-                ),
-            )
+            CtrBuffer::new(cosmic_text::Buffer::new(
+                &mut self.get().font_system,
+                Metrics::new(font_size, line_height),
+            ))
         }
     }
 
     /// # Safety
-    /// text_ptr should be proper UTF-8
+    /// `text_ptr` should be proper UTF-8
     #[no_mangle]
     #[export_name = "ctrSetBufferContents"]
     pub unsafe extern "C" fn set_buffer_contents(
@@ -331,13 +339,13 @@ impl FfiCtr {
     #[no_mangle]
     #[export_name = "ctrSetBufferSize"]
     pub extern "C" fn set_buffer_size(self, buf: CtrBuffer, x: f32, y: f32) {
-        buf.get().set_size(&mut self.get().font_system, x, y)
+        buf.get().set_size(&mut self.get().font_system, x, y);
     }
 
     #[no_mangle]
     #[export_name = "ctrShapeBuffer"]
     pub extern "C" fn shape_buffer(self, buf: CtrBuffer, align: CtrAlign) {
-        for line in buf.get().lines.iter_mut() {
+        for line in &mut buf.get().lines {
             line.set_align(Some(align.into()));
         }
         buf.get().shape_until_scroll(&mut self.get().font_system);
@@ -367,20 +375,18 @@ impl FfiCtr {
         gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.get().framebuffer));
 
         let stat = gl.check_framebuffer_status(glow::READ_FRAMEBUFFER);
-        if stat != glow::FRAMEBUFFER_COMPLETE {
-            panic!("{stat}");
-        }
+        assert!(stat == glow::FRAMEBUFFER_COMPLETE, "{stat}");
 
         gl.use_program(Some(self.get().shader.0));
 
-        gl.bind_vertex_array(Some(self.get().shader.2.1));
+        gl.bind_vertex_array(Some(self.get().shader.2 .1));
 
         gl.active_texture(glow::TEXTURE0);
         gl.bind_texture(glow::TEXTURE_2D, Some(self.get().texture));
 
         gl.uniform_1_i32(Some(&uniforms.tex), 0);
 
-        gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA)
+        gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
     }
 
     unsafe fn unbind(self) {
@@ -394,12 +400,12 @@ impl FfiCtr {
 
         gl.bind_framebuffer(glow::READ_FRAMEBUFFER, None);
 
-        gl.blend_func(glow::ONE, glow::ONE_MINUS_SRC_ALPHA)
+        gl.blend_func(glow::ONE, glow::ONE_MINUS_SRC_ALPHA);
     }
 
     /// # Safety
     /// A whole lotta gl
-    /// 
+    ///
     /// Draws from -screen_<_>-screen_<_>
     #[no_mangle]
     #[export_name = "ctrDrawBuffer"]
@@ -419,24 +425,21 @@ impl FfiCtr {
 
         for run in buf.get().layout_runs() {
             // dbg!("{run:?}");
-            for glyph in run.glyphs.iter() {
+            for glyph in run.glyphs {
                 let physical_glyph = glyph.physical((0., 0.), 1.0);
 
-                let al = if let Some(alloc) = self.get().hashmap.get(&physical_glyph.cache_key) { *alloc } else {
+                let al = if let Some(alloc) = self.get().hashmap.get(&physical_glyph.cache_key) {
+                    *alloc
+                } else {
                     let glyph_color = glyph.color_opt.unwrap_or(cosmic_text::Color(color));
 
                     let img = self
                         .get()
                         .cache
-                        .get_image_uncached(
-                            &mut self.get().font_system,
-                            physical_glyph.cache_key,
-                        )
+                        .get_image_uncached(&mut self.get().font_system, physical_glyph.cache_key)
                         .unwrap();
-                    let sz = guillotiere::size2(
-                        img.placement.width as i32,
-                        img.placement.height as i32,
-                    );
+                    let sz =
+                        guillotiere::size2(img.placement.width as i32, img.placement.height as i32);
 
                     if sz.area() == 0 {
                         self.get()
@@ -484,7 +487,7 @@ impl FfiCtr {
                                 glow::RGBA,
                                 glow::UNSIGNED_BYTE,
                                 Some(&pix),
-                            )
+                            );
                         }
                         cosmic_text::SwashContent::SubpixelMask => panic!("Subpixel mask"),
                         cosmic_text::SwashContent::Color => {
@@ -515,7 +518,7 @@ impl FfiCtr {
                                 glow::RGBA,
                                 glow::UNSIGNED_BYTE,
                                 Some(&pix),
-                            )
+                            );
                         }
                     }
                     gl.framebuffer_texture_2d(
@@ -567,9 +570,14 @@ impl FfiCtr {
 
                 gl.uniform_2_f32(
                     Some(&uniforms.dest_pos),
-                    ((physical_glyph.x + pl.left) as f32 + (pl.width as f32 / 2.0f32)) / screen_width,
-                    ((physical_glyph.y + pl.top) as f32 - (pl.height as f32 / 2.0f32) - run.line_y - (screen_height - rect.max[1] as f32))
-                        / screen_height + 1f32,
+                    ((physical_glyph.x + pl.left) as f32 + (pl.width as f32 / 2.0f32))
+                        / screen_width,
+                    ((physical_glyph.y + pl.top) as f32
+                        - (pl.height as f32 / 2.0f32)
+                        - run.line_y
+                        - (screen_height - rect.max[1] as f32))
+                        / screen_height
+                        + 1f32,
                 );
                 gl.uniform_2_f32(
                     Some(&uniforms.dest_size),
