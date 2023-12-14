@@ -142,7 +142,7 @@ void MainPanel::Draw()
 
 	if(Preferences::Has("Show CPU / GPU load"))
 	{
-		string loadString = to_string(lround(load * 100.)) + "% GPU";
+		string loadString = "📉" + to_string(lround(load * 100.)) + "% GPU 📉";
 		const Color &color = *GameData::Colors().Get("medium");
 
 		CCosmicText::DirectDrawText(loadString,

@@ -179,15 +179,13 @@ void PlanetLabel::Draw() const
 			name, 
 			to + nameOffset, 
 			18.0, 
-			labelColor, 
-			Alignment::LEFT
+			labelColor
 		);
 		CCosmicText::DirectDrawText(
 			government, 
 			to + governmentOffset, 
 			14.0,
-			labelColor, 
-			Alignment::LEFT
+			labelColor
 		);
 	}
 }

@@ -15,6 +15,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "ShopPanel.h"
 
+#include "Point.h"
+#include "Rectangle.h"
+#include "text/CCosmic.h"
 #include "text/alignment.hpp"
 #include "CategoryTypes.h"
 #include "Color.h"
@@ -689,7 +692,8 @@ const Outfit *ShopPanel::Zone::GetOutfit() const
 
 void ShopPanel::DrawShipsSidebar()
 {
-	const Font &font = FontSet::Get(14);
+	const auto FONT_SIZE = 15.0;
+
 	const Color &medium = *GameData::Colors().Get("medium");
 	const Color &bright = *GameData::Colors().Get("bright");
 
@@ -708,7 +712,7 @@ void ShopPanel::DrawShipsSidebar()
 	// Draw this string, centered in the side panel:
 	static const string YOURS = "Your Ships:";
 	Point yoursPoint(Screen::Right() - SIDEBAR_WIDTH, Screen::Top() + 10 - sidebarSmoothScroll);
-	font.Draw({YOURS, {SIDEBAR_WIDTH, Alignment::CENTER}}, yoursPoint, bright);
+	CCosmicText::DirectDrawText(YOURS, yoursPoint, FONT_SIZE, bright, Point(SIDEBAR_WIDTH, FONT_SIZE), Alignment::CENTER);
 
 	// Start below the "Your Ships" label, and draw them.
 	Point point(
@@ -802,10 +806,10 @@ void ShopPanel::DrawShipsSidebar()
 	else if(player.Cargo().Size())
 	{
 		point.X() = Screen::Right() - SIDEBAR_WIDTH + 10;
-		font.Draw("cargo space:", point, medium);
+		CCosmicText::DirectDrawText("cargo space:",  point, FONT_SIZE, medium);
 
 		string space = Format::Number(player.Cargo().Free()) + " / " + Format::Number(player.Cargo().Size());
-		font.Draw({space, {SIDEBAR_WIDTH - 20, Alignment::RIGHT}}, point, bright);
+		CCosmicText::DirectDrawText(space, point, FONT_SIZE, bright, Point(SIDEBAR_WIDTH - 20, FONT_SIZE), Alignment::RIGHT);
 		point.Y() += 20.;
 	}
 	maxSidebarScroll = max(0., point.Y() + sidebarSmoothScroll - Screen::Bottom() + BUTTON_HEIGHT);
@@ -861,7 +865,7 @@ void ShopPanel::DrawButtons()
 		Point(Screen::Right() - SIDEBAR_WIDTH / 2, Screen::Bottom() - BUTTON_HEIGHT),
 		Point(SIDEBAR_WIDTH, 1), *GameData::Colors().Get("shop side panel footer"));
 
-	const Font &font = FontSet::Get(14);
+	const auto FONT_SIZE = 14.0;
 	const Color &bright = *GameData::Colors().Get("bright");
 	const Color &dim = *GameData::Colors().Get("medium");
 	const Color &back = *GameData::Colors().Get("panel background");
@@ -869,12 +873,12 @@ void ShopPanel::DrawButtons()
 	const Point creditsPoint(
 		Screen::Right() - SIDEBAR_WIDTH + 10,
 		Screen::Bottom() - 65);
-	font.Draw("You have:", creditsPoint, dim);
+	CCosmicText::DirectDrawText("You have:", creditsPoint, FONT_SIZE, dim);
 
 	const auto credits = Format::CreditString(player.Accounts().Credits());
-	font.Draw({credits, {SIDEBAR_WIDTH - 20, Alignment::RIGHT}}, creditsPoint, bright);
+	CCosmicText::DirectDrawText(credits, creditsPoint, FONT_SIZE, bright, Point(SIDEBAR_WIDTH - 20, FONT_SIZE), Alignment::RIGHT);
 
-	const Font &bigFont = FontSet::Get(18);
+	const auto BIGFONT_SIZE = 18.0;
 	const Color &hover = *GameData::Colors().Get("hover");
 	const Color &active = *GameData::Colors().Get("active");
 	const Color &inactive = *GameData::Colors().Get("inactive");
@@ -890,23 +894,35 @@ void ShopPanel::DrawButtons()
 	else
 		buyTextColor = &active;
 	string BUY = isOwned ? (playerShip ? "_Install" : "_Cargo") : "_Buy";
-	bigFont.Draw(BUY,
-		buyCenter - .5 * Point(bigFont.Width(BUY), bigFont.Height()),
-		*buyTextColor);
+	const auto buy_dim = CCosmicText::SimpleLineWidth(BUY, BIGFONT_SIZE);
+	CCosmicText::DirectDrawText(CCosmicText::Format(BUY),
+		Rectangle(buyCenter, Point(buy_dim,  BIGFONT_SIZE)),
+		BIGFONT_SIZE,
+		BIGFONT_SIZE,
+		*buyTextColor,
+		Alignment::CENTER);
 
 	const Point sellCenter = Screen::BottomRight() - Point(130, 25);
 	FillShader::Fill(sellCenter, Point(60, 30), back);
 	static const string SELL = "_Sell";
-	bigFont.Draw(SELL,
-		sellCenter - .5 * Point(bigFont.Width(SELL), bigFont.Height()),
-		CanSell() ? hoverButton == 's' ? hover : active : inactive);
+	const auto sell_dim = CCosmicText::SimpleLineWidth(SELL, BIGFONT_SIZE);
+	CCosmicText::DirectDrawText(CCosmicText::Format(SELL),
+		Rectangle(sellCenter, Point(sell_dim,  BIGFONT_SIZE)),
+		BIGFONT_SIZE,
+		BIGFONT_SIZE,
+		CanSell() ? hoverButton == 's' ? hover : active : inactive,
+		Alignment::CENTER);
 
 	const Point leaveCenter = Screen::BottomRight() - Point(45, 25);
 	FillShader::Fill(leaveCenter, Point(70, 30), back);
 	static const string LEAVE = "_Leave";
-	bigFont.Draw(LEAVE,
-		leaveCenter - .5 * Point(bigFont.Width(LEAVE), bigFont.Height()),
-		hoverButton == 'l' ? hover : active);
+	const auto leave_dim = CCosmicText::SimpleLineWidth(LEAVE, BIGFONT_SIZE);
+	CCosmicText::DirectDrawText(CCosmicText::Format(LEAVE),
+		Rectangle(leaveCenter, Point(leave_dim,  BIGFONT_SIZE)),
+		BIGFONT_SIZE,
+		BIGFONT_SIZE,
+		hoverButton == 'l' ? hover : active,
+		Alignment::CENTER);
 
 	const Point findCenter = Screen::BottomRight() - Point(580, 20);
 	const Sprite *findIcon =
@@ -918,10 +934,10 @@ void ShopPanel::DrawButtons()
 	if(modifier > 1)
 	{
 		string mod = "x " + to_string(modifier);
-		int modWidth = font.Width(mod);
-		font.Draw(mod, buyCenter + Point(-.5 * modWidth, 10.), dim);
+		int modWidth = CCosmicText::SimpleLineWidth(mod, FONT_SIZE - 4.0);
+		CCosmicText::DirectDrawText(mod, buyCenter + Point(-.5 * modWidth, 10.), FONT_SIZE - 4.0, dim);
 		if(CanSellMultiple())
-			font.Draw(mod, sellCenter + Point(-.5 * modWidth, 10.), dim);
+			CCosmicText::DirectDrawText(mod, sellCenter + Point(-.5 * modWidth, 10.), FONT_SIZE - 4.0, dim);
 	}
 }
 
@@ -997,7 +1013,7 @@ void ShopPanel::DrawMain()
 			Point size(bigFont.Width(category) + 25., bigFont.Height());
 			categoryZones.emplace_back(Point(Screen::Left(), side.Y()) + .5 * size, size, category);
 			SpriteShader::Draw(isCollapsed ? collapsedArrow : expandedArrow, side + Point(10., 10.));
-			bigFont.Draw(category, side + Point(25., 0.), isCollapsed ? dim : bright);
+			CCosmicText::DirectDrawText(category, side + Point(25., 0.), 18.0, isCollapsed ? dim : bright);
 
 			if(point.X() != begin.X())
 			{

@@ -1092,17 +1092,18 @@ void Engine::Draw() const
 	const Font &font = FontSet::Get(14);
 	const vector<Messages::Entry> &messages = Messages::Get(step);
 	Rectangle messageBox = hud->GetBox("messages");
-	WrappedText messageLine(font);
-	messageLine.SetWrapWidth(messageBox.Width());
-	messageLine.SetParagraphBreak(0.);
+	// WrappedText messageLine(font);
+	// messageLine.SetWrapWidth(messageBox.Width());
+	// messageLine.SetParagraphBreak(0.);
 	Point messagePoint = Point(messageBox.Left(), messageBox.Bottom());
 	for(auto it = messages.rbegin(); it != messages.rend(); ++it)
 	{
-		messageLine.Wrap(it->message);
-		messagePoint.Y() -= messageLine.Height();
+		// messageLine.Wrap(it->message);
+		// messagePoint.Y() -= 15.;
+		messagePoint.Y() -= CCosmicText::TextDimensions(it->message, 14.0, 15.0, messageBox.Dimensions()).height;
 		if(messagePoint.Y() < messageBox.Top())
 			break;
-		float alpha = (it->step + 1000 - step) * .001f;
+		float alpha = max((it->step + 1000 - step) * .001f, 0.f);
 		const Color *color = nullptr;
 		switch(it->importance)
 		{
@@ -1121,7 +1122,15 @@ void Engine::Draw() const
 		}
 		if(!color)
 			color = GameData::Colors().Get("message importance default");
-		messageLine.Draw(messagePoint, color->Additive(alpha));
+		// messageLine.Draw(messagePoint, color->Additive(alpha));
+		CCosmicText::DirectDrawText(
+			it->message,
+			Rectangle::FromCorner(messagePoint, messageBox.Dimensions()),
+			14.0,
+			15.0,
+			color->Transparent(alpha),
+			Alignment::LEFT
+		);
 	}
 
 	// Draw crosshairs around anything that is targeted.
@@ -1183,12 +1192,14 @@ void Engine::Draw() const
 	// filling the entire backlog of sprites before landing on a planet.
 	GameData::ProcessSprites();
 
+	CCosmicText::ClearCache();
+
 	if(Preferences::Has("Show CPU / GPU load"))
 	{
-		string loadString = to_string(lround(load * 100.)) + "% CPU";
+		string loadString = "📈" + to_string(lround(load * 100.)) + "% CPU 📈";
 		Color color = *colors.Get("medium");
 
-		auto width = CCosmicText::TextWidth(loadString, 14.0);
+		auto width = CCosmicText::SimpleLineWidth(loadString, 14.0);
 		
 		CCosmicText::DirectDrawText(loadString,
 			Point(-10 - width, Screen::Height() * -.5 + 5.), 14.0, color);
@@ -1283,7 +1294,6 @@ void Engine::BreakTargeting(const Government *gov)
 void Engine::EnterSystem()
 {
 	ai.Clean();
-	CCosmicText::ClearCache();
 
 	Ship *flagship = player.Flagship();
 	if(!flagship)

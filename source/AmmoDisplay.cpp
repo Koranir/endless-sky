@@ -16,6 +16,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "AmmoDisplay.h"
 
 #include "Color.h"
+#include "text/CCosmic.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "GameData.h"
@@ -67,7 +68,8 @@ void AmmoDisplay::Update(const Ship &flagship)
 
 void AmmoDisplay::Draw(const Rectangle &ammoBox, const Point &iconDim) const
 {
-	const Font &font = FontSet::Get(14);
+	const auto FONT_SIZE = 14.0;
+
 	ammoIconZones.clear();
 
 	const double &ammoIconWidth = iconDim.X();
@@ -83,7 +85,7 @@ void AmmoDisplay::Draw(const Rectangle &ammoBox, const Point &iconDim) const
 	auto pos = Point(ammoBox.Left() + ammoPad, ammoBox.Bottom() - ammoPad);
 	// These offsets are relative to that corner.
 	auto boxOff = Point(ammoIconWidth - .5 * selectedSprite->Width(), .5 * ammoIconHeight);
-	auto textOff = Point(ammoIconWidth - .5 * ammoIconHeight, .5 * (ammoIconHeight - font.Height()));
+	auto textOff = Point(ammoIconWidth - .5 * ammoIconHeight, .5 * (ammoIconHeight - FONT_SIZE));
 	auto iconOff = Point(.5 * ammoIconHeight, .5 * ammoIconHeight);
 	const double iconCenterX = (ammoBox.Right() + ammoBox.Left()) / 2.;
 	for(const auto &it : ammo)
@@ -107,8 +109,8 @@ void AmmoDisplay::Draw(const Rectangle &ammoBox, const Point &iconDim) const
 			continue;
 
 		string amount = to_string(it.second);
-		Point textPos = pos + textOff + Point(-font.Width(amount), 0.);
-		font.Draw(amount, textPos, isSelected ? selectedColor : unselectedColor);
+		Point textPos = pos + textOff + Point(-CCosmicText::TextDimensions(amount, FONT_SIZE, FONT_SIZE, ammoBox.Dimensions()).width, 0.);
+		CCosmicText::DirectDrawText(amount, textPos, FONT_SIZE, isSelected ? selectedColor : unselectedColor);
 	}
 }
 

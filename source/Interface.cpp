@@ -17,12 +17,15 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Angle.h"
 #include "DataNode.h"
+#include "text/CCosmic.h"
 #include "text/DisplayText.h"
 #include "FillShader.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "GameData.h"
 #include "Information.h"
+#include "text/Format.h"
+#include "text/alignment.hpp"
 #include "text/layout.hpp"
 #include "LineShader.h"
 #include "OutlineShader.h"
@@ -598,9 +601,12 @@ bool Interface::TextElement::ParseLine(const DataNode &node)
 // Report the actual dimensions of the object that will be drawn.
 Point Interface::TextElement::NativeDimensions(const Information &info, int state) const
 {
-	const Font &font = FontSet::Get(fontSize);
-	const auto layout = Layout(static_cast<int>(Bounds().Width() - padding.X()), truncate);
-	return Point(font.FormattedWidth({GetString(info), layout}), font.Height());
+	// const Font &font = FontSet::Get(fontSize);
+	// const auto layout = Layout(static_cast<int>(Bounds().Width() - padding.X()), truncate);
+	// return Point(font.FormattedWidth({GetString(info), layout}), font.Height());
+	auto maximum = Bounds().Dimensions() - padding;
+	auto dim = CCosmicText::TextDimensions(CCosmicText::Format(GetString(info)), fontSize, fontSize + 1, maximum);
+	return {dim.width, dim.height};
 }
 
 
@@ -612,8 +618,19 @@ void Interface::TextElement::Draw(const Rectangle &rect, const Information &info
 	if(!color[state])
 		return;
 
-	const auto layout = Layout(static_cast<int>(rect.Width()), truncate);
-	FontSet::Get(fontSize).Draw({GetString(info), layout}, rect.TopLeft(), *color[state]);
+	// const auto layout = Layout(static_cast<int>(rect.Width()), truncate);
+	// FontSet::Get(fontSize).Draw({GetString(info), layout}, rect.TopLeft(), *color[state]);
+
+	CCosmicText::DirectDrawText(GetString(info), rect.TopLeft(), fontSize, *color[state]);
+
+	// CCosmicText::DirectDrawText(
+	// 	CCosmicText::Format(GetString(info)),
+	// 	rect,
+	// 	fontSize,
+	// 	fontSize + 1,
+	// 	*color[state],
+	// 	alignment.X() < 0 ? Alignment::LEFT : alignment.X() > 0 ? Alignment::RIGHT : Alignment::CENTER
+	// );
 }
 
 

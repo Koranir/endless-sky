@@ -241,6 +241,12 @@ impl FfiCtr {
     }
 }
 
+#[repr(C)]
+pub struct CtrBufferDimensions {
+    width: f32,
+    height: f32,
+}
+
 fn mulcol(a: u8, b: u8) -> u8 {
     ((u32::from(a) * u32::from(b)) as f32 / 255.) as u8
 }
@@ -383,7 +389,7 @@ impl FfiCtr {
     }
 
     #[no_mangle]
-    #[export_name = "ctrBufferLen"]
+    #[export_name = "ctrBufferSingleLen"]
     pub extern "C" fn tex_buffer_len(
         self,
         buf: CtrBuffer,
@@ -393,6 +399,54 @@ impl FfiCtr {
             lines[0].w
         } else {
             0.0
+        }
+    }
+
+    #[no_mangle]
+    #[export_name = "ctrBufferDimensions"]
+    pub extern "C" fn tex_buffer_dimensions(
+        self,
+        buf: CtrBuffer,
+    ) -> CtrBufferDimensions {
+        let a =buf.get().layout_runs().fold((0.0, 0), |a, n| {
+            (n.line_w.max(a.0), a.1 + 1)
+        });
+
+        CtrBufferDimensions {
+            width: a.0,
+            height: a.1 as f32 * buf.get().metrics().line_height,
+        }
+    }
+
+    #[no_mangle]
+    #[export_name = "ctrTextDimensionsUncached"]
+    pub unsafe extern "C" fn tex_buffer_dimensions_2(
+        self,
+        text_ptr: *const u8,
+        text_len: usize,
+        font_size: f32,
+        line_height: f32,
+        max_width: f32,
+        max_height: f32,
+    ) -> CtrBufferDimensions {
+        let mut buf = cosmic_text::Buffer::new(&mut self.get().font_system, Metrics::new(font_size, line_height));
+        let mut buf = buf.borrow_with(&mut self.get().font_system);
+
+        let str =
+            std::str::from_utf8(unsafe { std::slice::from_raw_parts(text_ptr, text_len) }).unwrap();
+
+        buf.set_size(max_width, max_height);
+        buf.set_text(str, Attrs::new().family(cosmic_text::Family::Name("ubuntu")), cosmic_text::Shaping::Advanced);
+
+        buf.shape_until_scroll();
+
+        let a =buf.layout_runs().fold((0.0, 0), |a, n| {
+            (n.line_w.max(a.0), a.1 + 1)
+        });
+
+        CtrBufferDimensions {
+            width: a.0,
+            height: a.1 as f32 * line_height,
         }
     }
 
@@ -476,19 +530,19 @@ impl FfiCtr {
                 );
                 gl.uniform_2_f32(
                     Some(&uniforms.dest_size),
-                    pl.width as f32 / screen_width,
-                    pl.height as f32 / screen_height,
+                    (pl.width + 2) as f32 / screen_width,
+                    (pl.height + 2) as f32 / screen_height,
                 );
 
                 gl.uniform_2_f32(
                     Some(&uniforms.source_pos),
                     al.rectangle.center().x as f32 / self.get().atlas.size().width as f32,
-                    al.rectangle.center().y as f32 / self.get().atlas.size().height as f32,
+                    (al.rectangle.center().y) as f32 / self.get().atlas.size().height as f32,
                 );
                 gl.uniform_2_f32(
                     Some(&uniforms.source_size),
-                    al.rectangle.size().width as f32 / self.get().atlas.size().width as f32,
-                    al.rectangle.size().height as f32 / self.get().atlas.size().height as f32,
+                    (al.rectangle.size().width + 2) as f32 / self.get().atlas.size().width as f32,
+                    (al.rectangle.size().height + 2) as f32 / self.get().atlas.size().height as f32,
                 );
 
                 gl.draw_arrays(glow::TRIANGLE_STRIP, 0, 4);

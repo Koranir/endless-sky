@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DataFile.h"
 #include "DataNode.h"
 #include "Files.h"
+#include "text/CCosmic.h"
 #include "text/Font.h"
 #include "FrameTimer.h"
 #include "GameData.h"
@@ -41,6 +42,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestContext.h"
 #include "UI.h"
 
+#include <SDL_keycode.h>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -323,6 +325,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 		}
 		SDL_Keymod mod = SDL_GetModState();
 		Font::ShowUnderlines(mod & KMOD_ALT);
+		CCosmicText::ShowUnderlines(mod & KMOD_ALT);
 
 		// In full-screen mode, hide the cursor if inactive for ten seconds,
 		// but only if the player is flying around in the main view.

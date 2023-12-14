@@ -17,6 +17,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Information.h"
 
+#include "Rectangle.h"
+#include "text/CCosmic.h"
 #include "text/alignment.hpp"
 #include "BankPanel.h"
 #include "Command.h"
@@ -139,12 +141,21 @@ void PlanetPanel::Draw()
 	if(!selectedPanel)
 	{
 		Rectangle box = ui.GetBox("content");
-		if(box.Width() != text.WrapWidth())
-		{
-			text.SetWrapWidth(box.Width());
-			text.Wrap(planet.Description());
-		}
-		text.Draw(box.TopLeft(), *GameData::Colors().Get("bright"));
+		// if(box.Width() != text.WrapWidth())
+		// {
+		// 	text.SetWrapWidth(box.Width());
+		// 	text.Wrap(planet.Description());
+		// }
+		// text.Draw(box.TopLeft(), *GameData::Colors().Get("bright"));
+
+		CCosmicText::DirectDrawText(
+			CCosmicText::Format(planet.Description()),
+			box,
+			16.0,
+			24.0,
+			*GameData::Colors().Get("bright"),
+			Alignment::LEFT
+		);
 	}
 }
 
