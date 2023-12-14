@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "CategoryList.h"
 #include "CoreStartData.h"
 #include "Dialog.h"
+#include "text/CCosmic.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "text/Format.h"
@@ -143,7 +144,9 @@ void MainPanel::Draw()
 	{
 		string loadString = to_string(lround(load * 100.)) + "% GPU";
 		const Color &color = *GameData::Colors().Get("medium");
-		FontSet::Get(14).Draw(loadString, Point(10., Screen::Height() * -.5 + 5.), color);
+
+		CCosmicText::DirectDrawText(loadString,
+			Point(10., Screen::Height() * -.5 + 5.), 14.0, color);
 
 		loadSum += loadTimer.Time();
 		if(++loadCount == 60)

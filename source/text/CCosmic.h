@@ -17,11 +17,12 @@ public:
     static void Init(const std::vector<const char *> &fonts);
     static std::string Debug();
 
-    static CtrBuffer CreateBuffer(float fontSize, float lineHeight);
-
-    static void DrawText(CtrBuffer buf, const std::string &text, CtrRect where, const Color &col, Alignment align);
+    static void ClearCache();
 
     static void DirectDrawText(const std::string &text, Rectangle where, float fontSize, float lineHeight, const Color &col, Alignment align);
+    static void DirectDrawText(const std::string &text, Point where, float fontSize, const Color &col, Alignment align = Alignment::LEFT);
+
+    static float TextWidth(const std::string &text, float fontSize, Alignment align = Alignment::LEFT);
 
 };
 

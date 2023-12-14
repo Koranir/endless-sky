@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Color.h"
 #include <cstdint>
+#include <iostream>
 
 
 
@@ -80,13 +81,13 @@ const float *Color::Get() const
 
 
 
-uint32_t Color::Rgba8() const
+uint32_t Color::Argb8() const
 {
 	uint32_t ret = 0;
-	ret |= static_cast<uint32_t>(color[0] * 255.) << 24;
-	ret |= static_cast<uint32_t>(color[1] * 255.) << 16;
-	ret |= static_cast<uint32_t>(color[2] * 255.) << 8;
-	ret |= static_cast<uint32_t>(color[3] * 255.);
+	ret |= static_cast<uint32_t>(color[3] * 255.) << 24;
+	ret |= static_cast<uint32_t>(color[0] * 255.) << 16;
+	ret |= static_cast<uint32_t>(color[1] * 255.) << 8;
+	ret |= static_cast<uint32_t>(color[2] * 255.);
 	return ret;
 }
 
@@ -109,6 +110,16 @@ Color Color::Transparent(float alpha) const
 	for(int i = 0; i < 3; ++i)
 		result.color[i] = color[i] * alpha;
 	result.color[3] = alpha;
+
+	return result;
+}
+
+
+
+Color Color::AlphaMul(float alpha) const
+{
+	Color result = *this;
+	result.color[3] *= alpha;
 
 	return result;
 }

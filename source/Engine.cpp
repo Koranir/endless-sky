@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
+#include "Point.h"
 #include "Rectangle.h"
 #include "text/CCosmic.h"
 #include "text/Font.h"
@@ -1186,18 +1187,12 @@ void Engine::Draw() const
 	{
 		string loadString = to_string(lround(load * 100.)) + "% CPU";
 		Color color = *colors.Get("medium");
-		font.Draw(loadString,
-			Point(-10 - font.Width(loadString), Screen::Height() * -.5 + 5.), color);
-	}
 
-	CCosmicText::DirectDrawText(
-		"<should be centered>", 
-		Rectangle::WithCorners(Screen::BottomLeft(), Screen::TopRight()), 
-		18.0, 
-		19.0, 
-		*GameData::Colors().Get("medium"), 
-		Alignment::CENTER
-	);
+		auto width = CCosmicText::TextWidth(loadString, 14.0);
+		
+		CCosmicText::DirectDrawText(loadString,
+			Point(-10 - width, Screen::Height() * -.5 + 5.), 14.0, color);
+	}
 }
 
 
@@ -1288,6 +1283,7 @@ void Engine::BreakTargeting(const Government *gov)
 void Engine::EnterSystem()
 {
 	ai.Clean();
+	CCosmicText::ClearCache();
 
 	Ship *flagship = player.Flagship();
 	if(!flagship)

@@ -42,7 +42,7 @@ public:
 	// Get the color as a float vector, suitable for use by OpenGL.
 	const float *Get() const;
 
-	uint32_t Rgba8() const;
+	uint32_t Argb8() const;
 
 	// Get this color, but entirely opaque. That is, this is the color you would
 	// get if drawing this color on top of opaque black.
@@ -50,6 +50,8 @@ public:
 	// Assuming that this color is completely opaque, get the same color with
 	// the given transparency.
 	Color Transparent(float alpha) const;
+	// Only multiply alpha by alpha.
+	Color AlphaMul(float alpha) const;
 	// Assuming that this is an opaque color, get its additive equivalent with
 	// the given fraction of its full brightness.
 	Color Additive(float alpha) const;
