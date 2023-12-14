@@ -205,7 +205,7 @@ impl CtrBuffer {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CtrRect {
     min: [i32; 2],
     max: [i32; 2],
@@ -448,11 +448,8 @@ impl FfiCtr {
                         continue;
                     }
 
-                    let al = match self.get().atlas.allocate(sz) {
-                        Some(al) => al,
-                        None => {
-                            panic!("Ran out of atlas space")
-                        }
+                    let Some(al) = self.get().atlas.allocate(sz) else {
+                        panic!("Ran out of atlas space")
                     };
 
                     let temp_buf = gl.create_framebuffer().unwrap();
@@ -558,9 +555,7 @@ impl FfiCtr {
                     (Some(al), img.placement)
                 };
 
-                let (al, pl) = if let (Some(al), pl) = al {
-                    (al, pl)
-                } else {
+                let (Some(al), pl) = al else {
                     continue;
                 };
 
