@@ -793,6 +793,12 @@ void PreferencesPanel::DrawPlugins()
 		bool isSelected = (plugin.name == selectedPlugin);
 		if(isSelected || plugin.name == hoverItem)
 			table.DrawHighlight(back);
+		else if(pluginZones.size() > static_cast<size_t>(selected) && plugin.name == pluginZones.at(selected).Value())
+		{
+			table.SetHighlight(-120, font.Width(plugin.name) - 100);
+			table.DrawHighlight(back);
+			table.SetHighlight(-120, 100);
+		}
 
 		const Sprite *sprite = box[plugin.currentState];
 		Point topLeft = table.GetRowBounds().TopLeft() - Point(sprite->Width(), 0.);
