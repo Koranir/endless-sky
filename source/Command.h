@@ -120,7 +120,7 @@ public:
 	explicit Command(Action action);
 
 	// Read the current keyboard state and set this object to reflect it.
-	void ReadKeyboard();
+	void InputCommands(bool enableMouse);
 
 	// Load or save the keyboard preferences.
 	static void LoadSettings(const std::string &path);

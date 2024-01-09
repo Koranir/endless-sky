@@ -34,6 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -90,7 +91,7 @@ public:
 	void Draw() const;
 
 	// Select the object the player clicked on.
-	void Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button);
+	bool Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button);
 	void SelectGroup(int group, bool hasShift, bool hasControl);
 
 	// Break targeting on all projectiles between the player and the given
@@ -152,7 +153,7 @@ private:
 	void SendHails();
 	void HandleKeyboardInputs();
 	void HandleMouseClicks();
-	void HandleMouseInput(Command &activeCommands);
+	std::optional<bool> HandleMouseInput(Command &activeCommands);
 
 	void FillCollisionSets();
 
@@ -213,6 +214,8 @@ private:
 	bool wasActive = false;
 	bool isMouseHoldEnabled = false;
 	bool isMouseTurningEnabled = false;
+
+	std::optional<bool> mouseOverriden;
 
 	// Viewport position and velocity.
 	Point center;

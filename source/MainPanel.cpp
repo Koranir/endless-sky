@@ -235,7 +235,7 @@ bool MainPanel::Click(int x, int y, int clicks, int button)
 	hasShift = (mod & KMOD_SHIFT);
 	hasControl = (mod & KMOD_CTRL);
 
-	engine.Click(dragSource, dragSource, hasShift, hasControl, button);
+	canDrag = engine.Click(dragSource, dragSource, hasShift, hasControl, button);
 
 	return true;
 }

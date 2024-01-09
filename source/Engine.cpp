@@ -1186,7 +1186,7 @@ void Engine::Draw() const
 
 
 // Select the object the player clicked on.
-void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button)
+bool Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button)
 {
 	if(button == SDL_BUTTON_RIGHT)
 	{
@@ -1202,11 +1202,11 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasCo
 			clickPoint = (from - radarCenter) / RADAR_SCALE;
 		else
 			clickPoint = from / zoom;
-		return;
+		return mouseOverriden.value_or(true);
 	}
 
 	// First, see if this is a click on an escort icon.
-	doClickNextStep = true;
+	doClickNextStep = mouseOverriden.value_or(true);
 	this->hasShift = hasShift;
 	this->hasControl = hasControl;
 	isRightClick = false;
@@ -1228,6 +1228,8 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasCo
 			(to - radarCenter) / RADAR_SCALE + center);
 	else
 		clickBox = Rectangle::WithCorners(from / zoom + center, to / zoom + center);
+
+	return mouseOverriden.value_or(true);
 }
 
 
@@ -1442,7 +1444,7 @@ void Engine::CalculateStep()
 		return;
 
 	// Handle the mouse input of the mouse navigation
-	HandleMouseInput(activeCommands);
+	mouseOverriden = HandleMouseInput(activeCommands);
 	// Now, all the ships must decide what they are doing next.
 	ai.Step(activeCommands);
 
@@ -1927,7 +1929,7 @@ void Engine::HandleKeyboardInputs()
 
 	// Determine which new keys were pressed by the player.
 	Command oldHeld = keyHeld;
-	keyHeld.ReadKeyboard();
+	keyHeld.InputCommands(!mouseOverriden.value_or(true));
 	Command keyDown = keyHeld.AndNot(oldHeld);
 
 	// Certain commands are always sent when the corresponding key is depressed.
@@ -2004,7 +2006,7 @@ void Engine::HandleMouseClicks()
 	}
 
 	// If there is no click event sent while the engine was active, bail out.
-	if(!doClick)
+	if(!doClick || !mouseOverriden.value_or(true))
 		return;
 
 	// Check for clicks on stellar objects. Only left clicks apply, and the
@@ -2110,7 +2112,7 @@ void Engine::HandleMouseClicks()
 
 
 // Determines alternate mouse turning, setting player mouse angle, and right-click firing weapons.
-void Engine::HandleMouseInput(Command &activeCommands)
+optional<bool> Engine::HandleMouseInput(Command &activeCommands)
 {
 	isMouseHoldEnabled = activeCommands.Has(Command::MOUSE_TURNING_HOLD);
 	bool isMouseToggleEnabled = Preferences::Has("Control ship with mouse");
@@ -2120,7 +2122,12 @@ void Engine::HandleMouseInput(Command &activeCommands)
 	// hold will temporarily turn OFF mouse control.
 	isMouseTurningEnabled = (isMouseHoldEnabled ^ isMouseToggleEnabled);
 	if(!isMouseTurningEnabled)
-		return;
+	{
+		if(isMouseHoldEnabled)
+			return optional<bool>();
+		else
+			return optional(true);
+	}
 	activeCommands.Set(Command::MOUSE_TURNING_HOLD);
 	int mousePosX;
 	int mousePosY;
@@ -2128,6 +2135,8 @@ void Engine::HandleMouseInput(Command &activeCommands)
 	double relX = mousePosX - Screen::RawWidth() / 2.0;
 	double relY = mousePosY - Screen::RawHeight() / 2.0;
 	ai.SetMousePosition(Point(relX, relY));
+
+	return optional(false);
 }
 
 

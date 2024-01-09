@@ -153,7 +153,7 @@ Command::Command(Action action)
 
 
 // Read the current keyboard state.
-void Command::ReadKeyboard()
+void Command::InputCommands(bool enableMouse)
 {
 	Clear();
 	const Uint8 *keyDown = SDL_GetKeyboardState(nullptr);
@@ -165,7 +165,9 @@ void Command::ReadKeyboard()
 				return static_cast<bool>(keyDown[SDL_GetScancodeFromKey(code.get())]);
 			},
 			[&](Command::ActionKind::MouseButton button){
-				return static_cast<bool>(SDL_BUTTON(button.get()) & mouseMask);
+				if(enableMouse || (button.get() != SDL_BUTTON_LEFT && button.get() != SDL_BUTTON_RIGHT))
+					return static_cast<bool>(SDL_BUTTON(button.get()) & mouseMask);
+				return false;
 			},
 			[](Command::ActionKind::None){
 				return false;
@@ -486,7 +488,7 @@ Command::Command(uint64_t state, const string &text)
 
 
 template<>
-void DataWriter::Write(const Command::Action &action)
+void DataWriter::WriteToken(const Command::Action &action)
 {
 	string val = visit(match{
 		[](const Command::ActionKind::None &){
