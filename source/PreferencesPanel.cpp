@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "text/alignment.hpp"
 #include "Audio.h"
 #include "Color.h"
+#include "Controller.h"
 #include "Dialog.h"
 #include "Files.h"
 #include "FillShader.h"
@@ -43,8 +44,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "opengl.h"
 
+#include <SDL_gamecontroller.h>
 #include <SDL_mouse.h>
 #include <algorithm>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
@@ -84,6 +90,9 @@ namespace {
 	const int SETTINGS_PAGE_COUNT = 2;
 	// Hovering a preference for this many frames activates the tooltip.
 	const int HOVER_TIME = 60;
+
+	constexpr auto REPEAT_DELAY = 6;
+	map<SDL_GameControllerAxis, pair<double, int>> timers;
 }
 
 
@@ -138,6 +147,7 @@ void PreferencesPanel::Draw()
 
 	Information info;
 	info.SetBar("volume", Audio::Volume());
+	info.SetBar("deadzone", Controller::Deadzone());
 	if(Plugins::HasChanged())
 		info.SetCondition("show plugins changed");
 	if(SETTINGS_PAGE_COUNT > 1)
@@ -166,6 +176,36 @@ void PreferencesPanel::Draw()
 	}
 	else if(page == 'p')
 		DrawPlugins();
+
+	for (auto &[axis, pair_] : timers) {
+		auto &[dir, time] = pair_;
+		if(time > 0) time--;
+		if(!time) {
+			time = REPEAT_DELAY;
+			if(axis == SDL_CONTROLLER_AXIS_LEFTY)
+			{
+				if(dir < 0.)
+					HandleUp();
+				else
+					HandleDown();
+			}
+			else if(axis == SDL_CONTROLLER_AXIS_LEFTX)
+			{
+				if(dir > 0. && currentSettingsPage < SETTINGS_PAGE_COUNT - 1)
+				{
+					++currentSettingsPage;
+					selected = 0;
+					selectedItem.clear();
+				}
+				else if(currentSettingsPage > 0)
+				{
+					--currentSettingsPage;
+					selected = 0;
+					selectedItem.clear();
+				}
+			}
+		}
+	}
 }
 
 
@@ -229,6 +269,97 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 
 
 
+bool PreferencesPanel::ControllerButtonDown(SDL_GameControllerButton button, const Command &command) {
+	if(static_cast<unsigned>(editing) < zones.size())
+	{
+		Command::SetAction(zones[editing].Value(), {Command::ActionKind::ControllerButton{button}});
+		EndEditing();
+		return true;
+	}
+
+	if(button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+		HandleDown();
+	else if(button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+		HandleUp();
+	else if(button == SDL_CONTROLLER_BUTTON_A)
+		HandleConfirm();
+	else if(button == SDL_CONTROLLER_BUTTON_B || button == SDL_CONTROLLER_BUTTON_START)
+		Exit();
+	else if(button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+	{
+		page = 'p';
+		hoverItem.clear();
+		selected = 0;
+
+		// Reset the render buffers in case the UI scale has changed.
+		const Interface *pluginUi = GameData::Interfaces().Get("plugins");
+		Rectangle pluginListBox = pluginUi->GetBox("plugin list");
+		pluginListClip = std::make_unique<RenderBuffer>(pluginListBox.Dimensions());
+		RenderPluginDescription(selectedPlugin);
+	}
+	else if(button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+	{
+		page = 'c';
+		hoverItem.clear();
+		selected = 0;
+	}
+	else if(button == SDL_CONTROLLER_BUTTON_BACK)
+	{
+		page = 's';
+		hoverItem.clear();
+		selected = 0;
+	}
+	else if(button == SDL_CONTROLLER_BUTTON_LEFTSTICK && page == 'p')
+		Files::OpenUserPluginFolder();
+	else if(button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT && currentSettingsPage < SETTINGS_PAGE_COUNT - 1)
+	{
+		++currentSettingsPage;
+		selected = 0;
+		selectedItem.clear();
+	}
+	else if(button == SDL_CONTROLLER_BUTTON_DPAD_LEFT && currentSettingsPage > 0)
+	{
+		--currentSettingsPage;
+		selected = 0;
+		selectedItem.clear();
+	}
+	else if(button ==SDL_CONTROLLER_BUTTON_X && (page == 'c'))
+	{
+		if(zones[latest].Value().ActionName() != Command::MENU.ActionName())
+			Command::SetAction(zones[latest].Value(), {Command::ActionKind::None()});
+	}
+	else
+		return false;
+
+	return true;
+}
+
+
+
+bool PreferencesPanel::ControllerAxis(SDL_GameControllerAxis axis, int16_t val, const Command &command) {
+	auto nrmval = static_cast<double>(val) / INT16_MAX;
+	auto active = Controller::IsValidVal(nrmval);
+
+	if(static_cast<unsigned>(editing) < zones.size() && active)
+	{
+		Command::SetAction(zones[editing].Value(), {
+			Command::ActionKind::ControllerAxis{make_pair(axis, nrmval > 0.)}
+		});
+		EndEditing();
+		return true;
+	}
+
+	if(!active) {
+		timers.erase(axis);
+		return true;
+	} else
+		timers.try_emplace(axis, make_pair(val, 0));
+
+	return true;
+}
+
+
+
 bool PreferencesPanel::Click(int x, int y, int clicks, int button)
 {
 	if(static_cast<unsigned>(editing) < zones.size())
@@ -244,6 +375,12 @@ bool PreferencesPanel::Click(int x, int y, int clicks, int button)
 	{
 		Audio::SetVolume((20 - y) / 200.);
 		Audio::Play(Audio::Get("warder"));
+		return true;
+	}
+
+	if(x >= 265 && x < 295 && y >= 75 && y < 175)
+	{
+		Controller::SetDeadzone((175 - y) / 100.);
 		return true;
 	}
 

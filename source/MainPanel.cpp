@@ -220,6 +220,42 @@ bool MainPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 
 
 
+bool MainPanel::ControllerButtonDown(SDL_GameControllerButton button, const Command &command)
+{
+	if(command.Has(Command::MAP | Command::INFO | Command::HAIL | Command::HELP))
+		show = command;
+	else if(command.Has(Command::AMMO))
+	{
+		Preferences::ToggleAmmoUsage();
+		Messages::Add("Your escorts will now expend ammo: " + Preferences::AmmoUsage() + "."
+			, Messages::Importance::High);
+	}
+	else
+		return false;
+
+	return true;
+}
+
+
+
+bool MainPanel::ControllerAxis(SDL_GameControllerAxis axis, Sint16 value, const Command &command)
+{
+	if(command.Has(Command::MAP | Command::INFO | Command::HAIL | Command::HELP))
+		show = command;
+	else if(command.Has(Command::AMMO))
+	{
+		Preferences::ToggleAmmoUsage();
+		Messages::Add("Your escorts will now expend ammo: " + Preferences::AmmoUsage() + "."
+			, Messages::Importance::High);
+	}
+	else
+		return false;
+
+	return true;
+}
+
+
+
 bool MainPanel::Click(int x, int y, int clicks, int button)
 {
 	// Don't respond to clicks if another panel is active.

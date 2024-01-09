@@ -556,6 +556,10 @@ interface "preferences"
 		dimensions 0 -200
 		color "energy"
 		size 3
+	bar "deadzone"
+		from 280.5 75
+		dimensions 0 100
+		size 3
 
 
 

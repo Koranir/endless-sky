@@ -21,8 +21,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <SDL2/SDL.h>
 
+#include <SDL_events.h>
+#include <SDL_gamecontroller.h>
 #include <SDL_mouse.h>
 #include <algorithm>
+#include <utility>
 
 using namespace std;
 
@@ -76,6 +79,17 @@ bool UI::Handle(const SDL_Event &event)
 		{
 			Command command({Command::ActionKind::Keyboard{event.key.keysym.sym}});
 			handled = (*it)->KeyDown(event.key.keysym.sym, event.key.keysym.mod, command, !event.key.repeat);
+		}
+		else if(event.type == SDL_CONTROLLERBUTTONDOWN)
+		{
+			auto button = static_cast<SDL_GameControllerButton>(event.cbutton.button);
+			handled = (*it)->ControllerButtonDown(button, Command({Command::ActionKind::ControllerButton{button}}));
+		}
+		else if(event.type == SDL_CONTROLLERAXISMOTION)
+		{
+			auto axis = static_cast<SDL_GameControllerAxis>(event.caxis.axis);
+			handled = (*it)->ControllerAxis(axis, event.caxis.value,
+				Command({Command::ActionKind::ControllerAxis{make_pair(axis, event.caxis.value > 0)}}));
 		}
 
 		// If this panel does not want anything below it to receive events, do

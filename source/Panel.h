@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Rectangle.h"
 
+#include <SDL_gamecontroller.h>
 #include <functional>
 #include <list>
 #include <string>
@@ -72,6 +73,9 @@ public:
 protected:
 	// Only override the ones you need; the default action is to return false.
 	virtual bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress);
+	// TODO: Combine KeyDown, ControllerButtonDown, Click, etc into just ActionRecieved.
+	virtual bool ControllerButtonDown(SDL_GameControllerButton button, const Command &command);
+	virtual bool ControllerAxis(SDL_GameControllerAxis axis, Sint16 value, const Command &command);
 	virtual bool Click(int x, int y, int clicks, int button);
 	virtual bool Hover(int x, int y);
 	virtual bool Drag(double dx, double dy);

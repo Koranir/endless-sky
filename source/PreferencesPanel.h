@@ -24,6 +24,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ScrollVar.h"
 #include "text/WrappedText.h"
 
+#include <SDL_gamecontroller.h>
+#include <SDL_stdinc.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,6 +49,8 @@ public:
 protected:
 	// Only override the ones you need; the default action is to return false.
 	virtual bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress) override;
+	virtual bool ControllerButtonDown(SDL_GameControllerButton button, const Command &command) override;
+	virtual bool ControllerAxis(SDL_GameControllerAxis axis, int16_t val, const Command &command) override;
 	virtual bool Click(int x, int y, int clicks, int buttons) override;
 	virtual bool Hover(int x, int y) override;
 	virtual bool Scroll(double dx, double dy) override;

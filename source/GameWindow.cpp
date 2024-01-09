@@ -89,7 +89,7 @@ bool GameWindow::Init(bool headless)
 #endif
 
 	// This needs to be called before any other SDL commands.
-	if(SDL_Init(SDL_INIT_VIDEO) != 0)
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
 	{
 		checkSDLerror();
 		return false;

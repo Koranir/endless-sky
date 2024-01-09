@@ -19,14 +19,19 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DataNode.h"
 #include "DataWriter.h"
 #include "text/Format.h"
+#include "Controller.h"
 
 #include <SDL2/SDL.h>
 
+#include <SDL_error.h>
+#include <SDL_gamecontroller.h>
 #include <SDL_keyboard.h>
 #include <SDL_mouse.h>
+#include <SDL_stdinc.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <string>
@@ -65,6 +70,19 @@ namespace {
 		if(first == 'u') {
 			return {Command::ActionKind::None()};
 		}
+		if(first == 'a') {
+			auto val = token.substr(2);
+			return {Command::ActionKind::ControllerAxis{
+				make_pair(
+					static_cast<SDL_GameControllerAxis>(DataNode::Value(val)), 
+					token.at(1) == '-'
+				)
+			}};
+		}
+		if(first == 'c') {
+			auto val = token.substr(1);
+			return {Command::ActionKind::ControllerButton{static_cast<SDL_GameControllerButton>(DataNode::Value(val))}};
+		}
 
 		return {Command::ActionKind::Keyboard{node.Value(1)}};
 	}
@@ -76,6 +94,16 @@ namespace {
 			},
 			[](const Command::ActionKind::MouseButton &button){
 				return make_optional(string("Mouse " + to_string(button.get())));
+			},
+			[](const Command::ActionKind::ControllerButton &button){
+				return make_optional(string(
+					SDL_GameControllerGetStringForButton(button.get())
+				));
+			},
+			[](const Command::ActionKind::ControllerAxis &axis){
+				return make_optional(string((axis.get().second ? "-" : "+") +
+					string(SDL_GameControllerGetStringForAxis(axis.get().first))
+				));
 			},
 			[](const Command::ActionKind::None &){
 				return optional<string>();
@@ -167,6 +195,23 @@ void Command::InputCommands(bool enableMouse)
 			[&](Command::ActionKind::MouseButton button){
 				if(enableMouse || (button.get() != SDL_BUTTON_LEFT && button.get() != SDL_BUTTON_RIGHT))
 					return static_cast<bool>(SDL_BUTTON(button.get()) & mouseMask);
+				return false;
+			},
+			[&](Command::ActionKind::ControllerButton button){
+				if(Controller::Get()) {
+					auto val =  static_cast<bool>(SDL_GameControllerGetButton(Controller::Get().value(), button.get()));
+					cerr << SDL_GetError() << "\n";
+					return val;
+				}
+				return false;
+			},
+			[](Command::ActionKind::ControllerAxis axis){
+				if(Controller::Get()) {
+					auto val = SDL_GameControllerGetAxis(Controller::Get().value(), axis.get().first)
+						/ static_cast<double>(INT16_MAX);
+
+					return ((axis.get().second ? 1 : -1) * val) > 0. && Controller::IsValidVal(val);
+				}
 				return false;
 			},
 			[](Command::ActionKind::None){
@@ -501,6 +546,14 @@ void DataWriter::WriteToken(const Command::Action &action)
 		[](const Command::ActionKind::MouseButton &button)
 		{
 			return string("m" + to_string(button.get()));
+		},
+		[](const Command::ActionKind::ControllerButton &button)
+		{
+			return string("c" + to_string(button.get()));
+		},
+		[](const Command::ActionKind::ControllerAxis &axis)
+		{
+			return string("a" + string(axis.get().second ? "-" : "+") + to_string(axis.get().first));
 		}
 	}, action);
 

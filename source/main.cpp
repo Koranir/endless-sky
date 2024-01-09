@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Audio.h"
 #include "Command.h"
+#include "Controller.h"
 #include "Conversation.h"
 #include "ConversationPanel.h"
 #include "DataFile.h"
@@ -43,6 +44,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestContext.h"
 #include "UI.h"
 
+#include <SDL_events.h>
+#include <SDL_gamecontroller.h>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -266,6 +269,8 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 	// Limit how quickly full-screen mode can be toggled.
 	int toggleTimeout = 0;
 
+	int controllerCheck = 0;
+
 	// Data to track progress of testing if/when a test is running.
 	TestContext testContext;
 	if(!testToRunName.empty())
@@ -287,9 +292,13 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 
 			if(debugMode && event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKQUOTE)
 				isPaused = !isPaused;
-			else if(event.type == SDL_KEYDOWN && menuPanels.IsEmpty()
-					&& Command({Command::ActionKind::Keyboard{event.key.keysym.sym}}).Has(Command::MENU)
-					&& !gamePanels.IsEmpty() && gamePanels.Top()->IsInterruptible())
+			else if(menuPanels.IsEmpty() && (
+					(event.type == SDL_KEYDOWN
+						&& Command({Command::ActionKind::Keyboard{event.key.keysym.sym}}).Has(Command::MENU))
+					|| (event.type == SDL_CONTROLLERBUTTONDOWN
+						&& Command({Command::ActionKind::ControllerButton{static_cast<SDL_GameControllerButton>(event.cbutton.button)}})
+							.Has(Command::MENU))
+				) && !gamePanels.IsEmpty() && gamePanels.Top()->IsInterruptible())
 			{
 				// User pressed the Menu key.
 				menuPanels.Push(shared_ptr<Panel>(
@@ -332,6 +341,12 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
 			ProcessEvents();
+
+			controllerCheck++;
+			if(controllerCheck % 60 == 0) {
+				Controller::TryConnect();
+				controllerCheck = 0;
+			}
 
 			SDL_Keymod mod = SDL_GetModState();
 			Font::ShowUnderlines(mod & KMOD_ALT);

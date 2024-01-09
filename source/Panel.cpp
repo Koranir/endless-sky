@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Color.h"
 #include "Command.h"
+#include "Controller.h"
 #include "Dialog.h"
 #include "FillShader.h"
 #include "text/Format.h"
@@ -25,6 +26,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Preferences.h"
 #include "Screen.h"
 #include "UI.h"
+#include <SDL_gamecontroller.h>
+#include <SDL_keycode.h>
+#include <algorithm>
+#include <cstdint>
 
 using namespace std;
 
@@ -120,6 +125,55 @@ bool Panel::AllowsFastForward() const noexcept
 // Only override the ones you need; the default action is to return false.
 bool Panel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
+	return false;
+}
+
+
+
+bool Panel::ControllerButtonDown(SDL_GameControllerButton button, const Command &command)
+{
+	switch (button) {
+	case SDL_CONTROLLER_BUTTON_A:
+		return KeyDown(SDLK_RETURN, 0, Command::NONE, true);
+	case SDL_CONTROLLER_BUTTON_START:
+		return KeyDown(SDLK_ESCAPE, 0, Command::NONE, true);
+	case SDL_CONTROLLER_BUTTON_DPAD_UP:
+		return KeyDown(SDLK_UP, 0, Command::NONE, true);
+	case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+		return KeyDown(SDLK_DOWN, 0, Command::NONE, true);
+	case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+		return KeyDown(SDLK_LEFT, 0, Command::NONE, true);
+	case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+		return KeyDown(SDLK_RIGHT, 0, Command::NONE, true);
+	default:
+		break;
+	}
+
+	return false;
+}
+
+
+
+bool Panel::ControllerAxis(SDL_GameControllerAxis axis, int16_t val, const Command &command)
+{
+	auto nrmval = static_cast<double>(val) / static_cast<double>(INT16_MAX);
+	auto active = Controller::IsValidVal(nrmval);
+
+	if(active)
+		switch (axis) {
+		case SDL_CONTROLLER_AXIS_LEFTX:
+			if(nrmval > 0.)
+				ControllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_LEFT, Command::NONE);
+			else
+				ControllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, Command::NONE);
+		case SDL_CONTROLLER_AXIS_LEFTY:
+			if(nrmval > 0.)
+				ControllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_DOWN, Command::NONE);
+			else
+				ControllerButtonDown(SDL_CONTROLLER_BUTTON_DPAD_UP, Command::NONE);
+		default:
+			break;
+		}
 	return false;
 }
 

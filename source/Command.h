@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define COMMAND_H_
 
 #include <SDL2/SDL_keycode.h>
+#include <SDL_gamecontroller.h>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -35,6 +36,8 @@ class Command {
 public:
 	class ActionKind {
 	public:
+		// This prevents needing all the boilerplate for the '<' and '==' operators,
+		// while keeping it easy to get the data from it.
 		template<typename T>
 		class UglyHack : public std::tuple<T> {
 		public:
@@ -44,15 +47,20 @@ public:
 		};
 
 		class Keyboard : public UglyHack<SDL_Keycode> {};
-
+		class ControllerButton : public UglyHack<SDL_GameControllerButton> {};
+		// pair<axis, bool> where bool is the sign bit, essentially.
+		class ControllerAxis : public UglyHack<std::pair<SDL_GameControllerAxis, bool>> {};
 		class MouseButton : public UglyHack<int> {};
-
-		// class MouseWheel : public UglyHack<bool> {};
-
 		class None : public std::tuple<> {};
 	};
 
-	class Action : public std::variant<ActionKind::Keyboard, ActionKind::MouseButton,/* ActionKind::MouseWheel,*/ ActionKind::None> {};
+	class Action : public std::variant<
+		ActionKind::Keyboard,
+		ActionKind::ControllerButton,
+		ActionKind::ControllerAxis,
+		ActionKind::MouseButton,
+		ActionKind::None
+	> {};
 
 public:
 	// Empty command:
