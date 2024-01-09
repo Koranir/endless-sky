@@ -414,7 +414,7 @@ bool BoardingPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command,
 
 
 // Handle mouse clicks.
-bool BoardingPanel::Click(int x, int y, int clicks)
+bool BoardingPanel::Click(int x, int y, int clicks, int button)
 {
 	// Was the click inside the plunder list?
 	if(x >= -330 && x < 20 && y >= -180 && y < 60)

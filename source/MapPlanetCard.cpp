@@ -82,7 +82,7 @@ MapPlanetCard::MapPlanetCard(const StellarObject &object, unsigned number, bool 
 
 
 
-MapPlanetCard::ClickAction MapPlanetCard::Click(int x, int y, int clicks)
+MapPlanetCard::ClickAction MapPlanetCard::Click(int x, int y, int clicks, int button)
 {
 	ClickAction clickAction = ClickAction::NONE;
 	// The isShown variable should have already updated by the drawing of this item.

@@ -260,7 +260,7 @@ bool ShipInfoPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command,
 
 
 
-bool ShipInfoPanel::Click(int x, int y, int /* clicks */)
+bool ShipInfoPanel::Click(int x, int y, int /* clicks */, int button)
 {
 	if(shipIt == panelState.Ships().end())
 		return true;

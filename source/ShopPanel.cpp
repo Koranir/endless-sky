@@ -443,7 +443,7 @@ bool ShopPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 
 
 
-bool ShopPanel::Click(int x, int y, int /* clicks */)
+bool ShopPanel::Click(int x, int y, int /* clicks */, int mouseButton)
 {
 	dragShip = nullptr;
 	// Handle clicks on the buttons.

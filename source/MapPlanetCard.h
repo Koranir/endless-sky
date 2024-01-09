@@ -47,7 +47,7 @@ public:
 	// For the orbit selection to work properly this has to be a planet.
 	explicit MapPlanetCard(const StellarObject &object, unsigned number, bool hasVisited);
 	// Return if this one was clicked, whether or not we did something about it.
-	ClickAction Click(int x, int y, int clicks);
+	ClickAction Click(int x, int y, int clicks, int button);
 	// Draw this at the corresponding scroll; if it is not outside bounds, and return if we drew it.
 	bool DrawIfFits(const Point &uiPoint);
 	// If this object is currently being shown.

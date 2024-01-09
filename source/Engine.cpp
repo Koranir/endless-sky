@@ -71,6 +71,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Wormhole.h"
 #include "text/WrappedText.h"
 
+#include <SDL_mouse.h>
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -1185,8 +1186,25 @@ void Engine::Draw() const
 
 
 // Select the object the player clicked on.
-void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasControl)
+void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button)
 {
+	if(button == SDL_BUTTON_RIGHT)
+	{
+		doClickNextStep = true;
+		hasShift = false;
+		isRightClick = true;
+
+		// Determine if the right-click was within the radar display, and if so, rescale.
+		const Interface *hud = GameData::Interfaces().Get("hud");
+		Point radarCenter = hud->GetPoint("radar");
+		double radarRadius = hud->GetValue("radar radius");
+		if(Preferences::Has("Clickable radar display") && (from - radarCenter).Length() <= radarRadius)
+			clickPoint = (from - radarCenter) / RADAR_SCALE;
+		else
+			clickPoint = from / zoom;
+		return;
+	}
+
 	// First, see if this is a click on an escort icon.
 	doClickNextStep = true;
 	this->hasShift = hasShift;
@@ -1210,24 +1228,6 @@ void Engine::Click(const Point &from, const Point &to, bool hasShift, bool hasCo
 			(to - radarCenter) / RADAR_SCALE + center);
 	else
 		clickBox = Rectangle::WithCorners(from / zoom + center, to / zoom + center);
-}
-
-
-
-void Engine::RClick(const Point &point)
-{
-	doClickNextStep = true;
-	hasShift = false;
-	isRightClick = true;
-
-	// Determine if the right-click was within the radar display, and if so, rescale.
-	const Interface *hud = GameData::Interfaces().Get("hud");
-	Point radarCenter = hud->GetPoint("radar");
-	double radarRadius = hud->GetValue("radar radius");
-	if(Preferences::Has("Clickable radar display") && (point - radarCenter).Length() <= radarRadius)
-		clickPoint = (point - radarCenter) / RADAR_SCALE;
-	else
-		clickPoint = point / zoom;
 }
 
 
@@ -2122,18 +2122,12 @@ void Engine::HandleMouseInput(Command &activeCommands)
 	if(!isMouseTurningEnabled)
 		return;
 	activeCommands.Set(Command::MOUSE_TURNING_HOLD);
-	bool rightMouseButtonHeld = false;
 	int mousePosX;
 	int mousePosY;
-	if((SDL_GetMouseState(&mousePosX, &mousePosY) & SDL_BUTTON_RMASK) != 0)
-		rightMouseButtonHeld = true;
+	SDL_GetMouseState(&mousePosX, &mousePosY);
 	double relX = mousePosX - Screen::RawWidth() / 2.0;
 	double relY = mousePosY - Screen::RawHeight() / 2.0;
 	ai.SetMousePosition(Point(relX, relY));
-
-	// Activate firing command.
-	if(isMouseTurningEnabled && rightMouseButtonHeld)
-		activeCommands.Set(Command::PRIMARY);
 }
 
 

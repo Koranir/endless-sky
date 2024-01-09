@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <SDL2/SDL.h>
 
+#include <SDL_mouse.h>
 #include <algorithm>
 
 using namespace std;
@@ -56,14 +57,12 @@ bool UI::Handle(const SDL_Event &event)
 		{
 			int x = Screen::Left() + event.button.x * 100 / Screen::Zoom();
 			int y = Screen::Top() + event.button.y * 100 / Screen::Zoom();
-			if(event.button.button == 1)
+			if(event.button.button == SDL_BUTTON_LEFT)
 			{
 				handled = (*it)->ZoneClick(Point(x, y));
-				if(!handled)
-					handled = (*it)->Click(x, y, event.button.clicks);
 			}
-			else if(event.button.button == 3)
-				handled = (*it)->RClick(x, y);
+			if(!handled)
+					handled = (*it)->Click(x, y, event.button.clicks, event.button.button);
 		}
 		else if(event.type == SDL_MOUSEBUTTONUP)
 		{
@@ -75,7 +74,7 @@ bool UI::Handle(const SDL_Event &event)
 			handled = (*it)->Scroll(event.wheel.x, event.wheel.y);
 		else if(event.type == SDL_KEYDOWN)
 		{
-			Command command(event.key.keysym.sym);
+			Command command({Command::ActionKind::Keyboard{event.key.keysym.sym}});
 			handled = (*it)->KeyDown(event.key.keysym.sym, event.key.keysym.mod, command, !event.key.repeat);
 		}
 

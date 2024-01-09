@@ -288,7 +288,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			if(debugMode && event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKQUOTE)
 				isPaused = !isPaused;
 			else if(event.type == SDL_KEYDOWN && menuPanels.IsEmpty()
-					&& Command(event.key.keysym.sym).Has(Command::MENU)
+					&& Command({Command::ActionKind::Keyboard{event.key.keysym.sym}}).Has(Command::MENU)
 					&& !gamePanels.IsEmpty() && gamePanels.Top()->IsInterruptible())
 			{
 				// User pressed the Menu key.
@@ -304,7 +304,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 				GameWindow::AdjustViewport();
 			}
 			else if(event.type == SDL_KEYDOWN && !toggleTimeout
-					&& (Command(event.key.keysym.sym).Has(Command::FULLSCREEN)
+					&& (Command({Command::ActionKind::Keyboard{event.key.keysym.sym}}).Has(Command::FULLSCREEN)
 					|| (event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))))
 			{
 				toggleTimeout = 30;
@@ -315,7 +315,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 				// The UI handled the event.
 			}
 			else if(event.type == SDL_KEYDOWN && !event.key.repeat
-					&& (Command(event.key.keysym.sym).Has(Command::FASTFORWARD)))
+					&& (Command({Command::ActionKind::Keyboard{event.key.keysym.sym}}).Has(Command::FASTFORWARD)))
 			{
 				isFastForward = !isFastForward;
 			}

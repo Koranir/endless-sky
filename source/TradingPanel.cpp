@@ -282,7 +282,7 @@ bool TradingPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, 
 
 
 
-bool TradingPanel::Click(int x, int y, int clicks)
+bool TradingPanel::Click(int x, int y, int clicks, int button)
 {
 	const Interface *tradeUi = GameData::Interfaces().Get("trade");
 	const Rectangle box = tradeUi->GetBox("content");

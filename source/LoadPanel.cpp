@@ -195,7 +195,7 @@ void LoadPanel::Draw()
 
 			const double width = pilotBox.Width();
 			Rectangle zone(drawPoint + Point(width / 2., 10.), Point(width, 20.));
-			const Point textPoint(drawPoint.X() + hTextPad, zone.Center().Y() - font.Height() / 2);
+			const Point textPoint(drawPoint.X() + hTextPad, zone.Center().Y() - font.Height() / 2.0);
 			bool isHighlighted = (it.first == selectedPilot || (hasHover && zone.Contains(hoverPoint)));
 
 			double alpha = min((drawPoint.Y() - (top - fadeOut)) * .1,
@@ -236,7 +236,7 @@ void LoadPanel::Draw()
 
 			const string &file = it.first;
 			Rectangle zone(drawPoint + Point(snapshotBox.Width() / 2., 10.), Point(snapshotBox.Width(), 20.));
-			const Point textPoint(drawPoint.X() + hTextPad, zone.Center().Y() - font.Height() / 2);
+			const Point textPoint(drawPoint.X() + hTextPad, zone.Center().Y() - font.Height() / 2.0);
 			bool isHovering = (hasHover && zone.Contains(hoverPoint));
 			bool isHighlighted = (file == selectedFile || isHovering);
 			if(isHovering)
@@ -411,7 +411,7 @@ bool LoadPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 
 
 
-bool LoadPanel::Click(int x, int y, int clicks)
+bool LoadPanel::Click(int x, int y, int clicks, int buttons)
 {
 	// When the user clicks, clear the hovered state.
 	hasHover = false;

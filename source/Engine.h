@@ -90,8 +90,7 @@ public:
 	void Draw() const;
 
 	// Select the object the player clicked on.
-	void Click(const Point &from, const Point &to, bool hasShift, bool hasControl);
-	void RClick(const Point &point);
+	void Click(const Point &from, const Point &to, bool hasShift, bool hasControl, int button);
 	void SelectGroup(int group, bool hasShift, bool hasControl);
 
 	// Break targeting on all projectiles between the player and the given

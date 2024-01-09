@@ -22,24 +22,68 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <SDL2/SDL.h>
 
+#include <SDL_keyboard.h>
+#include <SDL_mouse.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <map>
+#include <optional>
+#include <string>
+#include <variant>
+#include <utility>
 
 using namespace std;
 
 namespace {
 	// These lookup tables make it possible to map a command to its description,
-	// the name of the key it is mapped to, or the SDL keycode it is mapped to.
+	// the name of the action it is mapped to, or the action it is mapped to.
 	map<Command, string> description;
-	map<Command, string> keyName;
-	map<int, Command> commandForKeycode;
-	map<Command, int> keycodeForCommand;
-	// Keep track of any keycodes that are mapped to multiple commands, in order
+	map<Command, optional<string>> actionName;
+	map<Command::Action, Command> commandForAction;
+	map<Command, Command::Action> actionForCommand;
+	// Keep track of any actions that are mapped to multiple commands, in order
 	// to display a warning to the player.
-	map<int, int> keycodeCount;
+	map<Command::Action, int> actionCount;
 	// Need a uint64_t 1 to generate Commands.
 	const uint64_t ONE = 1;
+
+	template<class... Ts>
+	struct match : Ts... { using Ts::operator()...; };
+	// explicit deduction guide
+	template<class... Ts>
+	match(Ts...) -> match<Ts...>;
+
+	Command::Action LoadAction(const DataNode &node) {
+		auto token = node.Token(1);
+
+		auto first = token.front();
+		if(first == 'm') {
+			auto val = token.substr(1);
+			return {Command::ActionKind::MouseButton{DataNode::Value(val)}};
+		}
+		if(first == 'u') {
+			return {Command::ActionKind::None()};
+		}
+
+		return {Command::ActionKind::Keyboard{node.Value(1)}};
+	}
+
+	optional<string> GetActionName(const Command::Action &action) {
+		return visit(match{
+			[](const Command::ActionKind::Keyboard &key){
+				return make_optional(string(SDL_GetKeyName(key.get())));
+			},
+			[](const Command::ActionKind::MouseButton &button){
+				return make_optional(string("Mouse " + to_string(button.get())));
+			},
+			[](const Command::ActionKind::None &){
+				return optional<string>();
+			}
+		}, action);
+	}
+
+	static const string UNBOUND_KEY = string("(none)");
 }
 
 
@@ -91,7 +135,7 @@ string Command::ReplaceNamesWithKeys(const string &text)
 {
 	map<string, string> subs;
 	for(const auto &it : description)
-		subs['<' + it.second + '>'] = '"' + keyName[it.first] + '"';
+		subs['<' + it.second + '>'] = '"' + actionName[it.first].value_or(UNBOUND_KEY) + '"';
 
 	return Format::Replace(text, subs);
 }
@@ -99,10 +143,10 @@ string Command::ReplaceNamesWithKeys(const string &text)
 
 
 // Create a command representing whatever is mapped to the given key code.
-Command::Command(int keycode)
+Command::Command(Action action)
 {
-	auto it = commandForKeycode.find(keycode);
-	if(it != commandForKeycode.end())
+	auto it = commandForAction.find(action);
+	if(it != commandForAction.end())
 		*this = it->second;
 }
 
@@ -113,12 +157,27 @@ void Command::ReadKeyboard()
 {
 	Clear();
 	const Uint8 *keyDown = SDL_GetKeyboardState(nullptr);
+	const uint32_t mouseMask = SDL_GetMouseState(nullptr, nullptr);
+
+	auto IsActionActive = [&](const Command::Action &action){
+		return visit(match{
+			[&](Command::ActionKind::Keyboard code){
+				return static_cast<bool>(keyDown[SDL_GetScancodeFromKey(code.get())]);
+			},
+			[&](Command::ActionKind::MouseButton button){
+				return static_cast<bool>(SDL_BUTTON(button.get()) & mouseMask);
+			},
+			[](Command::ActionKind::None){
+				return false;
+			}
+		}, action);
+	};
 
 	// Each command can only have one keycode, but misconfigured settings can
 	// temporarily cause one keycode to be used for two commands. Also, more
 	// than one key can be held down at once.
-	for(const auto &it : keycodeForCommand)
-		if(keyDown[SDL_GetScancodeFromKey(it.second)])
+	for(const auto &it : actionForCommand)
+		if(IsActionActive(it.second))
 			*this |= it.first;
 
 	// Check whether the `Shift` modifier key was pressed for this step.
@@ -146,19 +205,19 @@ void Command::LoadSettings(const string &path)
 		if(it != commands.end() && node.Size() >= 2)
 		{
 			Command command = it->second;
-			int keycode = node.Value(1);
-			keycodeForCommand[command] = keycode;
-			keyName[command] = SDL_GetKeyName(keycode);
+			auto loaded = LoadAction(node);
+			actionForCommand[command] = loaded;
+			actionName[command] = GetActionName(loaded);
 		}
 	}
 
 	// Regenerate the lookup tables.
-	commandForKeycode.clear();
-	keycodeCount.clear();
-	for(const auto &it : keycodeForCommand)
+	commandForAction.clear();
+	actionCount.clear();
+	for(const auto &it : actionForCommand)
 	{
-		commandForKeycode[it.second] = it.first;
-		++keycodeCount[it.second];
+		commandForAction[it.second] = it.first;
+		++actionCount[it.second];
 	}
 }
 
@@ -169,7 +228,7 @@ void Command::SaveSettings(const string &path)
 {
 	DataWriter out(path);
 
-	for(const auto &it : keycodeForCommand)
+	for(const auto &it : actionForCommand)
 	{
 		auto dit = description.find(it.first);
 		if(dit != description.end())
@@ -180,20 +239,20 @@ void Command::SaveSettings(const string &path)
 
 
 // Set the key that is mapped to the given command.
-void Command::SetKey(Command command, int keycode)
+void Command::SetAction(Command command, Action action)
 {
 	// Always reset *all* the mappings when one is set. That way, if two commands
 	// are mapped to the same key and you change one of them, the other stays mapped.
-	keycodeForCommand[command] = keycode;
-	keyName[command] = SDL_GetKeyName(keycode);
+	actionForCommand[command] = action;
+	actionName[command] = GetActionName(action);
 
-	commandForKeycode.clear();
-	keycodeCount.clear();
+	commandForAction.clear();
+	actionCount.clear();
 
-	for(const auto &it : keycodeForCommand)
+	for(const auto &it : actionForCommand)
 	{
-		commandForKeycode[it.second] = it.first;
-		++keycodeCount[it.second];
+		commandForAction[it.second] = it.first;
+		++actionCount[it.second];
 	}
 }
 
@@ -212,12 +271,11 @@ const string &Command::Description() const
 
 // Get the name of the key that is mapped to this command. If this command is
 // a combination of more than one command, an empty string is returned.
-const string &Command::KeyName() const
+const string &Command::ActionName() const
 {
-	static const string empty = "(none)";
-	auto it = keyName.find(*this);
+	auto it = actionName.find(*this);
 
-	return (!HasBinding() ? empty : it->second);
+	return (!HasBinding() ? UNBOUND_KEY : it->second.value());
 }
 
 
@@ -225,13 +283,11 @@ const string &Command::KeyName() const
 // Check if the key has no binding.
 bool Command::HasBinding() const
 {
-	auto it = keyName.find(*this);
+	auto it = actionName.find(*this);
 
-	if(it == keyName.end())
+	if(it == actionName.end())
 		return false;
-	if(it->second.empty())
-		return false;
-	return true;
+	return it->second.has_value();
 }
 
 
@@ -239,12 +295,12 @@ bool Command::HasBinding() const
 // Check whether this is the only command mapped to the key it is mapped to.
 bool Command::HasConflict() const
 {
-	auto it = keycodeForCommand.find(*this);
-	if(it == keycodeForCommand.end())
+	auto it = actionForCommand.find(*this);
+	if(it == actionForCommand.end())
 		return false;
 
-	auto cit = keycodeCount.find(it->second);
-	return (cit != keycodeCount.end() && cit->second > 1);
+	auto cit = actionCount.find(it->second);
+	return (cit != actionCount.end() && cit->second > 1);
 }
 
 
@@ -425,4 +481,27 @@ Command::Command(uint64_t state, const string &text)
 {
 	if(!text.empty())
 		description[*this] = text;
+}
+
+
+
+template<>
+void DataWriter::Write(const Command::Action &action)
+{
+	string val = visit(match{
+		[](const Command::ActionKind::None &){
+			return string("unassigned");
+		},
+		[](const Command::ActionKind::Keyboard &key)
+		{
+			return to_string(key.get());
+		},
+		[](const Command::ActionKind::MouseButton &button)
+		{
+			return string("m" + to_string(button.get()));
+		}
+	}, action);
+
+	out << *before << val;
+	before = &space;
 }

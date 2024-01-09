@@ -293,7 +293,7 @@ bool Dialog::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool i
 
 
 
-bool Dialog::Click(int x, int y, int clicks)
+bool Dialog::Click(int x, int y, int clicks, int button)
 {
 	Point clickPos(x, y);
 

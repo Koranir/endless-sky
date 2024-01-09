@@ -46,6 +46,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "opengl.h"
 
+#include <SDL_mouse.h>
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -219,7 +220,7 @@ bool MainPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 
 
 
-bool MainPanel::Click(int x, int y, int clicks)
+bool MainPanel::Click(int x, int y, int clicks, int button)
 {
 	// Don't respond to clicks if another panel is active.
 	if(!canClick)
@@ -234,16 +235,7 @@ bool MainPanel::Click(int x, int y, int clicks)
 	hasShift = (mod & KMOD_SHIFT);
 	hasControl = (mod & KMOD_CTRL);
 
-	engine.Click(dragSource, dragSource, hasShift, hasControl);
-
-	return true;
-}
-
-
-
-bool MainPanel::RClick(int x, int y)
-{
-	engine.RClick(Point(x, y));
+	engine.Click(dragSource, dragSource, hasShift, hasControl, button);
 
 	return true;
 }
@@ -268,7 +260,7 @@ bool MainPanel::Release(int x, int y)
 	{
 		dragPoint = Point(x, y);
 		if(dragPoint.Distance(dragSource) > 5.)
-			engine.Click(dragSource, dragPoint, hasShift, hasControl);
+			engine.Click(dragSource, dragPoint, hasShift, hasControl, SDL_BUTTON_LEFT);
 
 		isDragging = false;
 	}

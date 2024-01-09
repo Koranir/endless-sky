@@ -70,7 +70,7 @@ namespace {
 		}
 
 	protected:
-		virtual bool Click(int x, int y, int clicks) override
+		virtual bool Click(int x, int y, int clicks, int button) override
 		{
 			Point off = Point(x, y) - randomPos;
 			if(fabs(off.X()) < 40. && fabs(off.Y()) < 20.)
@@ -78,7 +78,7 @@ namespace {
 				input = GameData::Phrases().Get("civilian")->Get();
 				return true;
 			}
-			return Dialog::Click(x, y, clicks);
+			return Dialog::Click(x, y, clicks, button);
 		}
 
 	private:

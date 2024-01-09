@@ -176,7 +176,7 @@ bool StartConditionsPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &c
 
 
 
-bool StartConditionsPanel::Click(int x, int y, int /* clicks */)
+bool StartConditionsPanel::Click(int x, int y, int /* clicks */, int button)
 {
 	// When the user clicks, clear the hovered state.
 	hasHover = false;

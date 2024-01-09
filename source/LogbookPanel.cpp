@@ -250,7 +250,7 @@ bool LogbookPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, 
 
 
 
-bool LogbookPanel::Click(int x, int y, int clicks)
+bool LogbookPanel::Click(int x, int y, int clicks, int button)
 {
 	x -= Screen::Left();
 	y -= Screen::Top();

@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "PreferencesPanel.h"
 
+#include "Command.h"
 #include "text/alignment.hpp"
 #include "Audio.h"
 #include "Color.h"
@@ -42,6 +43,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "opengl.h"
 
+#include <SDL_mouse.h>
 #include <algorithm>
 
 using namespace std;
@@ -172,7 +174,7 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 {
 	if(static_cast<unsigned>(editing) < zones.size())
 	{
-		Command::SetKey(zones[editing].Value(), key);
+		Command::SetAction(zones[editing].Value(), {Command::ActionKind::Keyboard{key}});
 		EndEditing();
 		return true;
 	}
@@ -216,8 +218,8 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 	}
 	else if((key == 'x' || key == SDLK_DELETE) && (page == 'c'))
 	{
-		if(zones[latest].Value().KeyName() != Command::MENU.KeyName())
-			Command::SetKey(zones[latest].Value(), 0);
+		if(zones[latest].Value().ActionName() != Command::MENU.ActionName())
+			Command::SetAction(zones[latest].Value(), {Command::ActionKind::None()});
 	}
 	else
 		return false;
@@ -227,8 +229,15 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 
 
 
-bool PreferencesPanel::Click(int x, int y, int clicks)
+bool PreferencesPanel::Click(int x, int y, int clicks, int button)
 {
+	if(static_cast<unsigned>(editing) < zones.size())
+	{
+		Command::SetAction(zones[editing].Value(), {Command::ActionKind::MouseButton{button}});
+
+		EndEditing();
+		return true;
+	}
 	EndEditing();
 
 	if(x >= 265 && x < 295 && y >= -220 && y < 70)
@@ -526,7 +535,7 @@ void PreferencesPanel::DrawControls()
 			zones.emplace_back(table.GetCenterPoint(), table.GetRowSize(), command);
 
 			table.Draw(command.Description(), medium);
-			table.Draw(command.KeyName(), isEditing ? bright : medium);
+			table.Draw(command.ActionName(), isEditing ? bright : medium);
 		}
 	}
 

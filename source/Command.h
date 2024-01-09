@@ -16,8 +16,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef COMMAND_H_
 #define COMMAND_H_
 
+#include <SDL2/SDL_keycode.h>
 #include <cstdint>
 #include <string>
+#include <tuple>
+#include <variant>
+#include <utility>
 
 class DataNode;
 
@@ -28,6 +32,28 @@ class DataNode;
 // A single Command object can represent multiple individual commands, e.g.
 // everything the AI wants a ship to do, or all keys the player is holding down.
 class Command {
+public:
+	class ActionKind {
+	public:
+		template<typename T>
+		class UglyHack : public std::tuple<T> {
+		public:
+			T get() const {
+				return std::get<0>(*this);
+			}
+		};
+
+		class Keyboard : public UglyHack<SDL_Keycode> {};
+
+		class MouseButton : public UglyHack<int> {};
+
+		// class MouseWheel : public UglyHack<bool> {};
+
+		class None : public std::tuple<> {};
+	};
+
+	class Action : public std::variant<ActionKind::Keyboard, ActionKind::MouseButton,/* ActionKind::MouseWheel,*/ ActionKind::None> {};
+
 public:
 	// Empty command:
 	static const Command NONE;
@@ -91,7 +117,7 @@ public:
 	Command() = default;
 	// Create a command representing whatever command is mapped to the given
 	// keycode (if any).
-	explicit Command(int keycode);
+	explicit Command(Action action);
 
 	// Read the current keyboard state and set this object to reflect it.
 	void ReadKeyboard();
@@ -99,12 +125,12 @@ public:
 	// Load or save the keyboard preferences.
 	static void LoadSettings(const std::string &path);
 	static void SaveSettings(const std::string &path);
-	static void SetKey(Command command, int keycode);
+	static void SetAction(Command command, Action action);
 
 	// Get the description or keycode name for this command. If this command is
 	// a combination of more than one command, an empty string is returned.
 	const std::string &Description() const;
-	const std::string &KeyName() const;
+	const std::string &ActionName() const;
 	bool HasBinding() const;
 	bool HasConflict() const;
 
