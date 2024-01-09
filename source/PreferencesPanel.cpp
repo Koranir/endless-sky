@@ -617,7 +617,7 @@ void PreferencesPanel::DrawSettings()
 		"Extra fleet status messages",
 		"\n",
 		"Gameplay",
-		"Control ship with mouse",
+		"Mouse controls default",
 		AUTO_AIM_SETTING,
 		AUTO_FIRE_SETTING,
 		TURRET_TRACKING,
@@ -835,6 +835,11 @@ void PreferencesPanel::DrawSettings()
 		{
 			isOn = Preferences::GetAlertIndicator() != Preferences::AlertIndicator::NONE;
 			text = Preferences::AlertSetting();
+		}
+		else if(setting == "Mouse controls default")
+		{
+			text = isOn ? "to enabled" : "to disabled";
+			isOn = true;
 		}
 		else
 			text = isOn ? "on" : "off";

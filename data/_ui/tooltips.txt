@@ -1173,8 +1173,8 @@ tip "Fire secondary weapon"
 tip "Toggle cloaking device"
 	`Activate or deactivate your fleet's cloaking devices, if any are installed.`
 
-tip "Mouse turning (hold)"
-	`Cause your flagship to turn toward your mouse if this key is held. To have mouse turning always active, activate the "Control ship with mouse" setting. If that setting is active, holding this key deactivates mouse turning.`
+tip "Mouse controls (hold)"
+	`Cause your flagship to turn toward your mouse and enables left and right click bound controls if this key is held. To have mouse turning always active, activate the "Mouse controls default" setting. If that setting is active, holding this key deactivates mouse turning.`
 
 tip "Show main menu"
 	`Open the main menu.`
@@ -1290,8 +1290,8 @@ tip "Alert indicator"
 tip "Extra fleet status messages"
 	`Display extra status messages about escorts in your fleet, such as when they are destroyed or scanned.`
 
-tip "Control ship with mouse"
-	`If active, your flagship will always turn toward your mouse. For activating mouse turning on a key press, see the "Mouse turning (hold)" control.`
+tip "Mouse controls default"
+	`If active, your flagship will always turn toward your mouse and left or right click bound controls will be enabled. For toggling mouse controls, see the "Mouse controls (hold)" control.`
 
 tip "Automatic aiming"
 	`Automatically turn your ship towards your target to aim fixed weapons.`

@@ -458,11 +458,11 @@ bool MainPanel::ShowHelp(bool force)
 
 	vector<string> forced;
 	// Check if any help messages should be shown.
-	if(Preferences::Has("Control ship with mouse"))
+	if(Preferences::Has("Mouse controls default"))
 	{
 		if(force)
-			forced.push_back("control ship with mouse");
-		else if(DoHelp("control ship with mouse"))
+			forced.push_back("Mouse controls default");
+		else if(DoHelp("Mouse controls default"))
 			return true;
 	}
 	if(flagship->IsTargetable())

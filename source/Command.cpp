@@ -96,7 +96,7 @@ const Command Command::FORWARD(ONE << 1, "Forward thrust");
 const Command Command::LEFT(ONE << 2, "Turn left");
 const Command Command::RIGHT(ONE << 3, "Turn right");
 const Command Command::BACK(ONE << 4, "Reverse");
-const Command Command::MOUSE_TURNING_HOLD(ONE << 5, "Mouse turning (hold)");
+const Command Command::MOUSE_TURNING_HOLD(ONE << 5, "Mouse controls (hold)");
 const Command Command::PRIMARY(ONE << 6, "Fire primary weapon");
 const Command Command::SECONDARY(ONE << 7, "Fire secondary weapon");
 const Command Command::SELECT(ONE << 8, "Select secondary weapon");

@@ -214,7 +214,7 @@ void Preferences::Load()
 		else if(node.Token(0) == "previous saves" && node.Size() >= 2)
 			previousSaveCount = max<int>(3, node.Value(1));
 		else if(node.Token(0) == "alt-mouse turning")
-			settings["Control ship with mouse"] = (node.Size() == 1 || node.Value(1));
+			settings["Mouse controls default"] = (node.Size() == 1 || node.Value(1));
 		else
 			settings[node.Token(0)] = (node.Size() == 1 || node.Value(1));
 	}
