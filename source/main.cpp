@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "Action.h"
 #include "Audio.h"
 #include "Command.h"
 #include "Conversation.h"
@@ -23,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DataNode.h"
 #include "Engine.h"
 #include "Files.h"
+#include "Input.h"
 #include "text/Font.h"
 #include "FrameTimer.h"
 #include "GameData.h"
@@ -43,15 +45,20 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TestContext.h"
 #include "UI.h"
 
+#include <SDL_events.h>
+#include <SDL_gamecontroller.h>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <thread>
 
 #include <cassert>
 #include <future>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #ifdef _WIN32
 #define STRICT
@@ -260,6 +267,11 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 	bool isPaused = false;
 	bool isFastForward = false;
 
+	// Keep axis events going when possible. If the event has not been emitted already, emit it again.
+	map<SDL_GameControllerAxis, pair<SDL_Event, bool>> controllerAxis;
+	bool isScrolling = false;
+	bool scrolled = false;
+
 	// If fast forwarding, keep track of whether the current frame should be drawn.
 	int skipFrame = 0;
 
@@ -273,23 +285,41 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 
 	const bool isHeadless = (testContext.CurrentTest() && !debugMode);
 
-	auto ProcessEvents = [&menuPanels, &gamePanels, &player, &cursorTime, &toggleTimeout, &debugMode, &isPaused,
-			&isFastForward]
+	auto ProcessEvents = [&menuPanels, &gamePanels, &player, &cursorTime, &toggleTimeout, &debugMode,
+		&isPaused, &isFastForward, &controllerAxis, &scrolled, &isScrolling]
 	{
+		UI &activeUI = (menuPanels.IsEmpty() ? gamePanels : menuPanels);
+
+		Input::SetInputMethod(Command::KEYBOARD);
+
 		SDL_Event event;
 		while(SDL_PollEvent(&event))
 		{
-			UI &activeUI = (menuPanels.IsEmpty() ? gamePanels : menuPanels);
+			auto currentAction = Action::FromEvent(event);
+			optional<Command> currentCommand;
+			if(currentAction) currentCommand = {currentAction};
 
 			// If the mouse moves, reset the cursor movement timeout.
 			if(event.type == SDL_MOUSEMOTION)
 				cursorTime = 0;
 
+			if(event.type == SDL_CONTROLLERAXISMOTION)
+			{
+				auto axis = static_cast<SDL_GameControllerAxis>(event.caxis.axis);
+				// auto &[val, touched] = controllerAxis[axis];
+				// val = static_cast<double>(event.caxis.value) / INT16_MAX;
+				// touched = true;
+				controllerAxis[axis] = make_pair(event, true);
+			}
+
+			if(event.type == SDL_MOUSEWHEEL)
+				isScrolling = true;
+
 			if(debugMode && event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKQUOTE)
 				isPaused = !isPaused;
-			else if(event.type == SDL_KEYDOWN && menuPanels.IsEmpty()
-					&& Command(event.key.keysym.sym).Has(Command::MENU)
-					&& !gamePanels.IsEmpty() && gamePanels.Top()->IsInterruptible())
+			else if(currentCommand && menuPanels.IsEmpty()
+					&& !gamePanels.IsEmpty() && gamePanels.Top()->IsInterruptible()
+					&& currentCommand.value().Has(Command::MENU))
 			{
 				// User pressed the Menu key.
 				menuPanels.Push(shared_ptr<Panel>(
@@ -303,8 +333,8 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 				// and the OpenGL viewport to match.
 				GameWindow::AdjustViewport();
 			}
-			else if(event.type == SDL_KEYDOWN && !toggleTimeout
-					&& (Command(event.key.keysym.sym).Has(Command::FULLSCREEN)
+			else if(currentCommand && !toggleTimeout
+					&& (currentCommand.value().Has(Command::FULLSCREEN)
 					|| (event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))))
 			{
 				toggleTimeout = 30;
@@ -314,12 +344,26 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			{
 				// The UI handled the event.
 			}
-			else if(event.type == SDL_KEYDOWN && !event.key.repeat
-					&& (Command(event.key.keysym.sym).Has(Command::FASTFORWARD)))
+			else if(currentCommand && !event.key.repeat
+					&& currentCommand.value().Has(Command::FASTFORWARD))
 			{
 				isFastForward = !isFastForward;
 			}
 		}
+
+		for(auto &[axis, vt_] : controllerAxis)
+		{
+			auto &[event, touched] = vt_;
+
+			if(!touched)
+				activeUI.Handle(event);
+			touched = false;
+		}
+
+		if(!isScrolling && scrolled)
+			activeUI.Handle(
+				SDL_Event{SDL_MOUSEWHEEL}
+			);
 	};
 
 	// Game loop when running the game normally.
@@ -330,6 +374,8 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			if(toggleTimeout)
 				--toggleTimeout;
 			chrono::steady_clock::time_point start = chrono::steady_clock::now();
+
+			Input::Update();
 
 			ProcessEvents();
 

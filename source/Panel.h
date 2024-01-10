@@ -16,8 +16,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef PANEL_H_
 #define PANEL_H_
 
+#include "Action.h"
 #include "Rectangle.h"
 
+#include <SDL_events.h>
 #include <functional>
 #include <list>
 #include <string>
@@ -71,6 +73,7 @@ public:
 
 protected:
 	// Only override the ones you need; the default action is to return false.
+	virtual bool Handle(const Action &action, const Command &command, const SDL_Event &event);
 	virtual bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress);
 	virtual bool Click(int x, int y, int clicks);
 	virtual bool RClick(int x, int y);

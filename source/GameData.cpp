@@ -29,6 +29,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "FogShader.h"
+#include "Input.h"
 #include "text/FontSet.h"
 #include "FormationPattern.h"
 #include "Galaxy.h"
@@ -827,7 +828,7 @@ string GameData::HelpMessage(const string &name)
 {
 	static const string EMPTY;
 	auto it = objects.helpMessages.find(name);
-	return Command::ReplaceNamesWithKeys(it == objects.helpMessages.end() ? EMPTY : it->second);
+	return Command::ReplaceNamesWithKeys(it == objects.helpMessages.end() ? EMPTY : it->second, Input::InputMethod());
 }
 
 

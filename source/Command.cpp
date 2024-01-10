@@ -15,16 +15,24 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Command.h"
 
+#include "Action.h"
 #include "DataFile.h"
 #include "DataNode.h"
 #include "DataWriter.h"
 #include "text/Format.h"
+#include "Input.h"
 
 #include <SDL2/SDL.h>
 
+#include <SDL_gamecontroller.h>
+#include <SDL_mouse.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
+#include <functional>
 #include <map>
+#include <variant>
 
 using namespace std;
 
@@ -32,12 +40,47 @@ namespace {
 	// These lookup tables make it possible to map a command to its description,
 	// the name of the key it is mapped to, or the SDL keycode it is mapped to.
 	map<Command, string> description;
-	map<Command, string> keyName;
-	map<int, Command> commandForKeycode;
-	map<Command, int> keycodeForCommand;
-	// Keep track of any keycodes that are mapped to multiple commands, in order
-	// to display a warning to the player.
-	map<int, int> keycodeCount;
+
+	struct Mapping {
+		map<Command, string> keyName;
+
+		std::map<Action, Command> commandForAction;
+		std::map<Command, Action> actionForCommand;
+		// Keep track of any keycodes that are mapped to multiple commands, in order
+		// to display a warning to the player.
+		std::map<Action, int> actionCount;
+	};
+
+	Mapping mouseMappings;
+	Mapping controllerMappings;
+	Mapping keyboardMappings;
+
+	array<Mapping *, 3> mappings {
+		&keyboardMappings,
+		&mouseMappings,
+		&controllerMappings
+	};
+
+	Mapping &MappingForAction(const Action &action) {
+		auto *mapping = visit(ActionKind::Match{
+			[&](ActionKind::MouseButton){ return &mouseMappings; },
+			[&](ActionKind::MouseScroll){ return &mouseMappings; },
+			[&](ActionKind::Keyboard){ return &keyboardMappings; },
+			[&](ActionKind::ControllerButton){ return &controllerMappings; },
+			[&](ActionKind::ControllerAxis){ return &controllerMappings; },
+			[&](ActionKind::None){ return &keyboardMappings; },
+		}, action);
+		return *mapping;
+	}
+
+	string NameForAction(Command which, Command::KeyMapping current) {
+		for(int i = current; i > 0; i--) {
+			if(mappings[i]->keyName.count(which))
+				return mappings[i]->keyName[which];
+		}
+		return keyboardMappings.keyName[which];
+	}
+
 	// Need a uint64_t 1 to generate Commands.
 	const uint64_t ONE = 1;
 }
@@ -87,11 +130,11 @@ const Command Command::SHIFT(ONE << 34, "");
 
 // In the given text, replace any instances of command names (in angle brackets)
 // with key names (in quotes).
-string Command::ReplaceNamesWithKeys(const string &text)
+string Command::ReplaceNamesWithKeys(const string &text, KeyMapping current)
 {
 	map<string, string> subs;
 	for(const auto &it : description)
-		subs['<' + it.second + '>'] = '"' + keyName[it.first] + '"';
+		subs['<' + it.second + '>'] = '"' + NameForAction(it.first, current) + '"';
 
 	return Format::Replace(text, subs);
 }
@@ -99,11 +142,15 @@ string Command::ReplaceNamesWithKeys(const string &text)
 
 
 // Create a command representing whatever is mapped to the given key code.
-Command::Command(int keycode)
+Command::Command(Action action)
 {
-	auto it = commandForKeycode.find(keycode);
-	if(it != commandForKeycode.end())
-		*this = it->second;
+	auto SetAction = [&](Mapping &map){
+		auto it = map.commandForAction.find(action);
+		if(it != map.commandForAction.end())
+			*this = it->second;
+	};
+
+	SetAction(MappingForAction(action));
 }
 
 
@@ -113,13 +160,44 @@ void Command::ReadKeyboard()
 {
 	Clear();
 	const Uint8 *keyDown = SDL_GetKeyboardState(nullptr);
+	const uint32_t mouseButtonMask = SDL_GetMouseState(nullptr, nullptr);
+	const auto scrollState = Input::MouseScrollState().get();
 
-	// Each command can only have one keycode, but misconfigured settings can
-	// temporarily cause one keycode to be used for two commands. Also, more
-	// than one key can be held down at once.
-	for(const auto &it : keycodeForCommand)
-		if(keyDown[SDL_GetScancodeFromKey(it.second)])
-			*this |= it.first;
+	for(auto mapping : mappings) {
+		for(const auto &it : mapping->actionForCommand)
+		{
+			bool active = visit(ActionKind::Match{
+				[&](ActionKind::Keyboard key){
+					// Each command can only have one keycode, but misconfigured settings can
+					// temporarily cause one keycode to be used for two commands. Also, more
+					// than one key can be held down at once.
+					return static_cast<bool>(keyDown[SDL_GetScancodeFromKey(key.get())]);
+				},
+				[&](ActionKind::MouseButton button){
+					return static_cast<bool>((mouseButtonMask & SDL_BUTTON(button.get())));
+				},
+				[&](ActionKind::MouseScroll scroll){
+					auto [x, y] = scroll.get();
+					return (x > 0 && scrollState.first > 0)
+						|| (x < 0 && scrollState.first < 0)
+						|| (y > 0 && scrollState.second > 0)
+						|| (y < 0 && scrollState.second < 0);
+				},
+				[&](ActionKind::ControllerButton button){
+					return static_cast<bool>(SDL_GameControllerGetButton(Input::GetController(), button.get()));
+				},
+				[&](ActionKind::ControllerAxis axis_){
+					auto [axis, val] = axis_.get();
+					auto val2 = static_cast<double>(SDL_GameControllerGetAxis(Input::GetController(), axis)) / INT16_MAX;
+					return (abs(val2) > Input::Deadzone()) && ((val > 0.) ? (val2 > 0.) : (val2 < 0.));
+				},
+				[&](ActionKind::None){ return false; }
+			}, it.second);
+
+			if(active)
+				*this |= it.first;
+		}
+	}
 
 	// Check whether the `Shift` modifier key was pressed for this step.
 	if(SDL_GetModState() & KMOD_SHIFT)
@@ -146,20 +224,66 @@ void Command::LoadSettings(const string &path)
 		if(it != commands.end() && node.Size() >= 2)
 		{
 			Command command = it->second;
-			int keycode = node.Value(1);
-			keycodeForCommand[command] = keycode;
-			keyName[command] = SDL_GetKeyName(keycode);
+			Action action = Action::FromString(node.Token(1));
+			auto &mapping = MappingForAction(action);
+			mapping.actionForCommand[command] = action;
+			mapping.keyName[command] = action.DisplayName();
 		}
 	}
 
-	// Regenerate the lookup tables.
-	commandForKeycode.clear();
-	keycodeCount.clear();
-	for(const auto &it : keycodeForCommand)
-	{
-		commandForKeycode[it.second] = it.first;
-		++keycodeCount[it.second];
+	for(auto mapping : mappings) {
+		// Regenerate the lookup tables.
+		mapping->commandForAction.clear();
+		mapping->actionCount.clear();
+		for(const auto &it : mapping->actionForCommand)
+		{
+			mapping->commandForAction[it.second] = it.first;
+			++mapping->actionCount[it.second];
+		}
 	}
+}
+
+
+
+#include <sstream>
+
+template <>
+void DataWriter::WriteToken(const Action &a) {
+    std::stringstream token;
+
+    std::visit(ActionKind::Match{
+        [&](ActionKind::Keyboard key){
+            token << 'k' << key.get();
+        },
+        [&](ActionKind::MouseButton button){
+            token << 'm' << button.get();
+        },
+        [&](ActionKind::MouseScroll scroll) {
+            auto [x, y] = scroll.get();
+            token << 's';
+            if(x > 0)
+                token << "x+";
+            else if(x < 0)
+                token << "x-";
+            else if(y > 0)
+                token << "y+";
+            else if(y < 0)
+                token << "y-";
+        },
+        [&](ActionKind::ControllerButton button){
+            token << 'c' << button.get();
+        },
+        [&](ActionKind::ControllerAxis axis_){
+            auto [axis, val] = axis_.get();
+            token << 'a' << ((val > 0.) ? '+' : '-') << axis;
+        },
+		[&](ActionKind::None){
+			token << 'n';
+		}
+    }, a);
+
+    out << *before << token.str();
+	before = &space;
 }
 
 
@@ -169,31 +293,35 @@ void Command::SaveSettings(const string &path)
 {
 	DataWriter out(path);
 
-	for(const auto &it : keycodeForCommand)
-	{
-		auto dit = description.find(it.first);
-		if(dit != description.end())
-			out.Write(dit->second, it.second);
+	for(auto mapping : mappings) {
+		for(const auto &it : mapping->actionForCommand)
+		{
+			auto dit = description.find(it.first);
+			if(dit != description.end())
+				out.Write(dit->second, it.second);
+		}	
 	}
 }
 
 
 
 // Set the key that is mapped to the given command.
-void Command::SetKey(Command command, int keycode)
+void Command::SetKey(Command command, Action action)
 {
+	auto &mapping = MappingForAction(action);
+
 	// Always reset *all* the mappings when one is set. That way, if two commands
 	// are mapped to the same key and you change one of them, the other stays mapped.
-	keycodeForCommand[command] = keycode;
-	keyName[command] = SDL_GetKeyName(keycode);
+	mapping.actionForCommand[command] = action;
+	mapping.keyName[command] = action.DisplayName();
 
-	commandForKeycode.clear();
-	keycodeCount.clear();
+	mapping.commandForAction.clear();
+	mapping.actionCount.clear();
 
-	for(const auto &it : keycodeForCommand)
+	for(const auto &it : mapping.actionForCommand)
 	{
-		commandForKeycode[it.second] = it.first;
-		++keycodeCount[it.second];
+		mapping.commandForAction[it.second] = it.first;
+		++mapping.actionCount[it.second];
 	}
 }
 
@@ -212,22 +340,26 @@ const string &Command::Description() const
 
 // Get the name of the key that is mapped to this command. If this command is
 // a combination of more than one command, an empty string is returned.
-const string &Command::KeyName() const
+const string &Command::KeyName(KeyMapping current) const
 {
-	static const string empty = "(none)";
-	auto it = keyName.find(*this);
+	auto &mapping = *mappings[current];
 
-	return (!HasBinding() ? empty : it->second);
+	static const string empty = "(none)";
+	auto it = mapping.keyName.find(*this);
+
+	return (!HasBinding(current) ? empty : it->second);
 }
 
 
 
 // Check if the key has no binding.
-bool Command::HasBinding() const
+bool Command::HasBinding(KeyMapping current) const
 {
-	auto it = keyName.find(*this);
+	auto &mapping = *mappings[current];
 
-	if(it == keyName.end())
+	auto it = mapping.keyName.find(*this);
+
+	if(it == mapping.keyName.end())
 		return false;
 	if(it->second.empty())
 		return false;
@@ -237,14 +369,16 @@ bool Command::HasBinding() const
 
 
 // Check whether this is the only command mapped to the key it is mapped to.
-bool Command::HasConflict() const
+bool Command::HasConflict(KeyMapping current) const
 {
-	auto it = keycodeForCommand.find(*this);
-	if(it == keycodeForCommand.end())
+	auto &mapping = *mappings[current];
+
+	auto it = mapping.actionForCommand.find(*this);
+	if(it == mapping.actionForCommand.end())
 		return false;
 
-	auto cit = keycodeCount.find(it->second);
-	return (cit != keycodeCount.end() && cit->second > 1);
+	auto cit = mapping.actionCount.find(it->second);
+	return (cit != mapping.actionCount.end() && cit->second > 1);
 }
 
 

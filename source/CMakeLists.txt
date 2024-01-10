@@ -14,6 +14,8 @@ endif()
 # Every source file (and header file) should be listed here, except main.cpp.
 # If you add a new file, add it to this list.
 target_sources(EndlessSkyLib PRIVATE
+	Action.cpp
+	Action.h
 	AI.cpp
 	AI.h
 	Account.cpp
@@ -158,6 +160,8 @@ target_sources(EndlessSkyLib PRIVATE
 	Information.h
 	Interface.cpp
 	Interface.h
+	Input.cpp
+	Input.h
 	ItemInfoDisplay.cpp
 	ItemInfoDisplay.h
 	JumpTypes.h

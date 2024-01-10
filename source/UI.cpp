@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "UI.h"
 
+#include "Action.h"
 #include "Command.h"
 #include "Panel.h"
 #include "Screen.h"
@@ -22,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL2/SDL.h>
 
 #include <algorithm>
+#include <variant>
 
 using namespace std;
 
@@ -52,31 +54,19 @@ bool UI::Handle(const SDL_Event &event)
 					Screen::Left() + event.motion.x * 100 / Screen::Zoom(),
 					Screen::Top() + event.motion.y * 100 / Screen::Zoom());
 		}
-		else if(event.type == SDL_MOUSEBUTTONDOWN)
-		{
-			int x = Screen::Left() + event.button.x * 100 / Screen::Zoom();
-			int y = Screen::Top() + event.button.y * 100 / Screen::Zoom();
-			if(event.button.button == 1)
-			{
-				handled = (*it)->ZoneClick(Point(x, y));
-				if(!handled)
-					handled = (*it)->Click(x, y, event.button.clicks);
-			}
-			else if(event.button.button == 3)
-				handled = (*it)->RClick(x, y);
-		}
 		else if(event.type == SDL_MOUSEBUTTONUP)
 		{
 			int x = Screen::Left() + event.button.x * 100 / Screen::Zoom();
 			int y = Screen::Top() + event.button.y * 100 / Screen::Zoom();
 			handled = (*it)->Release(x, y);
 		}
-		else if(event.type == SDL_MOUSEWHEEL)
-			handled = (*it)->Scroll(event.wheel.x, event.wheel.y);
-		else if(event.type == SDL_KEYDOWN)
+		else
 		{
-			Command command(event.key.keysym.sym);
-			handled = (*it)->KeyDown(event.key.keysym.sym, event.key.keysym.mod, command, !event.key.repeat);
+			auto action = Action::FromEvent(event);
+			if(action)
+			{
+				handled = (*it)->Handle(action.value(), {action.value()}, event);
+			}
 		}
 
 		// If this panel does not want anything below it to receive events, do

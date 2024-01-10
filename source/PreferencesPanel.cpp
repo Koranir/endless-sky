@@ -15,6 +15,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "PreferencesPanel.h"
 
+#include "Action.h"
+#include "Input.h"
 #include "text/alignment.hpp"
 #include "Audio.h"
 #include "Color.h"
@@ -168,15 +170,71 @@ void PreferencesPanel::Draw()
 
 
 
-bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
-{
+bool PreferencesPanel::Handle(const Action &action, const Command &command, const SDL_Event &event) {
 	if(static_cast<unsigned>(editing) < zones.size())
 	{
-		Command::SetKey(zones[editing].Value(), key);
+		Command::SetKey(zones[editing].Value(), action);
 		EndEditing();
 		return true;
 	}
 
+	return visit(ActionKind::Match{
+		[&](ActionKind::MouseButton button){
+			int x = Screen::Left() + event.button.x * 100 / Screen::Zoom();
+			int y = Screen::Top() + event.button.y * 100 / Screen::Zoom();
+			if(event.button.button == 1)
+			{
+				if(ZoneClick(Point(x, y)))
+					return true;
+
+				return Click(x, y, event.button.clicks);
+			}
+			else if(event.button.button == 3)
+				return RClick(x, y);
+			else
+				return false;
+		},
+		[&](ActionKind::MouseScroll scroll){
+			auto [x, y] = scroll.get();
+			return Scroll(x, y);
+		},
+		[&](ActionKind::Keyboard key){
+			return KeyDown(event.key.keysym.sym, event.key.keysym.mod, command, !event.key.repeat);
+		},
+		[&](ActionKind::ControllerButton button){
+			auto dir = action.AsDirectional();
+			if(dir)
+			{
+				SDL_Keycode sym;
+				switch(dir.value()){
+				case Action::LEFT:
+					sym = SDLK_LEFT;
+				case Action::RIGHT:
+					sym = SDLK_RIGHT;
+				case Action::UP:
+					sym = SDLK_UP;
+				case Action::DOWN:
+					sym = SDLK_DOWN;
+				}
+				return KeyDown(sym, 0, command, true);
+			}
+			return false;
+		},
+		[&](ActionKind::ControllerAxis axis_){
+			auto &[axis, val] = axis_.get();
+			if(axis == SDL_CONTROLLER_AXIS_RIGHTY && abs(val) > Input::Deadzone()) {
+				return Scroll(0., val);
+			}
+			return false;
+		},
+		[&](ActionKind::None){ return false; },
+	}, action);
+}
+
+
+
+bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
+{
 	if(key == SDLK_DOWN)
 		HandleDown();
 	else if(key == SDLK_UP)
@@ -216,8 +274,8 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 	}
 	else if((key == 'x' || key == SDLK_DELETE) && (page == 'c'))
 	{
-		if(zones[latest].Value().KeyName() != Command::MENU.KeyName())
-			Command::SetKey(zones[latest].Value(), 0);
+		if(zones[latest].Value().KeyName(Input::InputMethod()) != Command::MENU.KeyName(Input::InputMethod()))
+			Command::SetKey(zones[latest].Value(), {ActionKind::None{}});
 	}
 	else
 		return false;
@@ -497,8 +555,8 @@ void PreferencesPanel::DrawControls()
 		{
 			int index = zones.size();
 			// Mark conflicts.
-			bool isConflicted = command.HasConflict();
-			bool isEmpty = !command.HasBinding();
+			bool isConflicted = command.HasConflict(Input::InputMethod());
+			bool isEmpty = !command.HasBinding(Input::InputMethod());
 			bool isEditing = (index == editing);
 			if(isConflicted || isEditing || isEmpty)
 			{
@@ -526,7 +584,7 @@ void PreferencesPanel::DrawControls()
 			zones.emplace_back(table.GetCenterPoint(), table.GetRowSize(), command);
 
 			table.Draw(command.Description(), medium);
-			table.Draw(command.KeyName(), isEditing ? bright : medium);
+			table.Draw(command.KeyName(Input::InputMethod()), isEditing ? bright : medium);
 		}
 	}
 

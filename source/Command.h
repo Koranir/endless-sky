@@ -16,7 +16,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef COMMAND_H_
 #define COMMAND_H_
 
+#include "Action.h"
+
 #include <cstdint>
+#include <map>
 #include <string>
 
 class DataNode;
@@ -28,6 +31,13 @@ class DataNode;
 // A single Command object can represent multiple individual commands, e.g.
 // everything the AI wants a ship to do, or all keys the player is holding down.
 class Command {
+public:
+	enum KeyMapping {
+		KEYBOARD = 0,
+		MOUSE = 1,
+		CONTROLLER = 2
+	};
+
 public:
 	// Empty command:
 	static const Command NONE;
@@ -85,13 +95,13 @@ public:
 public:
 	// In the given text, replace any instances of command names (in angle
 	// brackets) with key names (in quotes).
-	static std::string ReplaceNamesWithKeys(const std::string &text);
+	static std::string ReplaceNamesWithKeys(const std::string &text, KeyMapping current);
 
 public:
 	Command() = default;
 	// Create a command representing whatever command is mapped to the given
 	// keycode (if any).
-	explicit Command(int keycode);
+	Command(Action action);
 
 	// Read the current keyboard state and set this object to reflect it.
 	void ReadKeyboard();
@@ -99,14 +109,14 @@ public:
 	// Load or save the keyboard preferences.
 	static void LoadSettings(const std::string &path);
 	static void SaveSettings(const std::string &path);
-	static void SetKey(Command command, int keycode);
+	static void SetKey(Command command, Action action);
 
 	// Get the description or keycode name for this command. If this command is
 	// a combination of more than one command, an empty string is returned.
 	const std::string &Description() const;
-	const std::string &KeyName() const;
-	bool HasBinding() const;
-	bool HasConflict() const;
+	const std::string &KeyName(KeyMapping current) const;
+	bool HasBinding(KeyMapping current) const;
+	bool HasConflict(KeyMapping current) const;
 
 	// Load this command from an input file (for testing or scripted missions).
 	void Load(const DataNode &node);
