@@ -16,8 +16,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef COMMAND_H_
 #define COMMAND_H_
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <tuple>
 
 class DataNode;
 
@@ -150,6 +153,59 @@ private:
 	// Turning amount is stored as a separate double to allow fractional values.
 	double turn = 0.;
 };
+
+
+
+namespace command {
+	static const std::array<Command, 37> COMMANDS = {
+		Command::FORWARD,
+		Command::LEFT,
+		Command::RIGHT,
+		Command::BACK,
+		Command::AFTERBURNER,
+		Command::AUTOSTEER,
+		Command::LAND,
+		Command::JUMP,
+
+		Command::MAP,
+		Command::INFO,
+
+		Command::NEAREST,
+		Command::TARGET,
+		Command::HAIL,
+		Command::BOARD,
+		Command::NEAREST_ASTEROID,
+		Command::SCAN,
+
+		Command::PRIMARY,
+		Command::SELECT,
+		Command::SECONDARY,
+		Command::CLOAK,
+		Command::MOUSE_TURNING_HOLD,
+
+		Command::MENU,
+		Command::FULLSCREEN,
+		Command::FASTFORWARD,
+		Command::HELP,
+
+		Command::DEPLOY,
+		Command::FIGHT,
+		Command::GATHER,
+		Command::HOLD,
+		Command::AMMO,
+		Command::HARVEST
+	};
+
+	// Tuple is the category name, begin index, and length.
+	static const std::array<std::tuple<std::string, size_t, size_t>, 6> CATEGORIES = {
+		std::make_tuple("Navigation", 0, 8),
+		std::make_tuple("Interface", 8, 2),
+		std::make_tuple("Targeting", 10, 6),
+		std::make_tuple("Weapons", 16, 5),
+		std::make_tuple("Interface", 21, 4),
+		std::make_tuple("Fleet", 25, 6)
+	};
+}
 
 
 

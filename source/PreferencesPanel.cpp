@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "PreferencesPanel.h"
 
+#include "Command.h"
 #include "text/alignment.hpp"
 #include "Audio.h"
 #include "Color.h"
@@ -104,16 +105,20 @@ PreferencesPanel::PreferencesPanel()
 	hoverText.SetWrapWidth(250);
 	hoverText.SetAlignment(Alignment::LEFT);
 
+	const Interface *controlsUi = GameData::Interfaces().Get("controls");
+	controlsScroll.SetDisplaySize(controlsUi->GetBox("controls box").Height());
+	controlsHeight = 0;
+
 	// Set the initial plugin list and description scroll ranges.
 	const Interface *pluginUi = GameData::Interfaces().Get("plugins");
-	Rectangle pluginListBox = pluginUi->GetBox("plugin list");
+	Rectangle leftBox = pluginUi->GetBox("plugin  box");
 
 	pluginListHeight = 0;
 	for(const auto &plugin : Plugins::Get())
 		if(plugin.second.IsValid())
 			pluginListHeight += 20;
 
-	pluginListScroll.SetDisplaySize(pluginListBox.Height());
+	pluginListScroll.SetDisplaySize(leftBox.Height());
 	pluginListScroll.SetMaxValue(pluginListHeight);
 	Rectangle pluginDescriptionBox = pluginUi->GetBox("plugin description");
 	pluginDescriptionScroll.SetDisplaySize(pluginDescriptionBox.Height());
@@ -195,7 +200,7 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 		{
 			// Reset the render buffers in case the UI scale has changed.
 			const Interface *pluginUi = GameData::Interfaces().Get("plugins");
-			Rectangle pluginListBox = pluginUi->GetBox("plugin list");
+			Rectangle pluginListBox = pluginUi->GetBox("plugin  box");
 			pluginListClip = std::make_unique<RenderBuffer>(pluginListBox.Dimensions());
 			RenderPluginDescription(selectedPlugin);
 		}
@@ -254,7 +259,7 @@ bool PreferencesPanel::Click(int x, int y, int clicks)
 	{
 		// Don't handle clicks outside of the clipped area.
 		const Interface *pluginUi = GameData::Interfaces().Get("plugins");
-		Rectangle pluginListBox = pluginUi->GetBox("plugin list");
+		Rectangle pluginListBox = pluginUi->GetBox("plugin  box");
 		if(pluginListBox.Contains(point))
 		{
 			int index = 0;
@@ -348,7 +353,7 @@ bool PreferencesPanel::Scroll(double dx, double dy)
 	else if(page == 'p')
 	{
 		auto ui = GameData::Interfaces().Get("plugins");
-		const Rectangle &pluginBox = ui->GetBox("plugin list");
+		const Rectangle &pluginBox = ui->GetBox("plugin  box");
 		const Rectangle &descriptionBox = ui->GetBox("plugin description");
 
 		if(pluginBox.Contains(hoverPoint))
@@ -372,7 +377,7 @@ bool PreferencesPanel::Drag(double dx, double dy)
 	if(page == 'p')
 	{
 		auto ui = GameData::Interfaces().Get("plugins");
-		const Rectangle &pluginBox = ui->GetBox("plugin list");
+		const Rectangle &pluginBox = ui->GetBox("plugin  box");
 		const Rectangle &descriptionBox = ui->GetBox("plugin description");
 
 		if(pluginBox.Contains(hoverPoint))
@@ -427,55 +432,6 @@ void PreferencesPanel::DrawControls()
 	int firstY = -248;
 	table.DrawAt(Point(-130, firstY));
 
-	static const string CATEGORIES[] = {
-		"Keyboard Navigation",
-		"Interface",
-		"Targeting",
-		"Weapons",
-		"Interface",
-		"Fleet"
-	};
-	const string *category = CATEGORIES;
-	static const Command COMMANDS[] = {
-		Command::NONE,
-		Command::FORWARD,
-		Command::LEFT,
-		Command::RIGHT,
-		Command::BACK,
-		Command::AFTERBURNER,
-		Command::AUTOSTEER,
-		Command::LAND,
-		Command::JUMP,
-		Command::NONE,
-		Command::MAP,
-		Command::INFO,
-		Command::NONE,
-		Command::NEAREST,
-		Command::TARGET,
-		Command::HAIL,
-		Command::BOARD,
-		Command::NEAREST_ASTEROID,
-		Command::SCAN,
-		Command::NONE,
-		Command::PRIMARY,
-		Command::SELECT,
-		Command::SECONDARY,
-		Command::CLOAK,
-		Command::MOUSE_TURNING_HOLD,
-		Command::NONE,
-		Command::MENU,
-		Command::FULLSCREEN,
-		Command::FASTFORWARD,
-		Command::HELP,
-		Command::NONE,
-		Command::DEPLOY,
-		Command::FIGHT,
-		Command::GATHER,
-		Command::HOLD,
-		Command::AMMO,
-		Command::HARVEST
-	};
-	static const Command *BREAK = &COMMANDS[19];
 	for(const Command &command : COMMANDS)
 	{
 		// The "BREAK" line is where to go to the next column.
@@ -869,7 +825,7 @@ void PreferencesPanel::DrawPlugins()
 	// Switch render target to pluginListClip. Until target is destroyed or
 	// deactivated, all opengl commands will be drawn there instead.
 	auto target = pluginListClip->SetTarget();
-	Rectangle pluginListBox = pluginUI->GetBox("plugin list");
+	Rectangle pluginListBox = pluginUI->GetBox("plugin  box");
 
 	Table table;
 	table.AddColumn(

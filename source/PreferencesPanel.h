@@ -85,6 +85,7 @@ private:
 	// Which page of the preferences we're on.
 	char page = 'c';
 
+
 	Point hoverPoint;
 	int hoverCount = 0;
 	std::string selectedItem;
@@ -92,12 +93,20 @@ private:
 	std::string tooltip;
 	WrappedText hoverText;
 
-	int currentSettingsPage = 0;
-
-	std::string selectedPlugin;
 
 	std::vector<ClickZone<Command>> zones;
+
+	std::unique_ptr<RenderBuffer> controlsClip;
+	ScrollVar<double> controlsScroll;
+	int controlsHeight = 0;
+
+
 	std::vector<ClickZone<std::string>> prefZones;
+
+	int currentSettingsPage = 0;
+
+
+	std::string selectedPlugin;
 	std::vector<ClickZone<std::string>> pluginZones;
 
 	std::unique_ptr<RenderBuffer> pluginListClip;

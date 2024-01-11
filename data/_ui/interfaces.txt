@@ -167,6 +167,8 @@ color "warning back" .21 .18 .08 1.
 color "warning conflict" .315 .27 .12 1.
 color "warning no command" 0.16 0.16 0.13 1.
 
+color "warning reset" .8 .54 .24 0.
+
 # Colors used for messages
 color "message importance highest" 1. .5 0. 1.
 color "message importance info" 0. 1. .5 1.
@@ -470,6 +472,19 @@ interface "controls"
 		dimensions 90 30
 		color medium
 		hover bright
+	button r "_Reset all"
+		center -300 0
+		dimensions 100 30
+		color medium
+		hover "warning reset"
+
+	label "Controls:"
+		from -225 -236
+		align top left
+		color bright
+	visible
+	box "left box"
+		from -250 -216 to -10 184
 
 
 
