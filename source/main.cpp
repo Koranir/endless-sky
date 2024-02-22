@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "GameData.h"
 #include "GameLoadingPanel.h"
 #include "GameWindow.h"
+#include "KeybindDisplay.h"
 #include "Logger.h"
 #include "MainPanel.h"
 #include "MenuPanel.h"
@@ -393,7 +394,9 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 
 			// Events in this frame may have cleared out the menu, in which case
 			// we should draw the game panels instead:
-			(menuPanels.IsEmpty() ? gamePanels : menuPanels).DrawAll();
+			UI &activeUI = (menuPanels.IsEmpty() ? gamePanels : menuPanels);
+			activeUI.DrawAll();
+			KeybindDisplay::DrawForPanel(activeUI.Top().get());
 			if(isFastForward)
 				SpriteShader::Draw(SpriteSet::Get("ui/fast forward"), Screen::TopLeft() + Point(10., 10.));
 

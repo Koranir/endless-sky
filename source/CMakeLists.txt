@@ -161,6 +161,8 @@ target_sources(EndlessSkyLib PRIVATE
 	ItemInfoDisplay.cpp
 	ItemInfoDisplay.h
 	JumpTypes.h
+	KeybindDisplay.cpp
+	KeybindDisplay.h
 	Logger.cpp
 	Logger.h
 	LineShader.cpp

@@ -136,6 +136,14 @@ bool Panel::AllowsFastForward() const noexcept
 
 
 
+const vector<pair<SDL_Keycode, std::string>> &Panel::KeybindDescs() const
+{
+	static const vector<pair<SDL_Keycode, std::string>> empty;
+	return empty;
+}
+
+
+
 // Only override the ones you need; the default action is to return false.
 bool Panel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
