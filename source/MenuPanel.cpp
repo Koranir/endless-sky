@@ -50,6 +50,8 @@ namespace {
 	const int SCROLL_MOD = 2;
 	int scrollSpeed = 1;
 	bool showCreditsWarning = true;
+
+	Panel::KeybindList keybindList;
 }
 
 
@@ -94,6 +96,14 @@ MenuPanel::MenuPanel(PlayerInfo &player, UI &gamePanels)
 
 	if(!scrollSpeed)
 		scrollSpeed = 1;
+
+	keybindList = {
+		ES_COMMAND_KD(MENU, "Close"),
+		{string("p"), string("Preferences")},
+		{string("l"), string("Load")},
+		{string("q"), string("Quit")},
+		{string("up/down/space"), string("Credit Scroll")},
+	};
 }
 
 
@@ -108,6 +118,10 @@ void MenuPanel::Step()
 		if(scroll >= (20 * static_cast<long long int>(credits.size()) + 300) * SCROLL_MOD)
 			scroll = 0;
 	}
+	if(!player.IsLoaded() || player.IsDead())
+		keybindList["n"] = "New Player";
+	else
+		keybindList["n"] = "Enter Ship";
 }
 
 
@@ -154,6 +168,13 @@ void MenuPanel::Draw()
 
 	if(!credits.empty())
 		DrawCredits();
+}
+
+
+
+const Panel::KeybindList &MenuPanel::KeybindDescs() const
+{
+	return keybindList;
 }
 
 

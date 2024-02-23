@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <functional>
 #include <list>
 #include <string>
+#include <map>
 
 #include <SDL2/SDL.h>
 
@@ -74,7 +75,11 @@ public:
 	// Is fast-forward allowed to be on when this panel is on top of the GUI stack?
 	virtual bool AllowsFastForward() const noexcept;
 	// What keybinds are useable in this panel?
-	virtual const std::vector<std::pair<SDL_Keycode, std::string>> &KeybindDescs() const;
+	#define ES_COMMAND_KD(command, desc) {\
+		string(Command:: command .KeyName()), string(desc)\
+	}
+	using KeybindList = std::map<std::string, std::string>;
+	virtual const KeybindList &KeybindDescs() const;
 
 
 protected:

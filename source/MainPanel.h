@@ -50,6 +50,8 @@ public:
 	// Get the underlying game engine used by the game.
 	Engine &GetEngine();
 
+	virtual const Panel::KeybindList &KeybindDescs() const override;
+
 
 protected:
 	// Only override the ones you need; the default action is to return false.

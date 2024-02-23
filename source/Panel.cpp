@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Sprite.h"
 #include "SpriteShader.h"
 #include "UI.h"
+#include <SDL_keycode.h>
 
 using namespace std;
 
@@ -136,9 +137,9 @@ bool Panel::AllowsFastForward() const noexcept
 
 
 
-const vector<pair<SDL_Keycode, std::string>> &Panel::KeybindDescs() const
+const Panel::KeybindList &Panel::KeybindDescs() const
 {
-	static const vector<pair<SDL_Keycode, std::string>> empty;
+	static const Panel::KeybindList empty{{"Esc", "Close Panel"}};
 	return empty;
 }
 

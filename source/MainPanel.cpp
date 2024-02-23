@@ -53,12 +53,27 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 using namespace std;
 
+namespace {
+	Panel::KeybindList keybind_list;
+}
+
+
 
 
 MainPanel::MainPanel(PlayerInfo &player)
 	: player(player), engine(player)
 {
 	SetIsFullScreen(true);
+	keybind_list = {
+		ES_COMMAND_KD(MAP, "Map"),
+		ES_COMMAND_KD(INFO, "Info"),
+		ES_COMMAND_KD(MESSAGE_LOG, "Log"),
+		ES_COMMAND_KD(HAIL, "Hail"),
+		ES_COMMAND_KD(HELP, "Help"),
+		ES_COMMAND_KD(AMMO, "Ammo"),
+		{string("-/+"), string("Zoom")},
+		{string("0-9"), string("Group")}
+	};
 }
 
 
@@ -196,6 +211,13 @@ bool MainPanel::AllowsFastForward() const noexcept
 Engine &MainPanel::GetEngine()
 {
 	return engine;
+}
+
+
+
+const Panel::KeybindList &MainPanel::KeybindDescs() const
+{
+	return keybind_list;
 }
 
 
