@@ -18,6 +18,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DisplayText.h"
 #include "Font.h"
 
+#include "../Logger.h"
+
 #include <cctype>
 #include <cstring>
 #include <optional>
@@ -206,16 +208,13 @@ void WrappedText::SetText(const char *it, size_t length)
 
 
 // Binary search the text by width
-pair<string_view, string_view> splitByWidth(const string_view word, const Font *font, const int wrapWidth, const size_t last, size_t curr) {
-	if(last == curr)
-	{
-		if(curr == 0)	curr++;
-		return make_pair(word.substr(0, curr), word.substr(curr));
-	}
-	auto newlen = ((font->Width(word.substr(0, curr)) < wrapWidth)
-		? (word.length() + curr)
-		: (last + curr)) / 2;
-	return splitByWidth(word, font, wrapWidth, curr, newlen);
+pair<string_view, string_view> splitByWidth(const string_view word, const Font *font, const int wrapWidth, const size_t max, const size_t min, const size_t last) {
+	if(last == max || last == min)
+		return make_pair(word.substr(0, last), word.substr(last));
+	if(font->Width(word.substr(0, last)) < wrapWidth)
+		return splitByWidth(word, font, wrapWidth, max, last, (max + last) / 2);
+	else
+		return splitByWidth(word, font, wrapWidth, last, min, (min + last) / 2);
 };
 
 
@@ -242,8 +241,10 @@ void WrappedText::Wrap()
 		if(wrapWidth)
 			while(width > wrapWidth)
 			{
-				auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
+				auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, word.length(), 0, word.length() / 2);
+				Logger::LogError("Is too beeg" + string(word));
 				words.emplace_back(get, cursorX, cursorY);
+				lineWidth += font->Width(get);
 
 				cursorX = 0;
 				cursorY += lineHeight;
@@ -293,7 +294,7 @@ void WrappedText::Wrap()
 			cursorY += lineHeight + paragraphBreak;
 			wordStart = nullopt;
 		}
-		else if(ch > ' ')
+		else if(ch <= ' ')
 		{
 			cursorX += Space(ch);
 			wordStart = nullopt;
@@ -305,6 +306,11 @@ void WrappedText::Wrap()
 		auto word = string_view(wordStart.value().base());
 		putWord(word, true);
 	}
+
+	// for(auto word : words)
+	// {
+	// 	Logger::LogError(string(word.text));
+	// }
 
 	height = cursorY;
 }
