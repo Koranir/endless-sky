@@ -231,21 +231,39 @@ void WrappedText::Wrap()
 
 
 	optional<decltype(text.begin())> wordStart = nullopt;
+	size_t lineStart = 0;
+	int lineWidth;
 	int cursorX = 0;
 	int cursorY = 0;
 
-	auto newLined = [&cursorX, &cursorY, this](auto width, auto word){
+	auto putWord = [&lineWidth, &lineStart, &cursorX, &cursorY, this](auto word, bool isEnd){
+		auto width = font->Width(word);
+
+		if(wrapWidth)
+			while(width > wrapWidth)
+			{
+				auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
+				words.emplace_back(get, cursorX, cursorY);
+
+				cursorX = 0;
+				cursorY += lineHeight;
+
+				AdjustLine(lineStart, lineWidth, false);
+
+				word = rem;
+				width = font->Width(word);
+			}
+		
 		if(width + cursorX > wrapWidth)
 		{
-			words.emplace_back(word, cursorX, cursorY);
 			cursorX = 0;
 			cursorY += lineHeight;
+			AdjustLine(lineStart, lineWidth, isEnd);
 		}
-		else
-		{
-			words.emplace_back(word, cursorX, cursorY);
-			cursorX += width;
-		}
+		words.emplace_back(word, cursorX, cursorY);
+		cursorX += width;
+
+		lineWidth = cursorX;
 	};
 	
 	for(auto chiter = text.begin(); chiter != text.end(); chiter++)
@@ -259,20 +277,7 @@ void WrappedText::Wrap()
 				continue;
 
 			auto word = string_view((*wordStart).operator->(), chiter - *wordStart);
-			auto width = font->Width(word);
-			// if(wrapWidth)
-			// 	while(width > wrapWidth)
-			// 	{
-			// 		auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
-			// 		words.emplace_back(get, cursorX, cursorY);
-			// 		cursorX = 0;
-			// 		cursorY += lineHeight;
-
-			// 		word = rem;
-			// 		width = font->Width(word);
-			// 	}
-
-			newLined(width, word);
+			putWord(word, false);
 
 			wordStart = nullopt;
 		}
@@ -298,20 +303,7 @@ void WrappedText::Wrap()
 	if(wordStart)
 	{
 		auto word = string_view(wordStart.value().base());
-		auto width = font->Width(word);
-		// if(wrapWidth)
-		// 	while(width > wrapWidth)
-		// 	{
-		// 		auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
-		// 		words.emplace_back(get, cursorX, cursorY);
-		// 		cursorX = 0;
-		// 		cursorY += lineHeight;
-
-		// 		word = rem;
-		// 		width = font->Width(word);
-		// 	}
-
-		newLined(width, word);
+		putWord(word, true);
 	}
 
 	height = cursorY;
