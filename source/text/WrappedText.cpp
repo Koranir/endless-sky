@@ -18,9 +18,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DisplayText.h"
 #include "Font.h"
 
-#include "../Logger.h"
-
-#include <cctype>
 #include <cstring>
 #include <optional>
 
@@ -209,9 +206,16 @@ void WrappedText::SetText(const char *it, size_t length)
 
 // Binary search the text by width
 pair<string_view, string_view> splitByWidth(const string_view word, const Font *font, const int wrapWidth, const size_t max, const size_t min, const size_t last) {
+	auto width = font->Width(word.substr(0, last));
+
 	if(last == max || last == min)
-		return make_pair(word.substr(0, last), word.substr(last));
-	if(font->Width(word.substr(0, last)) < wrapWidth)
+	{
+		if(width > wrapWidth)
+			return make_pair(word.substr(0, last - 1), word.substr(last - 1));
+		else
+			return make_pair(word.substr(0, last), word.substr(last));
+	}
+	if(width < wrapWidth)
 		return splitByWidth(word, font, wrapWidth, max, last, (max + last) / 2);
 	else
 		return splitByWidth(word, font, wrapWidth, last, min, (min + last) / 2);
@@ -242,14 +246,12 @@ void WrappedText::Wrap()
 			while(width > wrapWidth)
 			{
 				auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, word.length(), 0, word.length() / 2);
-				Logger::LogError("Is too beeg" + string(word));
 				words.emplace_back(get, cursorX, cursorY);
-				lineWidth += font->Width(get);
+				lineWidth += font->Width(get) + space * 2;
+				AdjustLine(lineStart, lineWidth, false);
 
 				cursorX = 0;
 				cursorY += lineHeight;
-
-				AdjustLine(lineStart, lineWidth, false);
 
 				word = rem;
 				width = font->Width(word);
@@ -257,6 +259,7 @@ void WrappedText::Wrap()
 		
 		if(width + cursorX > wrapWidth)
 		{
+			lineWidth = cursorX;
 			cursorX = 0;
 			cursorY += lineHeight;
 			AdjustLine(lineStart, lineWidth, isEnd);
@@ -306,11 +309,6 @@ void WrappedText::Wrap()
 		auto word = string_view(wordStart.value().base());
 		putWord(word, true);
 	}
-
-	// for(auto word : words)
-	// {
-	// 	Logger::LogError(string(word.text));
-	// }
 
 	height = cursorY;
 }
