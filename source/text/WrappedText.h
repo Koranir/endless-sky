@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "truncate.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 class Color;
@@ -87,19 +88,13 @@ private:
 
 private:
 	// The returned text is a series of words and (x, y) positions:
-	class Word {
-	public:
-		Word() = default;
-
-		size_t Index() const;
-		Point Pos() const;
-
-	private:
-		size_t index = 0;
+	struct Word {
+		std::string_view text;
 		int x = 0;
 		int y = 0;
 
-		friend class WrappedText;
+		Word(std::string_view text, int x, int y) : text(text), x(x), y(y) {}
+		Point Pos() const;
 	};
 
 

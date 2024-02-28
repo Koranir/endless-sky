@@ -17,7 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 
 
-DisplayText::DisplayText(const char *text, Layout layout)
+DisplayText::DisplayText(std::string_view text, Layout layout)
 	: layout(layout), text(text)
 {
 }

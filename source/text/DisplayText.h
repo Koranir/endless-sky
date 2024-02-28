@@ -25,7 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 class DisplayText {
 public:
 	DisplayText() = default;
-	DisplayText(const char *text, Layout layout);
+	DisplayText(std::string_view text, Layout layout);
 	DisplayText(const std::string &text, Layout layout);
 
 	const std::string &GetText() const noexcept;

@@ -127,14 +127,14 @@ void Font::DrawAliased(const DisplayText &text, double x, double y, const Color 
 
 
 
-void Font::Draw(const string &str, const Point &point, const Color &color) const
+void Font::Draw(string_view str, const Point &point, const Color &color) const
 {
 	DrawAliased(str, round(point.X()), round(point.Y()), color);
 }
 
 
 
-void Font::DrawAliased(const string &str, double x, double y, const Color &color) const
+void Font::DrawAliased(string_view str, double x, double y, const Color &color) const
 {
 	glUseProgram(shader.Object());
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -205,9 +205,9 @@ void Font::DrawAliased(const string &str, double x, double y, const Color &color
 
 
 
-int Font::Width(const string &str, char after) const
+int Font::Width(string_view str, char after) const
 {
-	return WidthRawString(str.c_str(), after);
+	return WidthRawString(str, after);
 }
 
 
@@ -383,19 +383,19 @@ void Font::SetUpShader(float glyphW, float glyphH)
 
 
 
-int Font::WidthRawString(const char *str, char after) const noexcept
+int Font::WidthRawString(string_view str, char after) const noexcept
 {
 	int width = 0;
 	int previous = 0;
 	bool isAfterSpace = true;
 
-	for( ; *str; ++str)
+	for(char c : str)
 	{
-		if(*str == '_')
+		if(c == '_')
 			continue;
 
-		int glyph = Glyph(*str, isAfterSpace);
-		if(*str != '"' && *str != '\'')
+		int glyph = Glyph(c, isAfterSpace);
+		if(c != '"' && c != '\'')
 			isAfterSpace = !glyph;
 		if(!glyph)
 			width += space;
@@ -424,7 +424,7 @@ string Font::TruncateText(const DisplayText &text, int &width) const
 	switch(layout.truncate)
 	{
 		case Truncate::NONE:
-			width = WidthRawString(str.c_str());
+			width = WidthRawString(str);
 			return str;
 		case Truncate::FRONT:
 			return TruncateFront(str, width);
@@ -438,13 +438,13 @@ string Font::TruncateText(const DisplayText &text, int &width) const
 
 
 
-string Font::TruncateBack(const string &str, int &width) const
+string Font::TruncateBack(string_view str, int &width) const
 {
-	int firstWidth = WidthRawString(str.c_str());
+	int firstWidth = WidthRawString(str);
 	if(firstWidth <= width)
 	{
 		width = firstWidth;
-		return str;
+		return string(str);
 	}
 
 	int prevChars = str.size();
@@ -464,19 +464,19 @@ string Font::TruncateBack(const string &str, int &width) const
 		bool prevWorks = (prevWidth <= width);
 		nextChars += (prevWorks ? isSame : -isSame);
 
-		int nextWidth = WidthRawString(str.substr(0, nextChars).c_str(), '.');
+		int nextWidth = WidthRawString(str.substr(0, nextChars), '.');
 		bool nextWorks = (nextWidth <= width);
 		if(prevWorks != nextWorks && abs(nextChars - prevChars) == 1)
 		{
 			if(prevWorks)
 			{
 				width = prevWidth + widthEllipses;
-				return str.substr(0, prevChars) + "...";
+				return string(str.substr(0, prevChars)) + "...";
 			}
 			else
 			{
 				width = nextWidth + widthEllipses;
-				return str.substr(0, nextChars) + "...";
+				return string(str.substr(0, nextChars)) + "...";
 			}
 		}
 
@@ -484,18 +484,18 @@ string Font::TruncateBack(const string &str, int &width) const
 		prevWidth = nextWidth;
 	}
 	width = firstWidth;
-	return str;
+	return string(str);
 }
 
 
 
-string Font::TruncateFront(const string &str, int &width) const
+string Font::TruncateFront(string_view str, int &width) const
 {
-	int firstWidth = WidthRawString(str.c_str());
+	int firstWidth = WidthRawString(str);
 	if(firstWidth <= width)
 	{
 		width = firstWidth;
-		return str;
+		return string(str);
 	}
 
 	int prevChars = str.size();
@@ -515,19 +515,19 @@ string Font::TruncateFront(const string &str, int &width) const
 		bool prevWorks = (prevWidth <= width);
 		nextChars += (prevWorks ? isSame : -isSame);
 
-		int nextWidth = WidthRawString(str.substr(str.size() - nextChars).c_str());
+		int nextWidth = WidthRawString(str.substr(str.size() - nextChars));
 		bool nextWorks = (nextWidth <= width);
 		if(prevWorks != nextWorks && abs(nextChars - prevChars) == 1)
 		{
 			if(prevWorks)
 			{
 				width = prevWidth + widthEllipses;
-				return "..." + str.substr(str.size() - prevChars);
+				return "..." + string(str.substr(str.size() - prevChars));
 			}
 			else
 			{
 				width = nextWidth + widthEllipses;
-				return "..." + str.substr(str.size() - nextChars);
+				return "..." + string(str.substr(str.size() - nextChars));
 			}
 		}
 
@@ -535,18 +535,18 @@ string Font::TruncateFront(const string &str, int &width) const
 		prevWidth = nextWidth;
 	}
 	width = firstWidth;
-	return str;
+	return string(str);
 }
 
 
 
-string Font::TruncateMiddle(const string &str, int &width) const
+string Font::TruncateMiddle(string_view str, int &width) const
 {
-	int firstWidth = WidthRawString(str.c_str());
+	int firstWidth = WidthRawString(str);
 	if(firstWidth <= width)
 	{
 		width = firstWidth;
-		return str;
+		return string(str);
 	}
 
 	int prevChars = str.size();
@@ -568,7 +568,7 @@ string Font::TruncateMiddle(const string &str, int &width) const
 
 		int leftChars = nextChars / 2;
 		int rightChars = nextChars - leftChars;
-		int nextWidth = WidthRawString((str.substr(0, leftChars) + str.substr(str.size() - rightChars)).c_str(), '.');
+		int nextWidth = WidthRawString((string(str.substr(0, leftChars)).append(str.substr(str.size() - rightChars))), '.');
 		bool nextWorks = (nextWidth <= width);
 		if(prevWorks != nextWorks && abs(nextChars - prevChars) == 1)
 		{
@@ -580,12 +580,12 @@ string Font::TruncateMiddle(const string &str, int &width) const
 			}
 			else
 				width = nextWidth + widthEllipses;
-			return str.substr(0, leftChars) + "..." + str.substr(str.size() - rightChars);
+			return string(str.substr(0, leftChars)).append("...").append(str.substr(str.size() - rightChars));
 		}
 
 		prevChars = nextChars;
 		prevWidth = nextWidth;
 	}
 	width = firstWidth;
-	return str;
+	return string(str);
 }

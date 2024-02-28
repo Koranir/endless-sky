@@ -18,7 +18,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "DisplayText.h"
 #include "Font.h"
 
+#include <cctype>
 #include <cstring>
+#include <optional>
 
 using namespace std;
 
@@ -165,7 +167,7 @@ void WrappedText::Draw(const Point &topLeft, const Color &color) const
 
 	if(truncate == Truncate::NONE)
 		for(const Word &w : words)
-			font->Draw(text.c_str() + w.Index(), w.Pos() + topLeft, color);
+			font->Draw(w.text, w.Pos() + topLeft, color);
 	else
 	{
 		// Currently, we only apply truncation to a line if it contains a single word.
@@ -174,19 +176,12 @@ void WrappedText::Draw(const Point &topLeft, const Color &color) const
 		{
 			const Word &w = words[i];
 			if(h == w.y && (i != words.size() - 1 && w.y == words[i + 1].y))
-				font->Draw(text.c_str() + w.Index(), w.Pos() + topLeft, color);
+				font->Draw(w.text, w.Pos() + topLeft, color);
 			else
-				font->Draw({text.c_str() + w.Index(), {wrapWidth, truncate}}, w.Pos() + topLeft, color);
+				font->Draw({w.text, {wrapWidth, truncate}}, w.Pos() + topLeft, color);
 			h = w.y;
 		}
 	}
-}
-
-
-
-size_t WrappedText::Word::Index() const
-{
-	return index;
 }
 
 
@@ -210,6 +205,22 @@ void WrappedText::SetText(const char *it, size_t length)
 
 
 
+// Binary search the text by width
+pair<string_view, string_view> splitByWidth(const string_view word, const Font *font, const int wrapWidth, const size_t last, size_t curr) {
+	if(last == curr)
+	{
+		if(curr == 0)	curr++;
+		return make_pair(word.substr(0, curr), word.substr(curr));
+	}
+	auto newlen = ((font->Width(word.substr(0, curr)) < wrapWidth)
+		? (word.length() + curr)
+		: (last + curr)) / 2;
+	return splitByWidth(word, font, wrapWidth, curr, newlen);
+};
+
+
+
+// Loop through all the characters in the set text, accumulating continuous ASCII characters into words.
 void WrappedText::Wrap()
 {
 	height = 0;
@@ -218,102 +229,92 @@ void WrappedText::Wrap()
 	if(text.empty() || !font)
 		return;
 
-	// Do this as a finite state machine.
-	Word word;
-	bool traversingWord = false;
-	bool currentLineHasWords = false;
 
-	// Keep track of how wide the current line is. This is just so we know how
-	// much extra space must be allotted by the alignment code.
-	int lineWidth = 0;
-	// This is the index in the "words" vector of the first word on this line.
-	size_t lineBegin = 0;
+	optional<decltype(text.begin())> wordStart = nullopt;
+	int cursorX = 0;
+	int cursorY = 0;
 
-	// TODO: handle single words that are longer than the wrap width. Right now
-	// they are simply drawn un-broken, and thus extend beyond the margin.
-	// TODO: break words at hyphens, or even do automatic hyphenation. This
-	// would require a different format for the buffer, though, because it means
-	// inserting '\0' characters even where there is no whitespace.
-
-	for(string::iterator it = text.begin(); it != text.end(); ++it)
+	auto newLined = [&cursorX, &cursorY, this](auto width, auto word){
+		if(width + cursorX > wrapWidth)
+		{
+			words.emplace_back(word, cursorX, cursorY);
+			cursorX = 0;
+			cursorY += lineHeight;
+		}
+		else
+		{
+			words.emplace_back(word, cursorX, cursorY);
+			cursorX += width;
+		}
+	};
+	
+	for(auto chiter = text.begin(); chiter != text.end(); chiter++)
 	{
-		const char c = *it;
+		const char ch = *chiter;
 
-		// Whitespace signals a word end - mark it and wrap the text if needed.
-		if(c <= ' ' && traversingWord)
+		if(wordStart)
 		{
-			traversingWord = false;
-			// Break the string at this point, and measure the word's width.
-			*it = '\0';
-			const int width = font->Width(text.c_str() + word.index);
-			if(word.x + width > wrapWidth)
-			{
-				// If adding this word would overflow the length of the line,
-				// this word will be the first on the next line.
-				word.y += lineHeight;
-				word.x = 0;
+			// Continue if the character is not whitespace.
+			if(ch > ' ')
+				continue;
 
-				// Adjust the spacing of words in the now-complete line.
-				AdjustLine(lineBegin, lineWidth, false);
-			}
-			// Store this word, then advance the x position to the end of it.
-			words.push_back(word);
-			word.x += width;
-			// Keep track of how wide this line is now that this word is added.
-			lineWidth = word.x;
+			auto word = string_view((*wordStart).operator->(), chiter - *wordStart);
+			auto width = font->Width(word);
+			// if(wrapWidth)
+			// 	while(width > wrapWidth)
+			// 	{
+			// 		auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
+			// 		words.emplace_back(get, cursorX, cursorY);
+			// 		cursorX = 0;
+			// 		cursorY += lineHeight;
+
+			// 		word = rem;
+			// 		width = font->Width(word);
+			// 	}
+
+			newLined(width, word);
+
+			wordStart = nullopt;
+		}
+		else if(ch > ' ')
+		{
+			wordStart.emplace(chiter);
+			continue;
 		}
 
-		// If that whitespace was a newline, we must handle that, too.
-		if(c == '\n')
+		if(ch == '\n')
 		{
-			// The next word will begin on a new line.
-			word.y += lineHeight + paragraphBreak;
-			word.x = 0;
-
-			// Adjust the word spacings on the now-completed line.
-			AdjustLine(lineBegin, lineWidth, true);
-			currentLineHasWords = false;
+			cursorX = 0;
+			cursorY += lineHeight + paragraphBreak;
+			wordStart = nullopt;
 		}
-		// Otherwise, whitespace just adds to the x position.
-		else if(c <= ' ')
-			word.x += Space(c);
-		// If we've reached the start of a new word, remember where it begins.
-		else if(!traversingWord)
+		else if(ch > ' ')
 		{
-			traversingWord = true;
-			currentLineHasWords = true;
-			word.index = it - text.begin();
+			cursorX += Space(ch);
+			wordStart = nullopt;
 		}
 	}
 
-	// Handle the final word.
-	if(traversingWord)
+	if(wordStart)
 	{
-		const int width = font->Width(text.c_str() + word.index);
-		if(word.x + width > wrapWidth)
-		{
-			// If adding this word would overflow the length of the line,
-			// this final word will be the first (and only) on the next line.
-			word.y += lineHeight;
-			word.x = 0;
+		auto word = string_view(wordStart.value().base());
+		auto width = font->Width(word);
+		// if(wrapWidth)
+		// 	while(width > wrapWidth)
+		// 	{
+		// 		auto [get, rem] = splitByWidth(word, font, wrapWidth - cursorX, 0, word.length() / 2);
+		// 		words.emplace_back(get, cursorX, cursorY);
+		// 		cursorX = 0;
+		// 		cursorY += lineHeight;
 
-			// Adjust the spacing of words in the now-complete line.
-			AdjustLine(lineBegin, lineWidth, false);
-		}
-		// Store this word, then advance the x position to the end of it.
-		words.push_back(word);
-		word.x += width;
-		// Keep track of how wide this line is now that this word is added.
-		lineWidth = word.x;
+		// 		word = rem;
+		// 		width = font->Width(word);
+		// 	}
+
+		newLined(width, word);
 	}
-	// Advance line if we need to.
-	if(currentLineHasWords)
-		word.y += lineHeight + paragraphBreak;
 
-	// Adjust the spacing of words in the final line of text.
-	AdjustLine(lineBegin, lineWidth, true);
-
-	height = word.y;
+	height = cursorY;
 }
 
 
