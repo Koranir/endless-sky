@@ -68,6 +68,9 @@ if(NOT APPLE)
 	find_package(GLEW REQUIRED)
 endif()
 
+include(FindFreetype)
+find_package(HARFBUZZ REQUIRED)
+
 # Only very new versions of OpenAL provide a config package, so try to find it manually.
 find_package(OpenAL CONFIG QUIET)
 if(NOT OpenAL_FOUND)
@@ -81,6 +84,11 @@ endif()
 find_path(LIBMAD_INCLUDE_DIR mad.h)
 find_library(LIBMAD_LIB_DEBUG NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib")
 find_library(LIBMAD_LIB_RELEASE NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+
+# FriBidi doesn't have native cmake support
+find_path(LIBFRIBIDI_INCLUDE_DIR fribidi/fribidi.h REQUIRED)
+find_library(LIBFRIBIDI_LIB_DEBUG NAMES fribidi libfribidi NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib")
+find_library(LIBFRIBIDI_LIB_RELEASE NAMES fribidi libfribidi NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
 
 # Find the MinGW runtime DLLs.
 if(MINGW AND WIN32)
@@ -115,8 +123,10 @@ if(MINGW)
 endif()
 
 # Link with the general libraries.
-target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL
-	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>")
+target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL Freetype::Freetype harfbuzz
+	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>"
+	"$<IF:$<CONFIG:Debug>,${LIBFRIBIDI_LIB_DEBUG},${LIBFRIBIDI_LIB_RELEASE}>"
+)
 
 # Link the needed OS-specific dependencies, if any.
 if(WIN32)

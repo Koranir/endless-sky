@@ -141,6 +141,13 @@ int Screen::Height()
 
 
 
+Point Screen::RawDimensions()
+{
+	return Point(RAW_WIDTH, RAW_HEIGHT);
+}
+
+
+
 int Screen::RawWidth()
 {
 	return RAW_WIDTH;

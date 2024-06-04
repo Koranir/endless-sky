@@ -29,6 +29,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "FogShader.h"
+#include "FontSystem.h"
+#include "Screen.h"
 #include "text/FontSet.h"
 #include "FormationPattern.h"
 #include "Galaxy.h"
@@ -38,6 +40,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ImageSet.h"
 #include "Interface.h"
 #include "LineShader.h"
+#include "Logger.h"
 #include "MaskManager.h"
 #include "Minable.h"
 #include "Mission.h"
@@ -64,11 +67,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Test.h"
 #include "TestData.h"
 #include "UniverseObjects.h"
+#include "text/Utf8.h"
 
 #include <algorithm>
 #include <atomic>
+#include <cstdlib>
 #include <iostream>
 #include <queue>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -270,6 +276,60 @@ void GameData::LoadSettings()
 
 void GameData::LoadShaders()
 {
+	auto fonts = FontSystem::DefaultFontFaces(FontSystem::CJKResolver::Korean);
+	FontSystem::Init(fonts);
+
+	// float fontSize = (sin(chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now().time_since_epoch()).count() / 6.28 / 1000) + 1.0) * 48;
+	// Logger::LogError(FontSystem::Get().FallbackFor(0x0645).Name());
+	float fontSize = 48.0;
+	// vector<FontSystem::ShapeGlyph> glyphs;
+	string proverbBase = "Hello, World! من جد وجد, 고생 끝에 낙이 온다, خیلی ممنون";
+	// string proverbBase = "Hello, World!";
+	u32string proverb;
+	size_t pos = 0;
+	while(pos != proverbBase.npos)
+	{
+		proverb.push_back(Utf8::DecodeCodePoint(proverbBase, pos));
+	}
+	auto glyphs = FontSystem::Get().Shape({{proverb, FontSystem::AttrsList {
+		nullopt,
+		0,
+		0,
+	}}});
+	// auto unshaped = FontSystem::Get().ShapeFallback(glyphs, FontSystem::Get().FallbackFor('E'), proverb, FontSystem::AttrsList { nullopt, 0, 0}, 0, proverb.size(), false);
+
+	auto pen = Point();
+	for(const auto &glyph : glyphs)
+	{
+		cout << "HB: " << glyph.x_advance * fontSize << "," << glyph.y_advance * fontSize << " . " << glyph.x_offset * fontSize << "," << glyph.y_offset * fontSize << "\n";
+		auto [rect, metrics] = FontSystem::Get().ToAtlasRect(FontSystem::CacheKey {
+		  glyph.font_id,
+		  glyph.glyph_id,
+		  fontSize,
+		  glyph.cache_key_flags  
+	  });
+
+		auto size = Point(metrics.width / 64.0, metrics.height / 64.0) * 2.0;
+		auto offset = Point(metrics.horiBearingX / 64.0 * 2.0 + glyph.x_offset * fontSize * 2.0, -size.Y() + metrics.horiBearingY / 64.0 * 2.0 + glyph.y_offset * fontSize * 2.0); // Point(metrics.horiBearingX / 64.0, metrics.horiBearingY / -64.0) * 2.0;
+		auto advance = Point(glyph.x_advance * fontSize, glyph.y_advance * fontSize) * 2.0;
+
+		auto screenPos = Rectangle::FromCorner(
+			floor(pen + offset) / Screen::RawDimensions(),
+			floor(size + Point(1, 1)) / Screen::RawDimensions()
+		);
+		pen += advance;
+		FontSystem::Get().BlitFromAtlas(rect, screenPos, FontSystem::AttrsList{
+			glyph.color_opt,
+			0,
+			glyph.cache_key_flags,
+		});
+	}
+	
+	// cout << "M: " << metrics.width * scale << "x" << metrics.height * scale << " @ " << metrics.horiBearingX * scale << "x" << metrics.horiBearingY * scale << "x\n" << "R: " << rect.Dimensions().X() * FontSystem::Get().AtlasSize().X() << "x" << rect.Dimensions().Y() * FontSystem::Get().AtlasSize().Y() << "\n";
+	// cout << pen.X() << "x" << pen.Y() << '\n';
+	// FontSystem::FallbackFont('A').Shape("نص على شكل");
+	// Logger::LogError(Font2::FallbackFont(0x2E90/*0x00000041*/).Name());
+
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 

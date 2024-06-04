@@ -180,6 +180,33 @@ Point &Point::operator*=(const Point &other)
 
 
 
+
+Point Point::operator/(const Point &other) const
+{
+#ifdef __SSE3__
+	Point result;
+	result.v = v / other.v;
+	return result;
+#else
+	return Point(x / other.x, y / other.y);
+#endif
+}
+
+
+
+Point &Point::operator/=(const Point &other)
+{
+#ifdef __SSE3__
+	v /= other.v;
+#else
+	x /= other.x;
+	y /= other.y;
+#endif
+	return *this;
+}
+
+
+
 Point Point::operator/(double scalar) const
 {
 #ifdef __SSE3__
@@ -285,6 +312,13 @@ Point Point::Unit() const
 
 
 
+Point Point::Reciprocal() const
+{
+	return Point(1.0 / X(), 1.0 / Y());
+}
+
+
+
 double Point::Distance(const Point &point) const
 {
 	return (*this - point).Length();
@@ -351,3 +385,10 @@ inline Point::Point(const __m128d &v)
 {
 }
 #endif
+
+
+
+Point floor(const Point &p)
+{
+	return Point(floor(p.X()), floor(p.Y()));
+}

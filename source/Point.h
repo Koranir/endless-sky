@@ -56,6 +56,8 @@ public:
 	// Multiply the respective components of each Point.
 	Point operator*(const Point &other) const;
 	Point &operator*=(const Point &other);
+	Point operator/(const Point &other) const;
+	Point &operator/=(const Point &other);
 
 	double &X();
 	const double &X() const noexcept;
@@ -71,6 +73,7 @@ public:
 	double Length() const;
 	double LengthSquared() const;
 	Point Unit() const;
+	Point Reciprocal() const;
 
 	double Distance(const Point &point) const;
 	double DistanceSquared(const Point &point) const;
@@ -83,6 +86,7 @@ public:
 	friend Point min(const Point &p, const Point &q);
 	// Use the max of each x and each y coordinates.
 	friend Point max(const Point &p, const Point &q);
+	friend Point floor(const Point &p);
 
 
 private:

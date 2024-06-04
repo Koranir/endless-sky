@@ -45,6 +45,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "System.h"
 #include "UI.h"
 
+#include "FontSystem.h"
+#include <chrono>
+#include <iostream>
+
 #include "opengl.h"
 
 #include <cmath>

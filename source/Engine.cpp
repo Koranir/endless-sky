@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "Flotsam.h"
+#include "FontSystem.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
 #include "text/Format.h"

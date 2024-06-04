@@ -61,6 +61,7 @@ public:
 	static int Width();
 	static int Height();
 
+	static Point RawDimensions();
 	static int RawWidth();
 	static int RawHeight();
 

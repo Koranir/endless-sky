@@ -23,19 +23,18 @@
         "openal-soft",
         {
           "name": "openal-soft",
-          "features": [
-            "pipewire"
-          ],
+          "features": ["pipewire"],
           "platform": "linux"
         },
-        "sdl2"
+        "sdl2",
+        "harfbuzz",
+        "freetype",
+        "fribidi"
       ]
     },
     "steam-libs": {
       "description": "System libraries not provided in the Steam Sniper Runtime.",
-      "dependencies": [
-        "libmad"
-      ]
+      "dependencies": ["libmad"]
     }
   }
 }
