@@ -77,10 +77,17 @@ if(NOT OpenAL_FOUND)
 	set_target_properties(OpenAL PROPERTIES IMPORTED_LOCATION "${OPENAL}")
 endif()
 
+find_package(Freetype REQUIRED)
+find_package(ICU REQUIRED COMPONENTS data uc)
+find_package(HARFBUZZ REQUIRED)
+
 # libmad doesn't provide native cmake support.
 find_path(LIBMAD_INCLUDE_DIR mad.h)
 find_library(LIBMAD_LIB_DEBUG NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib")
 find_library(LIBMAD_LIB_RELEASE NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+
+# stb doesn't either
+find_path(STBRP_INCLUDE_DIR stb/stb_rect_pack.h)
 
 # Find the MinGW runtime DLLs.
 if(MINGW AND WIN32)
@@ -115,8 +122,17 @@ if(MINGW)
 endif()
 
 # Link with the general libraries.
-target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL
-	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>")
+target_link_libraries(ExternalLibraries INTERFACE
+	SDL2::SDL2
+	PNG::PNG
+	JPEG::JPEG
+	OpenAL::OpenAL
+	Freetype::Freetype
+	harfbuzz
+	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>"
+	ICU::data
+	ICU::uc
+)
 
 # Link the needed OS-specific dependencies, if any.
 if(WIN32)

@@ -9,10 +9,13 @@
     "system-libs": {
       "description": "System libraries required to build ES.",
       "dependencies": [
+        "freetype",
         {
           "name": "glew",
           "platform": "!osx"
         },
+        "harfbuzz",
+        "icu",
         "libpng",
         "libjpeg-turbo",
         "libmad",
@@ -28,7 +31,8 @@
           ],
           "platform": "linux"
         },
-        "sdl2"
+        "sdl2",
+        "stb"
       ]
     },
     "steam-libs": {
