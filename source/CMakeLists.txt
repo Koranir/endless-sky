@@ -123,6 +123,8 @@ target_sources(EndlessSkyLib PRIVATE
 	Flotsam.h
 	FogShader.cpp
 	FogShader.h
+	FontSystem.cpp
+	FontSystem.h
 	FormationPattern.cpp
 	FormationPattern.h
 	FrameTimer.cpp
