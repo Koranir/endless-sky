@@ -175,15 +175,9 @@ public:
 			GLuint buffer;
 	};
 
-public:
-	FontSystem(const std::vector<MetaFace> &fontFaces);
-
-	// Draw some text to the screen.
+	// Text box properties
 	//
-	// `position`: Source of the drawn text, with the `y` being the baseline.
-	// `font_size`: Pixel size of the em-square - the hieght of the font.
-	// `text`: The text to draw.
-	// `attrs`: Text modifiers - color, underline, bold, italic.
+	// `font_size`: Pixel size of the em-square - the height of the font.
 	// `width`: Max width of the text, will wrap if no truncation is applied.
 	// `align`: The alignment of the text, with values of [-1, 0, 1] for left,
 	// middle, and right-align respectively. If width is nullopt, then the text
@@ -193,25 +187,44 @@ public:
 	// of wrapped, with values of [-1, 0, 1] indicating in witch direction the
 	// truncation will source from; i.e. -1 will truncate the left and leave only
 	// the rightmost characters that fit in the width.
+	class TextBox {
+	public:
+		TextBox(
+			float font_size,
+			std::optional<unsigned int> width = std::nullopt,
+			int align = 0,
+			std::optional<int> trunc = std::nullopt
+		);
+
+	public:
+		float font_size;
+		std::optional<unsigned int> width;
+		int align;
+		std::optional<int> trunc;
+	};
+
+public:
+	FontSystem(const std::vector<MetaFace> &fontFaces);
+
+	// Draw some text to the screen.
+	//
+	// `position`: Source of the drawn text, with the `y` being the baseline.
+	// `box`: the text's layouting properties.
+	// `text`: The text to draw.
+	// `attrs`: Text modifiers - color, underline, bold, italic.
 	void Draw(
 		const Point &position,
-		const float font_size,
+		const TextBox &box,
 		const std::string &text,
-		const Attributes &attrs = Attributes(),
-		const std::optional<unsigned int> width = std::nullopt,
-		int align = 0,
-		std::optional<int> trunc = std::nullopt
+		const Attributes &attrs
 	);
 
 	// Draw some text spans to the screen.
 	// See `Draw` for more info.
 	void DrawSpans(
 		const Point &position,
-		const float font_size,
-		const std::vector<std::string, Attributes> &spans,
-		const std::optional<unsigned int> width = std::nullopt,
-		int align = 0,
-		std::optional<int> trunc = std::nullopt
+		const TextBox &box,
+		const std::vector<std::string, Attributes> &spans
 	);
 
 	std::vector<ShapeGlyph> Shape(const std::vector<std::pair<std::u32string_view, Attributes>> &line);
