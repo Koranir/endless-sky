@@ -78,7 +78,7 @@ if(NOT OpenAL_FOUND)
 endif()
 
 find_package(Freetype REQUIRED)
-find_package(ICU REQUIRED COMPONENTS data uc)
+find_package(ICU REQUIRED COMPONENTS data i18n io test tu uc)
 find_package(HARFBUZZ REQUIRED)
 
 # libmad doesn't provide native cmake support.
@@ -130,8 +130,12 @@ target_link_libraries(ExternalLibraries INTERFACE
 	Freetype::Freetype
 	harfbuzz
 	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>"
+	# TODO: Check which ones aren't needed
 	ICU::data
 	ICU::uc
+	ICU::i18n
+	ICU::io
+	ICU::tu
 )
 
 # Link the needed OS-specific dependencies, if any.
