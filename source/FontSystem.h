@@ -17,6 +17,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define FONT_SYSTEM_H_
 
 #include "Color.h"
+#include "text/alignment.hpp"
+#include "text/truncate.hpp"
 
 #include <freetype/freetype.h>
 #include <harfbuzz/hb.h>
@@ -179,28 +181,26 @@ public:
 	//
 	// `font_size`: Pixel size of the em-square - the height of the font.
 	// `width`: Max width of the text, will wrap if no truncation is applied.
-	// `align`: The alignment of the text, with values of [-1, 0, 1] for left,
-	// middle, and right-align respectively. If width is nullopt, then the text
+	// `align`: If width is nullopt, then the text
 	// will be to the left, middle, or right of the position, otherwise aligned
 	// to the box that is the width.
 	// `trunc`: If truncating, the text will be truncated over the width instead
-	// of wrapped, with values of [-1, 0, 1] indicating in witch direction the
-	// truncation will source from; i.e. -1 will truncate the left and leave only
+	// of wrapped. i.e. Truncate::Left will truncate the left and leave only
 	// the rightmost characters that fit in the width.
 	class TextBox {
 	public:
 		TextBox(
 			float font_size,
 			std::optional<unsigned int> width = std::nullopt,
-			int align = 0,
-			std::optional<int> trunc = std::nullopt
+			Alignment align = Alignment::LEFT,
+			Truncate trunc = Truncate::NONE
 		);
 
 	public:
 		float font_size;
 		std::optional<unsigned int> width;
-		int align;
-		std::optional<int> trunc;
+		Alignment align;
+		Truncate trunc;
 	};
 
 public:
