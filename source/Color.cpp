@@ -18,7 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 
 // Greyscale color constructor.
-Color::Color(float i, float a)
+constexpr Color::Color(float i, float a)
 	: color{i, i, i, a}
 {
 }
@@ -26,14 +26,14 @@ Color::Color(float i, float a)
 
 
 // Full color constructor.
-Color::Color(float r, float g, float b, float a)
+constexpr Color::Color(float r, float g, float b, float a)
 	: color{r, g, b, a}
 {
 }
 
 
 
-bool Color::operator==(const Color &other) const
+constexpr bool Color::operator==(const Color &other) const
 {
 	for(int i = 0; i < 4; ++i)
 		if(color[i] != other.color[i])
@@ -43,7 +43,7 @@ bool Color::operator==(const Color &other) const
 
 
 
-bool Color::operator!=(const Color &other) const
+constexpr bool Color::operator!=(const Color &other) const
 {
 	return !(*this == other);
 }
@@ -64,7 +64,7 @@ void Color::Load(double r, double g, double b, double a)
 
 
 // Check if Load() has been called for this color.
-bool Color::IsLoaded() const
+constexpr bool Color::IsLoaded() const
 {
 	return isLoaded;
 }
@@ -72,7 +72,7 @@ bool Color::IsLoaded() const
 
 
 // Get a float vector representing this color, for use by OpenGL.
-const float *Color::Get() const
+constexpr const float *Color::Get() const
 {
 	return color;
 }
@@ -80,7 +80,7 @@ const float *Color::Get() const
 
 
 // Get an opaque version of this color.
-Color Color::Opaque() const
+constexpr Color Color::Opaque() const
 {
 	Color opaque = *this;
 	opaque.color[3] = 1.f;
@@ -90,7 +90,7 @@ Color Color::Opaque() const
 
 
 // Assuming this color is opaque, get a transparent version of it.
-Color Color::Transparent(float alpha) const
+constexpr Color Color::Transparent(float alpha) const
 {
 	Color result;
 	for(int i = 0; i < 3; ++i)
@@ -103,7 +103,7 @@ Color Color::Transparent(float alpha) const
 
 
 // Assuming this color is opaque, get an additive version of it.
-Color Color::Additive(float alpha) const
+constexpr Color Color::Additive(float alpha) const
 {
 	Color result = Transparent(alpha);
 	result.color[3] = 0.f;
@@ -113,7 +113,7 @@ Color Color::Additive(float alpha) const
 
 
 
-Color Color::Combine(float a1, Color c1, float a2, Color c2)
+constexpr Color Color::Combine(float a1, Color c1, float a2, Color c2)
 {
 	return Color(
 			a1 * c1.color[0] + a2 * c2.color[0],
@@ -124,7 +124,7 @@ Color Color::Combine(float a1, Color c1, float a2, Color c2)
 
 
 
-Color Color::Multiply(float scalar, const Color &base)
+constexpr Color Color::Multiply(float scalar, const Color &base)
 {
 	return Color(
 			scalar * base.color[0],

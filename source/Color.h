@@ -26,35 +26,35 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 class Color {
 public:
 	// Constructor for shades of gray, opaque unless an alpha is also given.
-	explicit Color(float i = 1.f, float a = 1.f);
+	constexpr explicit Color(float i = 1.f, float a = 1.f);
 	// Constructor for colors, opaque unless an alpha is also given.
-	Color(float r, float g, float b, float a = 1.f);
+	constexpr Color(float r, float g, float b, float a = 1.f);
 
-	bool operator==(const Color &other) const;
-	bool operator!=(const Color &other) const;
+	constexpr bool operator==(const Color &other) const;
+	constexpr bool operator!=(const Color &other) const;
 
 	// Set this color to the given RGBA values.
 	void Load(double r, double g, double b, double a);
 	// Check if Load() has been called for this color.
-	bool IsLoaded() const;
+	constexpr bool IsLoaded() const;
 	// Get the color as a float vector, suitable for use by OpenGL.
-	const float *Get() const;
+	constexpr const float *Get() const;
 
 	// Get this color, but entirely opaque. That is, this is the color you would
 	// get if drawing this color on top of opaque black.
-	Color Opaque() const;
+	constexpr Color Opaque() const;
 	// Assuming that this color is completely opaque, get the same color with
 	// the given transparency.
-	Color Transparent(float alpha) const;
+	constexpr Color Transparent(float alpha) const;
 	// Assuming that this is an opaque color, get its additive equivalent with
 	// the given fraction of its full brightness.
-	Color Additive(float alpha) const;
+	constexpr Color Additive(float alpha) const;
 
 	// Compute a linear combination
-	static Color Combine(float a1, Color c1, float a2, Color c2);
+	constexpr static Color Combine(float a1, Color c1, float a2, Color c2);
 
 	// Multiply the RGBA values of the given Color by the given scalar and return a new Color.
-	static Color Multiply(float scalar, const Color &base);
+	constexpr static Color Multiply(float scalar, const Color &base);
 
 
 private:
