@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define FONT_SYSTEM_H_
 
 #include "Color.h"
+#include "Rectangle.h"
 #include "text/alignment.hpp"
 #include "text/truncate.hpp"
 
@@ -224,12 +225,15 @@ public:
 	void DrawSpans(
 		const Point &position,
 		const TextBox &box,
-		const std::vector<std::string, Attributes> &spans
+		const std::vector<std::pair<std::string, Attributes>> &spans
 	);
 
 	std::vector<ShapeGlyph> Shape(const std::vector<std::pair<std::u32string_view, Attributes>> &line);
 	// Shapes a span with a font & attributes, returning the start indices of missing glyphs.
-	std::vector<size_t> ShapeSpan(std::vector<ShapeGlyph> &glyphs, Font &font, std::u32string_view line, const Attributes &attrs);
+	std::vector<size_t> ShapeSpans(std::vector<ShapeGlyph> &glyphs, Font &font, std::u32string_view line, const Attributes &attrs);
+
+	int Width(const std::string &text, const Attributes &attrs);
+	int WidthSpans(const std::vector<std::pair<std::string, Attributes>> &line);
 
 	Placement &GetPlacement(const CacheKey &key);
 	GlyphAtlas &Atlas();
