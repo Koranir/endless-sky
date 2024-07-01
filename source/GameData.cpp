@@ -29,6 +29,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "FillShader.h"
 #include "Fleet.h"
 #include "FogShader.h"
+#include "FontSystem.h"
 #include "text/FontSet.h"
 #include "FormationPattern.h"
 #include "Galaxy.h"
@@ -75,6 +76,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace {
+    FontSystem fontSystem{vector<FontSystem::MetaFace>()};
+
 	UniverseObjects objects;
 	Set<Fleet> defaultFleets;
 	Set<Government> defaultGovernments;
@@ -270,6 +273,13 @@ void GameData::LoadSettings()
 
 void GameData::LoadShaders()
 {
+    auto paths = FontSystem::AllDefaultSystemFonts();
+    auto meta_faces = vector<FontSystem::MetaFace>();
+    for (const auto &path : paths) {
+        meta_faces.emplace_back(path);
+    }
+    fontSystem = FontSystem(meta_faces);
+
 	FontSet::Add(Files::Images() + "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() + "font/ubuntu18r.png", 18);
 
@@ -362,6 +372,13 @@ const vector<string> &GameData::Sources()
 UniverseObjects &GameData::Objects()
 {
 	return objects;
+}
+
+
+
+FontSystem &GameData::GetFontSystem()
+{
+    return fontSystem;
 }
 
 

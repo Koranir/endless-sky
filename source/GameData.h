@@ -36,6 +36,7 @@ class DataWriter;
 class Date;
 class Effect;
 class Fleet;
+class FontSystem;
 class FormationPattern;
 class Galaxy;
 class GameEvent;
@@ -94,6 +95,8 @@ public:
 
 	// Get a reference to the UniverseObjects object.
 	static UniverseObjects &Objects();
+
+	static FontSystem &GetFontSystem();
 
 	// Revert any changes that have been made to the universe.
 	static void Revert();
