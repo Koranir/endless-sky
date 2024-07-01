@@ -21,11 +21,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "text/alignment.hpp"
 #include "text/truncate.hpp"
 
+#include <cstddef>
 #include <freetype/freetype.h>
+#include <functional>
 #include <harfbuzz/hb.h>
 #include "Point.h"
 #include "opengl.h"
 #include <stb/stb_rect_pack.h>
+#include "unicode/uscript.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -39,13 +42,32 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 
 
+namespace _fontSystem {
+   	class CacheKey {
+	public:
+	    // `face` should be a `FontSystem::Face *`
+		CacheKey(void *face, uint16_t glyph_id, float font_size);
+
+		bool operator==(const CacheKey &other) const noexcept;
+
+	public:
+		void *face;
+		uint16_t glyph_id;
+		float font_size;
+	};
+};
+template<>
+struct std::hash<_fontSystem::CacheKey>
+{
+    size_t operator()(const _fontSystem::CacheKey &key) const noexcept;
+};
+
 // Class that handles font loading, shaping, fallback, and rendering.
 class FontSystem {
 public:
 	class Face {
 	public:
-		Face(const std::vector<char> &bytes);
-		Face(const std::filesystem::path &bytes);
+		Face(const std::filesystem::path &path);
 		~Face();
 
 		Face(const Face &) = delete;
@@ -62,31 +84,28 @@ public:
 	public:
 		// Create a new font collection.
 		// This will not set any fonts, so `AddXXX()` should be called first.
-		Font(const std::string &family_name);
+		inline Font(const std::string &family_name) : family_name(family_name) {} //
 
 		Font(const Font &) = delete;
 		Font(Font &&) = delete;
 		Font &operator=(const Font &) = delete;
 		Font &operator=(Font &&) = delete;
 
-		void AddItalic(const std::vector<char> &bytes);
-		void AddItalic(const std::filesystem::path &path);
-		void AddBold(const std::filesystem::path &path);
-		void AddBold(const std::vector<char> &bytes);
-		void AddNormal(const std::vector<char> &bytes);
-		void AddNormal(const std::filesystem::path &path);
+		inline void AddNormal(const std::filesystem::path &path) { normal.emplace(path); } //
+		inline void AddItalic(const std::filesystem::path &path) { italic.emplace(path); } //
+		inline void AddBold(const std::filesystem::path &path) { bold.emplace(path); } //
 
 		// Get the italic font, and whether italicity should be faked for it.
 		// If there is no specific italic font, the normal font (or bold, if it doesn't exist) will be returned.
-		std::pair<Face &, bool> Italic();
+		std::pair<Face &, bool> Italic(); //
 
 		// Get the bold font, and whether boldness should be faked for it.
 		// If there is no specific bold font, the normal font (or italic, if it doesn't exist) will be returned.
-		std::pair<Face &, bool> Bold();
+		std::pair<Face &, bool> Bold(); //
 
 		// Get the normal font.
 		// This will default in the order normal -> bold -> italic
-		Face &Normal();
+		Face &Normal(); //
 
 	private:
 		std::string family_name;
@@ -133,17 +152,7 @@ public:
 		bool underline;
 	};
 
-	class CacheKey {
-	public:
-		CacheKey(Face *face, uint16_t glyph_id, float font_size);
-
-		bool operator==(const CacheKey &other) const noexcept;
-
-	public:
-		Face *face;
-		uint16_t glyph_id;
-		float font_size;
-	};
+	using CacheKey = _fontSystem::CacheKey;
 
 	struct ShapeGlyph {
 		size_t start;
@@ -232,23 +241,28 @@ public:
 	// Shapes a span with a font & attributes, returning the start indices of missing glyphs.
 	std::vector<size_t> ShapeSpans(std::vector<ShapeGlyph> &glyphs, Font &font, std::u32string_view line, const Attributes &attrs);
 
-	int Width(const std::string &text, const Attributes &attrs);
-	int WidthSpans(const std::vector<std::pair<std::string, Attributes>> &line);
+	int Width(const std::string &text, const Attributes &attrs, float font_size); //
+	int WidthSpans(const std::vector<std::pair<std::string, Attributes>> &line, float font_size); //
 
-	Placement &GetPlacement(const CacheKey &key);
-	GlyphAtlas &Atlas();
+	Placement &GetPlacement(const CacheKey &key); //
+	GlyphAtlas &Atlas(); //
 
 	static std::vector<std::filesystem::path> AllDefaultSystemFonts();
-	static std::vector<char[2]> LocaleFallbacksNeeded(const std::string &str);
+	static std::vector<UScriptCode> LocaleFallbacksNeeded(const std::string &str); //
 
 private:
 	FT_Library ft_lib;
 	hb_buffer_t *scratch_buffer;
 
+	GlyphAtlas atlas;
+	std::unordered_map<CacheKey, Placement> atlasMap;
+
+	// Map of hash of (string, attrs)
+	std::unordered_map<size_t, std::vector<ShapeGlyph>> glyphCache;
+	std::vector<ShapeGlyph> &GetCachedGlyphs(const std::string &text, const Attributes &attrs);
+
 	std::vector<std::unique_ptr<Font>> fonts;
-	// Map of locales to default fonts, i.e. `{ "en": "Ubuntu Regular", "ko": "Noto Sans CJK KO" }`.
-	// Locales such as "en_AU.UTF-8" should be truncated to just the "en" bit.
-	std::unordered_map<char[2], Font *> default_locale_fonts;
+	std::unordered_map<UScriptCode, Font *> script_fallback_fonts;
 
 };
 
