@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
+#include <freetype/freetype.h>
 #include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <unicode/uchar.h>
 #include <unicode/uscript.h>
@@ -18,9 +20,24 @@
 
 using namespace std;
 
+namespace {
+    FT_Library ft_lib = nullptr;
+    mutex ft_lib_mutex;
+}
+
 size_t hash<FontSystem::CacheKey>::operator()(const FontSystem::CacheKey &key) const noexcept
 {
     return hash<void *>()(key.face) ^ (hash<float>()(key.font_size) << 1) ^ (hash<uint16_t>()(key.glyph_id) << 2);
+}
+
+
+
+FontSystem::FontSystem(const std::vector<MetaFace> &fontFaces)
+    : atlas(1024, 1024)
+{
+    lock_guard<mutex> ft_lib_mutex_lock{ft_lib_mutex};
+    if(!ft_lib)
+        assert(FT_Init_FreeType(&ft_lib));
 }
 
 
@@ -99,10 +116,16 @@ FontSystem::GlyphAtlas::GlyphAtlas(int width, int height)
 
 FontSystem::Face::Face(const filesystem::path &path, int index)
 {
-    hb_blob = hb_blob_create_from_file(path.c_str());
-    hb_face = hb_face_create(hb_blob, index);
-    hb = hb_font_create(hb_face);
+    assert(FT_New_Face(ft_lib, path.c_str(), index, &ft));
+    hb_face = hb_ft_face_create_referenced(ft);
+}
 
+
+
+FontSystem::Face::~Face()
+{
+    FT_Done_Face(ft);
+    hb_face_destroy(hb_face);
 }
 
 

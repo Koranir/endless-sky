@@ -78,11 +78,9 @@ public:
 		Face &operator=(const Face &) = delete;
 		Face &operator=(Face &&) = delete;
 
-	private:
+	public:
 		FT_Face ft;
-		hb_font_t *hb;
 		hb_face_t *hb_face;
-		hb_blob_t *hb_blob;
 	};
 
 	class Font {
@@ -149,7 +147,7 @@ public:
 
 	class Attributes {
 	public:
-		constexpr inline Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false) noexcept
+		inline Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false) noexcept
 		    : color_opt(color_opt), style(style), underline(underline) {}
 
 	public:
@@ -258,7 +256,6 @@ public:
 	static std::vector<UScriptCode> LocaleFallbacksNeeded(const std::string &str); //
 
 private:
-	FT_Library ft_lib;
 	hb_buffer_t *scratch_buffer;
 
 	GlyphAtlas atlas;
