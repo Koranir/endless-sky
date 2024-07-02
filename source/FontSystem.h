@@ -46,9 +46,12 @@ namespace _fontSystem {
    	class CacheKey {
 	public:
 	    // `face` should be a `FontSystem::Face *`
-		CacheKey(void *face, uint16_t glyph_id, float font_size);
+		inline constexpr CacheKey(void *face, uint16_t glyph_id, float font_size) //
+		    : face(face), glyph_id(glyph_id), font_size(font_size) {}
 
-		bool operator==(const CacheKey &other) const noexcept;
+		inline constexpr bool operator==(const CacheKey &other) const noexcept { //
+		    return face == other.face && glyph_id == other.glyph_id && font_size == other.font_size;
+		}
 
 	public:
 		void *face;
@@ -146,7 +149,8 @@ public:
 
 	class Attributes {
 	public:
-		Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false);
+		constexpr inline Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false) noexcept
+		    : color_opt(color_opt), style(style), underline(underline) {}
 
 	public:
 		std::optional<Color> color_opt;
