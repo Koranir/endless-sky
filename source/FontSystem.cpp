@@ -1,6 +1,8 @@
 #include "FontSystem.h"
 
 #include <algorithm>
+#include <cassert>
+#include <filesystem>
 #include <functional>
 #include <stdexcept>
 #include <unicode/uchar.h>
@@ -8,6 +10,11 @@
 #include <unicode/utf8.h>
 #include <utility>
 #include <vector>
+
+#include <harfbuzz/hb-ft.h>
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb/stb_rect_pack.h"
 
 using namespace std;
 
@@ -62,6 +69,48 @@ std::pair<FontSystem::Face &, bool> FontSystem::Font::Bold()
 FontSystem::Placement &FontSystem::GetPlacement(const CacheKey &key)
 {
     return atlasMap[key];
+}
+
+
+
+FontSystem::GlyphAtlas::GlyphAtlas(int width, int height)
+{
+    nodes = vector<stbrp_node>(width);
+    assert(nodes.size() == width);
+    stbrp_init_target(&context, width, height, nodes.data(), nodes.size());
+
+    glGenFramebuffers(1, &buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, buffer);
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    GLenum draw_buffer[] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, draw_buffer);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
+
+FontSystem::Face::Face(const filesystem::path &path, int index)
+{
+    hb_blob = hb_blob_create_from_file(path.c_str());
+    hb_face = hb_face_create(hb_blob, index);
+    hb = hb_font_create(hb_face);
+
+}
+
+
+
+FontSystem::GlyphAtlas::~GlyphAtlas()
+{
+    glDeleteFramebuffers(1, &buffer);
+    glDeleteTextures(1, &tex);
 }
 
 

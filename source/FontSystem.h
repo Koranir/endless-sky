@@ -67,7 +67,7 @@ class FontSystem {
 public:
 	class Face {
 	public:
-		Face(const std::filesystem::path &path);
+		Face(const std::filesystem::path &path, int index);
 		~Face();
 
 		Face(const Face &) = delete;
@@ -77,7 +77,9 @@ public:
 
 	private:
 		FT_Face ft;
-		hb_face_t *hb;
+		hb_font_t *hb;
+		hb_face_t *hb_face;
+		hb_blob_t *hb_blob;
 	};
 
 	class Font {
@@ -91,9 +93,9 @@ public:
 		Font &operator=(const Font &) = delete;
 		Font &operator=(Font &&) = delete;
 
-		inline void AddNormal(const std::filesystem::path &path) { normal.emplace(path); } //
-		inline void AddItalic(const std::filesystem::path &path) { italic.emplace(path); } //
-		inline void AddBold(const std::filesystem::path &path) { bold.emplace(path); } //
+		inline void AddNormal(const std::filesystem::path &path, int index) { normal.emplace(path, index); } //
+		inline void AddItalic(const std::filesystem::path &path, int index) { italic.emplace(path, index); } //
+		inline void AddBold(const std::filesystem::path &path, int index) { bold.emplace(path, index); } //
 
 		// Get the italic font, and whether italicity should be faked for it.
 		// If there is no specific italic font, the normal font (or bold, if it doesn't exist) will be returned.
@@ -177,14 +179,15 @@ public:
 
 	class GlyphAtlas {
 	public:
-			GlyphAtlas(int width, int height);
+		GlyphAtlas(int width, int height);
+		~GlyphAtlas();
 
 	public:
-			std::vector<stbrp_node> nodes;
-			stbrp_context context;
-			std::unordered_map<CacheKey, Placement> map;
-			GLuint tex;
-			GLuint buffer;
+		std::vector<stbrp_node> nodes;
+		stbrp_context context;
+		std::unordered_map<CacheKey, Placement> map;
+		GLuint tex;
+		GLuint buffer;
 	};
 
 	// Text box properties
@@ -199,12 +202,12 @@ public:
 	// the rightmost characters that fit in the width.
 	class TextBox {
 	public:
-		TextBox(
+		inline TextBox(
 			float font_size,
 			std::optional<unsigned int> width = std::nullopt,
 			Alignment align = Alignment::LEFT,
 			Truncate trunc = Truncate::NONE
-		);
+		) : font_size(font_size), width(width), align(align), trunc(trunc) {}
 
 	public:
 		float font_size;
