@@ -2,16 +2,19 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <freetype/freetype.h>
 #include <functional>
 #include <mutex>
 #include <stdexcept>
+#include <string_view>
 #include <unicode/uchar.h>
 #include <unicode/uscript.h>
 #include <unicode/utf8.h>
 #include <utility>
 #include <vector>
+#include <unicode/ubidi.h>
 
 #include <harfbuzz/hb-ft.h>
 
@@ -83,9 +86,60 @@ std::pair<FontSystem::Face &, bool> FontSystem::Font::Bold()
 
 
 
-FontSystem::Placement &FontSystem::GetPlacement(const CacheKey &key)
+FontSystem::Placement FontSystem::GetPlacement(const CacheKey &key)
 {
-    return atlasMap[key];
+    if(atlasMap.count(key))
+        return atlasMap[key];
+
+    auto face =reinterpret_cast<Face *>(key.face);
+    FT_Set_Char_Size(face->ft, key.font_size * 64, 0, 0, 0);
+    FT_Load_Glyph(face->ft, key.glyph_id, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD);
+
+    auto rect = stbrp_rect {
+        key.glyph_id,
+        static_cast<int>(face->ft->glyph->bitmap.width / 3),
+        static_cast<int>(face->ft->glyph->bitmap.rows),
+        0,
+        0,
+        0
+    };
+
+    if(!stbrp_pack_rects(&atlas.context, &rect, 1))
+    {
+        atlas = GlyphAtlas(atlas.context.width * 1.2, atlas.context.height * 1.2);
+
+        return Placement {
+            rect,
+            GlyphMetrics {
+                face->ft->glyph->metrics
+            }
+        };
+    }
+
+    GLuint tex;
+	GLuint buf;
+	glGenFramebuffers(1, &buf);
+	glBindFramebuffer(GL_FRAMEBUFFER, buf);
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rect.w, rect.h, 0, GL_RGB, GL_UNSIGNED_BYTE, face->ft->glyph->bitmap.buffer);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, buf);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, atlas.buffer);
+
+	glBlitFramebuffer(0, 0, rect.w, rect.h, rect.x, rect.y, rect.x + rect.w, rect.y + rect.h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glDeleteFramebuffers(1, &buf);
+	glDeleteTextures(1, &tex);
+
+	atlasMap[key] = {rect, {face->ft->glyph->metrics}};
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return {rect, {face->ft->glyph->metrics}};
 }
 
 
@@ -116,6 +170,7 @@ FontSystem::GlyphAtlas::GlyphAtlas(int width, int height)
 
 FontSystem::Face::Face(const filesystem::path &path, int index)
 {
+    lock_guard<mutex> ft_lib_mutex_lock{ft_lib_mutex};
     assert(FT_New_Face(ft_lib, path.c_str(), index, &ft));
     hb_face = hb_ft_face_create_referenced(ft);
 }
@@ -124,6 +179,7 @@ FontSystem::Face::Face(const filesystem::path &path, int index)
 
 FontSystem::Face::~Face()
 {
+    lock_guard<mutex> ft_lib_mutex_lock{ft_lib_mutex};
     FT_Done_Face(ft);
     hb_face_destroy(hb_face);
 }
@@ -199,4 +255,11 @@ vector<UScriptCode> FontSystem::LocaleFallbacksNeeded(const std::string &str)
     }
 
     return scripts;
+}
+
+
+
+vector<size_t> FontSystem::ShapeFallback(vector<ShapeGlyph> &glyphs, Font &font, u32string_view line, const Attributes &attrs)
+{
+
 }

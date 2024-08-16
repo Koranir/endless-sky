@@ -62,7 +62,7 @@ namespace _fontSystem {
 template<>
 struct std::hash<_fontSystem::CacheKey>
 {
-    size_t operator()(const _fontSystem::CacheKey &key) const noexcept;
+    size_t operator()(const _fontSystem::CacheKey &key) const noexcept; //
 };
 
 // Class that handles font loading, shaping, fallback, and rendering.
@@ -70,8 +70,8 @@ class FontSystem {
 public:
 	class Face {
 	public:
-		Face(const std::filesystem::path &path, int index);
-		~Face();
+		Face(const std::filesystem::path &path, int index); //
+		~Face(); //
 
 		Face(const Face &) = delete;
 		Face(Face &&) = delete;
@@ -147,7 +147,7 @@ public:
 
 	class Attributes {
 	public:
-		inline Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false) noexcept
+		inline Attributes(std::optional<Color> color_opt = std::nullopt, Style style = Style::NORMAL, bool underline = false) noexcept //
 		    : color_opt(color_opt), style(style), underline(underline) {}
 
 	public:
@@ -242,14 +242,14 @@ public:
 		const std::vector<std::pair<std::string, Attributes>> &spans
 	);
 
-	std::vector<ShapeGlyph> Shape(const std::vector<std::pair<std::u32string_view, Attributes>> &line);
+	std::vector<ShapeGlyph> ShapeSpans(const std::vector<std::pair<std::u32string_view, Attributes>> &line);
 	// Shapes a span with a font & attributes, returning the start indices of missing glyphs.
-	std::vector<size_t> ShapeSpans(std::vector<ShapeGlyph> &glyphs, Font &font, std::u32string_view line, const Attributes &attrs);
+	std::vector<size_t> ShapeFallback(std::vector<ShapeGlyph> &glyphs, Font &font, std::u32string_view line, const Attributes &attrs);
 
 	int Width(const std::string &text, const Attributes &attrs, float font_size); //
 	int WidthSpans(const std::vector<std::pair<std::string, Attributes>> &line, float font_size); //
 
-	Placement &GetPlacement(const CacheKey &key); //
+	Placement GetPlacement(const CacheKey &key); //
 	GlyphAtlas &Atlas(); //
 
 	static std::vector<std::filesystem::path> AllDefaultSystemFonts();
