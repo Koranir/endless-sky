@@ -10,6 +10,8 @@ cmake_dependent_option(ES_GLES "Build the game with OpenGL ES" OFF UNIX OFF)
 cmake_dependent_option(ES_STEAM "Build the game for the Steam Linux runtime" OFF UNIX OFF)
 cmake_dependent_option(ES_USE_SYSTEM_LIBRARIES "Use system libraries instead of the vcpkg ones." ON "APPLE OR ES_STEAM" OFF)
 cmake_dependent_option(ES_CREATE_BUNDLE "Create a Bundle instead of an executable. Not suitable for development purposes." OFF APPLE OFF)
+# TODO: Make cmake_dependant_option with targets wgpu-native provides builds for.
+option(ES_BUILD_WGPU_SOURCE "Build wgpu-native from source with a Rust compiler." ON)
 
 # Support Debug and Release configurations.
 set(CMAKE_CONFIGURATION_TYPES "Debug" "Release" CACHE STRING "" FORCE)
@@ -82,6 +84,55 @@ find_path(LIBMAD_INCLUDE_DIR mad.h)
 find_library(LIBMAD_LIB_DEBUG NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib")
 find_library(LIBMAD_LIB_RELEASE NAMES mad libmad NAMES_PER_DIR PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
 
+set(WGPU_NATIVE_TAG "v0.19.4.1")
+if(ES_BUILD_WGPU_SOURCE)
+	include(FetchContent)
+
+	FetchContent_Declare(
+		wgpu-native
+		GIT_REPOSITORY https://github.com/gfx-rs/wgpu-native.git
+		GIT_TAG ${WGPU_NATIVE_TAG}
+	)
+	FetchContent_Declare(
+		Corrosion
+		GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+		GIT_TAG v0.5
+	)
+	FetchContent_MakeAvailable(Corrosion wgpu-native)
+
+	corrosion_import_crate(MANIFEST_PATH "${wgpu-native_SOURCE_DIR}/Cargo.toml")
+
+	set(WGPU_INCLUDE_DIR ${wgpu-native_SOURCE_DIR}/ffi)
+	set(WGPU_LIB wgpu_native)
+else()
+	if(LINUX)
+		set(WGPU_LIB_OS_NAME "linux")
+	elseif(APPLE)
+		set(WGPU_LIB_OS_NAME "macos")
+	elseif(WIN32)
+		set(WGPU_LIB_OS_NAME "windows")
+	endif()
+	set(WGPU_LIB_ARCHIVE_NAME "wgpu-${WGPU_LIB_OS_NAME}-${CMAKE_SYSTEM_PROCESSOR}-release.zip")
+	set(WGPU_DOWNLOAD_ARCHIVE_DIR "${CMAKE_BINARY_DIR}/import/wgpu-native")
+	set(WGPU_ARCHIVE_LOC "${WGPU_DOWNLOAD_ARCHIVE_DIR}/${WGPU_LIB_ARCHIVE_NAME}")
+	file(
+		MAKE_DIRECTORY
+		${WGPU_DOWNLOAD_ARCHIVE_DIR}
+	)
+	file(
+		DOWNLOAD
+		"https://github.com/gfx-rs/wgpu-native/releases/download/${WGPU_NATIVE_TAG}/${WGPU_LIB_ARCHIVE_NAME}"
+		${WGPU_ARCHIVE_LOC}
+	)
+	file(
+		ARCHIVE_EXTRACT
+		INPUT ${WGPU_ARCHIVE_LOC}
+		DESTINATION ${WGPU_DOWNLOAD_ARCHIVE_DIR}
+	)
+	set(WGPU_INCLUDE_DIR ${WGPU_DOWNLOAD_ARCHIVE_DIR})
+	set(WGPU_LIB ${WGPU_DOWNLOAD_ARCHIVE_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}wgpu_native${CMAKE_SHARED_LIBRARY_SUFFIX})
+endif()
+
 # Find the MinGW runtime DLLs.
 if(MINGW AND WIN32)
 	# On Windows copy the MinGW runtime DLLs to the output folder as well.
@@ -126,7 +177,7 @@ endif()
 
 # Link with the general libraries.
 target_link_libraries(ExternalLibraries INTERFACE SDL2::SDL2 PNG::PNG JPEG::JPEG OpenAL::OpenAL
-	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>")
+	"$<IF:$<CONFIG:Debug>,${LIBMAD_LIB_DEBUG},${LIBMAD_LIB_RELEASE}>" "${WGPU_LIB}")
 
 # Link the needed OS-specific dependencies, if any.
 if(WIN32)

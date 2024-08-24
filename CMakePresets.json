@@ -68,6 +68,7 @@
       "description": "Builds with the default host compiler on Linux",
       "inherits": "base",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_TARGET_TRIPLET": "x64-linux-dynamic"
       },
       "condition": {
@@ -82,6 +83,7 @@
       "description": "Builds with the default host compiler with OpenGL ES on Linux",
       "inherits": "base",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_TARGET_TRIPLET": "x64-linux-dynamic",
         "ES_GLES": "ON"
       },
@@ -97,6 +99,7 @@
       "description": "Builds with the default host compiler on x64-based MacOS",
       "inherits": "base",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "VCPKG_TARGET_TRIPLET": "x64-osx-dynamic"
       },
@@ -112,6 +115,7 @@
       "description": "Builds with the default host compiler on ARM-based MacOS",
       "inherits": "base",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "VCPKG_TARGET_TRIPLET": "arm64-osx-dynamic"
       },
@@ -135,6 +139,7 @@
         "strategy": "external"
       },
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_TARGET_TRIPLET": "x64-windows",
         "CMAKE_CXX_COMPILER": "clang-cl.exe"
       },
@@ -150,6 +155,7 @@
       "description": "Builds with the MinGW compiler toolchain",
       "inherits": "base",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
         "CMAKE_RC_COMPILER": "windres",
         "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic",
@@ -171,6 +177,7 @@
         "strategy": "external"
       },
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++",
         "CMAKE_RC_COMPILER": "windres",
         "VCPKG_HOST_TRIPLET": "x86-mingw-dynamic",
@@ -188,6 +195,7 @@
       "description": "Builds for Linux for CI purposes",
       "inherits": "ci",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_HOST_TRIPLET": "linux64-release",
         "VCPKG_TARGET_TRIPLET": "linux64-release",
         "ES_USE_OFFSCREEN": "ON"
@@ -199,6 +207,7 @@
       "description": "Builds for Linux GLES for CI purposes",
       "inherits": "ci",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_HOST_TRIPLET": "linux64-release",
         "VCPKG_TARGET_TRIPLET": "linux64-release",
         "ES_GLES": "ON",
@@ -211,6 +220,7 @@
       "description": "Builds for MacOS for CI purposes",
       "inherits": "ci",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_HOST_TRIPLET": "macos64-release",
         "VCPKG_TARGET_TRIPLET": "macos64-release",
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
@@ -223,6 +233,7 @@
       "description": "Builds with clang-cl for CI purposes",
       "inherits": "ci",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "VCPKG_HOST_TRIPLET": "x64-windows-release",
         "VCPKG_TARGET_TRIPLET": "x64-windows-release",
         "CMAKE_CXX_COMPILER": "clang-cl.exe"
@@ -234,6 +245,7 @@
       "description": "Builds with MinGW for CI purposes",
       "inherits": "ci",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
         "CMAKE_RC_COMPILER": "windres",
         "VCPKG_HOST_TRIPLET": "win64-release",
@@ -246,6 +258,7 @@
       "description": "Builds for Linux like an official release",
       "inherits": "release",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
         "VCPKG_HOST_TRIPLET": "linux64-release",
         "VCPKG_TARGET_TRIPLET": "linux64-release"
@@ -257,6 +270,7 @@
       "description": "Builds for MacOS like an official release",
       "inherits": "release",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "ES_CREATE_BUNDLE": "ON",
         "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
         "VCPKG_HOST_TRIPLET": "macos64-release",
@@ -275,6 +289,7 @@
         "strategy": "external"
       },
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "ES_CREATE_BUNDLE": "ON",
         "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
         "VCPKG_HOST_TRIPLET": "macos64-release",
@@ -289,6 +304,7 @@
       "description": "Builds for MinGW like an official release",
       "inherits": "release",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "ES_CREATE_BUNDLE": "ON",
         "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
         "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
@@ -303,6 +319,7 @@
       "description": "Builds for MinGW x86 like an official release",
       "inherits": "release",
       "cacheVariables": {
+        "ES_BUILD_WGPU_SOURCE": "OFF",
         "ES_CREATE_BUNDLE": "ON",
         "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++",
         "CMAKE_RC_COMPILER": "windres",
