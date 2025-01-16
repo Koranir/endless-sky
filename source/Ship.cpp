@@ -971,7 +971,7 @@ void Ship::Save(DataWriter &out) const
 					out.Write("steering flare sound", it.first->Name());
 			for(const auto &it : baseAttributes.AfterburnerEffects())
 				for(int i = 0; i < it.second; ++i)
-					out.Write("afterburner effect", it.first->Name());
+					out.Write("afterburner effect", it.first.first->Name(), it.first.second);
 			for(const auto &it : baseAttributes.JumpEffects())
 				for(int i = 0; i < it.second; ++i)
 					out.Write("jump effect", it.first->Name());
@@ -4934,11 +4934,13 @@ void Ship::DoEngineVisuals(vector<Visual> &visuals, bool isUsingAfterburner)
 			Angle gimbal = Angle(gimbalDirection * point.gimbal.Degrees());
 			Angle afterburnerAngle = angle + point.facing + gimbal;
 			Point pos = angle.Rotate(point) * Zoom() + position;
-			// Stream the afterburner effects outward in the direction the engines are facing.
-			Point effectVelocity = velocity - 6. * afterburnerAngle.Unit();
 			for(auto &&it : Attributes().AfterburnerEffects())
+			{
+				// Stream the afterburner effects outward in the direction the engines are facing.
+				Point effectVelocity = (velocity - (it.first.second ? it.first.second : 6.) * afterburnerAngle.Unit());
 				for(int i = 0; i < it.second; ++i)
-					visuals.emplace_back(*it.first, pos, effectVelocity, afterburnerAngle);
+					visuals.emplace_back(*it.first.first, pos, effectVelocity, afterburnerAngle);
+			}
 		}
 	}
 }

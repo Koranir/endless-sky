@@ -55,6 +55,8 @@ void Effect::Load(const DataNode &node)
 			velocityScale = child.Value(1);
 		else if(child.Token(0) == "random velocity" && child.Size() >= 2)
 			randomVelocity = child.Value(1);
+		else if(child.Token(0) == "drag" && child.Size() >= 2)
+			drag = child.Value(1);
 		else if(child.Token(0) == "random angle" && child.Size() >= 2)
 			randomAngle = child.Value(1);
 		else if(child.Token(0) == "random spin" && child.Size() >= 2)

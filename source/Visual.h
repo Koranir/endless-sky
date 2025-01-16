@@ -46,4 +46,5 @@ public:
 private:
 	Angle spin;
 	int lifetime = 0;
+	double drag;
 };

@@ -59,6 +59,7 @@ private:
 	double randomAngle = 0.;
 	double randomSpin = 0.;
 	double randomFrameRate = 0.;
+	double drag = 0.;
 	// Absolute values are independent of the parent Body if specified.
 	Angle absoluteAngle;
 	bool hasAbsoluteAngle = false;

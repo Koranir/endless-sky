@@ -193,7 +193,7 @@ namespace {
 	// Used to add the contents of one outfit's map to another, while also
 	// erasing any key with a value of zero.
 	template <class T>
-	void MergeMaps(map<const T *, int> &thisMap, const map<const T *, int> &otherMap, int count)
+	void MergeMaps(map<T, int> &thisMap, const map<T, int> &otherMap, int count)
 	{
 		for(const auto &it : otherMap)
 		{
@@ -247,7 +247,7 @@ void Outfit::Load(const DataNode &node)
 		else if(child.Token(0) == "steering flare sound" && child.Size() >= 2)
 			++steeringFlareSounds[Audio::Get(child.Token(1))];
 		else if(child.Token(0) == "afterburner effect" && child.Size() >= 2)
-			++afterburnerEffects[GameData::Effects().Get(child.Token(1))];
+			++afterburnerEffects[make_pair(GameData::Effects().Get(child.Token(1)), child.Size() >= 3 ? child.Value(2) : 0.)];
 		else if(child.Token(0) == "jump effect" && child.Size() >= 2)
 			++jumpEffects[GameData::Effects().Get(child.Token(1))];
 		else if(child.Token(0) == "hyperdrive sound" && child.Size() >= 2)
@@ -633,7 +633,7 @@ const map<const Sound *, int> &Outfit::SteeringFlareSounds() const
 
 
 // Get the afterburner effect, if any.
-const map<const Effect *, int> &Outfit::AfterburnerEffects() const
+const map<pair<const Effect *, double>, int> &Outfit::AfterburnerEffects() const
 {
 	return afterburnerEffects;
 }
