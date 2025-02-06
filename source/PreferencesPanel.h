@@ -107,5 +107,5 @@ private:
 	ScrollVar<double> pluginDescriptionScroll;
 	int pluginListHeight = 0;
 
-	SettingsPane *subPanel = nullptr;
+	Panel *subPanel = nullptr;
 };

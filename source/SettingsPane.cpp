@@ -49,6 +49,14 @@ SettingsPane::SettingsPane(vector<Section> &&sections, const Rectangle &bounds, 
 
 void SettingsPane::Draw()
 {
+	if(Screen::Zoom() != this->scale)
+	{
+		this->scale = Screen::Zoom();
+		buffer.reset();
+		for(auto &section : sections)
+			section.Invalidate();
+	}
+
 	if(!buffer.has_value() || !(buffer->Width() == bounds.Width() && buffer->Height() == bounds.Height()))
 		buffer.emplace(bounds.Dimensions());
 
@@ -92,13 +100,6 @@ void SettingsPane::Draw()
 
 void SettingsPane::UpdateScale(double scale)
 {
-	if(scale == this->scale)
-		return;
-	this->scale = scale;
-
-	buffer.reset();
-	for(auto &section : sections)
-		section.Invalidate();
 }
 
 
@@ -109,7 +110,6 @@ bool SettingsPane::Click(int x, int y, int clicks)
 		return true;
 	
 	dragging = bounds.Contains(Point(x, y));
-	cout << dragging << '\n';
 	return dragging;
 }
 

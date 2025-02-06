@@ -107,7 +107,7 @@ protected:
 	std::vector<Section> sections;
 
 	Rectangle bounds;
-	double scale = 1.;
+	int scale;
 	std::optional<Rectangle> infoBounds;
 
 	bool dragging = false;

@@ -45,6 +45,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
+#include <optional>
 
 using namespace std;
 
@@ -237,7 +239,7 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 	{
 		if(subPanel)
 		{
-			GetUI()->PopThrough(subPanel);
+			RemoveChild(subPanel);
 			subPanel = nullptr;
 		}
 		page = key;
@@ -491,9 +493,8 @@ void PreferencesPanel::DrawControls()
 	if(!subPanel)
 	{
 		subPanel = new ControlSettingsPanel(LEFT_PANEL_BOUNDS, nullopt);
-		GetUI()->Push(subPanel);
+		AddChild(shared_ptr<Panel>(subPanel));
 	}
-	subPanel->UpdateScale(Screen::Zoom() / 100.);
 	// const Color &back = *GameData::Colors().Get("faint");
 	// const Color &dim = *GameData::Colors().Get("dim");
 	const Color &medium = *GameData::Colors().Get("medium");
