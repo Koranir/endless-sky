@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
 
 class DataNode;
@@ -99,7 +100,7 @@ public:
 	void ReadKeyboard();
 
 	// Load or save the keyboard preferences.
-	static void LoadSettings(const std::filesystem::path &path);
+	static void LoadSettings(const std::filesystem::path &path, bool newDefaults = false);
 	static void SaveSettings(const std::filesystem::path &path);
 	static void SetKey(Command command, int keycode);
 
@@ -107,6 +108,7 @@ public:
 	// a combination of more than one command, an empty string is returned.
 	const std::string &Description() const;
 	const std::string &KeyName() const;
+	std::optional<int> Default() const;
 	bool HasBinding() const;
 	bool HasConflict() const;
 

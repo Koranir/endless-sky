@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 
 class RenderBuffer;
+class SettingsPane;
 struct Plugin;
 
 
@@ -105,4 +106,6 @@ private:
 	ScrollVar<double> pluginListScroll;
 	ScrollVar<double> pluginDescriptionScroll;
 	int pluginListHeight = 0;
+
+	SettingsPane *subPanel = nullptr;
 };

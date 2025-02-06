@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "PreferencesPanel.h"
 
+#include "ControlSettingsPanel.h"
 #include "text/alignment.hpp"
 #include "audio/Audio.h"
 #include "Color.h"
@@ -43,6 +44,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "opengl.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -102,6 +104,8 @@ namespace {
 		{"environment volume", SoundCategory::ENVIRONMENT},
 		{"alert volume", SoundCategory::ALERT}
 	};
+
+	const Rectangle LEFT_PANEL_BOUNDS(Point(-130, -30), Point(225, 405));
 }
 
 
@@ -231,6 +235,11 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 		Exit();
 	else if(key == 'c' || key == 's' || key == 'p' || key == 'a')
 	{
+		if(subPanel)
+		{
+			GetUI()->PopThrough(subPanel);
+			subPanel = nullptr;
+		}
 		page = key;
 		hoverItem.clear();
 		selected = 0;
@@ -479,14 +488,20 @@ void PreferencesPanel::EndEditing()
 
 void PreferencesPanel::DrawControls()
 {
-	const Color &back = *GameData::Colors().Get("faint");
-	const Color &dim = *GameData::Colors().Get("dim");
+	if(!subPanel)
+	{
+		subPanel = new ControlSettingsPanel(LEFT_PANEL_BOUNDS, nullopt);
+		GetUI()->Push(subPanel);
+	}
+	subPanel->UpdateScale(Screen::Zoom() / 100.);
+	// const Color &back = *GameData::Colors().Get("faint");
+	// const Color &dim = *GameData::Colors().Get("dim");
 	const Color &medium = *GameData::Colors().Get("medium");
 	const Color &bright = *GameData::Colors().Get("bright");
 
-	// Colors for highlighting.
-	const Color &warning = *GameData::Colors().Get("warning conflict");
-	const Color &noCommand = *GameData::Colors().Get("warning no command");
+	// // Colors for highlighting.
+	// const Color &warning = *GameData::Colors().Get("warning conflict");
+	// const Color &noCommand = *GameData::Colors().Get("warning no command");
 
 	if(selected != oldSelected)
 		latest = selected;
@@ -496,153 +511,154 @@ void PreferencesPanel::DrawControls()
 	oldSelected = selected;
 	oldHover = hover;
 
-	Table table;
-	table.AddColumn(-115, {230, Alignment::LEFT});
-	table.AddColumn(115, {230, Alignment::RIGHT});
-	table.SetUnderline(-120, 120);
 
-	int firstY = -248;
-	table.DrawAt(Point(-130, firstY));
+	// Table table;
+	// table.AddColumn(-115, {230, Alignment::LEFT});
+	// table.AddColumn(115, {230, Alignment::RIGHT});
+	// table.SetUnderline(-120, 120);
 
-	// About CONTROLS pagination
-	// * A NONE command means that a string from CATEGORIES should be drawn
-	//   instead of a command.
-	// * A '\t' category string indicates that the first column on this page has
-	//   ended, and the next line should be drawn at the start of the next
-	//   column.
-	// * A '\n' category string indicates that this page is complete, no further
-	//   lines should be drawn on this page.
-	// * The namespace variable CONTROLS_PAGE_COUNT should be updated to the max
-	//   page count (count of '\n' characters plus one).
-	static const string CATEGORIES[] = {
-		"Keyboard Navigation",
-		"Fleet",
-		"\t",
-		"Targeting",
-		"Weapons",
-		"\n",
-		"Interface"
-	};
-	const string *category = CATEGORIES;
-	static const Command COMMANDS[] = {
-		Command::NONE,
-		Command::FORWARD,
-		Command::LEFT,
-		Command::RIGHT,
-		Command::BACK,
-		Command::AFTERBURNER,
-		Command::AUTOSTEER,
-		Command::LAND,
-		Command::JUMP,
-		Command::NONE,
-		Command::DEPLOY,
-		Command::FIGHT,
-		Command::GATHER,
-		Command::HOLD,
-		Command::AMMO,
-		Command::HARVEST,
-		Command::NONE,
-		Command::NONE,
-		Command::NEAREST,
-		Command::TARGET,
-		Command::HAIL,
-		Command::BOARD,
-		Command::NEAREST_ASTEROID,
-		Command::SCAN,
-		Command::NONE,
-		Command::PRIMARY,
-		Command::TURRET_TRACKING,
-		Command::SELECT,
-		Command::SECONDARY,
-		Command::CLOAK,
-		Command::MOUSE_TURNING_HOLD,
-		Command::NONE,
-		Command::NONE,
-		Command::MENU,
-		Command::MAP,
-		Command::INFO,
-		Command::FULLSCREEN,
-		Command::FASTFORWARD,
-		Command::HELP,
-		Command::MESSAGE_LOG
-	};
+	// int firstY = -248;
+	// table.DrawAt(Point(-130, firstY));
 
-	int page = 0;
-	for(const Command &command : COMMANDS)
-	{
-		string categoryString;
-		if(!command)
-		{
-			if(category != end(CATEGORIES))
-				categoryString = *category++;
-			else
-				table.Advance();
-			// Check if this is a page break.
-			if(categoryString == "\n")
-			{
-				++page;
-				continue;
-			}
-		}
-		// Check if this command is on the page being displayed.
-		// If this command isn't on the page being displayed, check if it is on an earlier page.
-		// If it is, continue to the next command.
-		// Otherwise, this command is on a later page,
-		// do not continue as no further commands are to be displayed.
-		if(page < currentControlsPage)
-			continue;
-		else if(page > currentControlsPage)
-			break;
-		if(!command)
-		{
-			// Check if this is a column break.
-			if(categoryString == "\t")
-			{
-				table.DrawAt(Point(130, firstY));
-				continue;
-			}
-			table.DrawGap(10);
-			table.DrawUnderline(medium);
-			table.Draw(categoryString, bright);
-			table.Draw("Key", bright);
-			table.DrawGap(5);
-		}
-		else
-		{
-			int index = zones.size();
-			// Mark conflicts.
-			bool isConflicted = command.HasConflict();
-			bool isEmpty = !command.HasBinding();
-			bool isEditing = (index == editing);
-			if(isConflicted || isEditing || isEmpty)
-			{
-				table.SetHighlight(56, 120);
-				table.DrawHighlight(isEditing ? dim : isEmpty ? noCommand : warning);
-			}
+	// // About CONTROLS pagination
+	// // * A NONE command means that a string from CATEGORIES should be drawn
+	// //   instead of a command.
+	// // * A '\t' category string indicates that the first column on this page has
+	// //   ended, and the next line should be drawn at the start of the next
+	// //   column.
+	// // * A '\n' category string indicates that this page is complete, no further
+	// //   lines should be drawn on this page.
+	// // * The namespace variable CONTROLS_PAGE_COUNT should be updated to the max
+	// //   page count (count of '\n' characters plus one).
+	// static const string CATEGORIES[] = {
+	// 	"Keyboard Navigation",
+	// 	"Fleet",
+	// 	"\t",
+	// 	"Targeting",
+	// 	"Weapons",
+	// 	"\n",
+	// 	"Interface"
+	// };
+	// const string *category = CATEGORIES;
+	// static const Command COMMANDS[] = {
+	// 	Command::NONE,
+	// 	Command::FORWARD,
+	// 	Command::LEFT,
+	// 	Command::RIGHT,
+	// 	Command::BACK,
+	// 	Command::AFTERBURNER,
+	// 	Command::AUTOSTEER,
+	// 	Command::LAND,
+	// 	Command::JUMP,
+	// 	Command::NONE,
+	// 	Command::DEPLOY,
+	// 	Command::FIGHT,
+	// 	Command::GATHER,
+	// 	Command::HOLD,
+	// 	Command::AMMO,
+	// 	Command::HARVEST,
+	// 	Command::NONE,
+	// 	Command::NONE,
+	// 	Command::NEAREST,
+	// 	Command::TARGET,
+	// 	Command::HAIL,
+	// 	Command::BOARD,
+	// 	Command::NEAREST_ASTEROID,
+	// 	Command::SCAN,
+	// 	Command::NONE,
+	// 	Command::PRIMARY,
+	// 	Command::TURRET_TRACKING,
+	// 	Command::SELECT,
+	// 	Command::SECONDARY,
+	// 	Command::CLOAK,
+	// 	Command::MOUSE_TURNING_HOLD,
+	// 	Command::NONE,
+	// 	Command::NONE,
+	// 	Command::MENU,
+	// 	Command::MAP,
+	// 	Command::INFO,
+	// 	Command::FULLSCREEN,
+	// 	Command::FASTFORWARD,
+	// 	Command::HELP,
+	// 	Command::MESSAGE_LOG
+	// };
 
-			// Mark the selected row.
-			bool isHovering = (index == hover && !isEditing);
-			if(!isHovering && index == selected)
-			{
-				auto textWidth = FontSet::Get(14).Width(command.Description());
-				table.SetHighlight(-120, textWidth - 110);
-				table.DrawHighlight(back);
-			}
+	// int page = 0;
+	// for(const Command &command : COMMANDS)
+	// {
+	// 	string categoryString;
+	// 	if(!command)
+	// 	{
+	// 		if(category != end(CATEGORIES))
+	// 			categoryString = *category++;
+	// 		else
+	// 			table.Advance();
+	// 		// Check if this is a page break.
+	// 		if(categoryString == "\n")
+	// 		{
+	// 			++page;
+	// 			continue;
+	// 		}
+	// 	}
+	// 	// Check if this command is on the page being displayed.
+	// 	// If this command isn't on the page being displayed, check if it is on an earlier page.
+	// 	// If it is, continue to the next command.
+	// 	// Otherwise, this command is on a later page,
+	// 	// do not continue as no further commands are to be displayed.
+	// 	if(page < currentControlsPage)
+	// 		continue;
+	// 	else if(page > currentControlsPage)
+	// 		break;
+	// 	if(!command)
+	// 	{
+	// 		// Check if this is a column break.
+	// 		if(categoryString == "\t")
+	// 		{
+	// 			table.DrawAt(Point(130, firstY));
+	// 			continue;
+	// 		}
+	// 		table.DrawGap(10);
+	// 		table.DrawUnderline(medium);
+	// 		table.Draw(categoryString, bright);
+	// 		table.Draw("Key", bright);
+	// 		table.DrawGap(5);
+	// 	}
+	// 	else
+	// 	{
+	// 		int index = zones.size();
+	// 		// Mark conflicts.
+	// 		bool isConflicted = command.HasConflict();
+	// 		bool isEmpty = !command.HasBinding();
+	// 		bool isEditing = (index == editing);
+	// 		if(isConflicted || isEditing || isEmpty)
+	// 		{
+	// 			table.SetHighlight(56, 120);
+	// 			table.DrawHighlight(isEditing ? dim : isEmpty ? noCommand : warning);
+	// 		}
 
-			// Highlight whichever row the mouse hovers over.
-			table.SetHighlight(-120, 120);
-			if(isHovering)
-			{
-				table.DrawHighlight(back);
-				hoverItem = command.Description();
-			}
+	// 		// Mark the selected row.
+	// 		bool isHovering = (index == hover && !isEditing);
+	// 		if(!isHovering && index == selected)
+	// 		{
+	// 			auto textWidth = FontSet::Get(14).Width(command.Description());
+	// 			table.SetHighlight(-120, textWidth - 110);
+	// 			table.DrawHighlight(back);
+	// 		}
 
-			zones.emplace_back(table.GetCenterPoint(), table.GetRowSize(), command);
+	// 		// Highlight whichever row the mouse hovers over.
+	// 		table.SetHighlight(-120, 120);
+	// 		if(isHovering)
+	// 		{
+	// 			table.DrawHighlight(back);
+	// 			hoverItem = command.Description();
+	// 		}
 
-			table.Draw(command.Description(), medium);
-			table.Draw(command.KeyName(), isEditing ? bright : medium);
-		}
-	}
+	// 		zones.emplace_back(table.GetCenterPoint(), table.GetRowSize(), command);
+
+	// 		table.Draw(command.Description(), medium);
+	// 		table.Draw(command.KeyName(), isEditing ? bright : medium);
+	// 	}
+	// }
 
 	Table infoTable;
 	infoTable.AddColumn(125, {150, Alignment::RIGHT});

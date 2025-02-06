@@ -35,6 +35,7 @@ namespace {
 	map<Command, string> keyName;
 	map<int, Command> commandForKeycode;
 	map<Command, int> keycodeForCommand;
+	map<Command, int> defaultKeycodeForCommand;
 	// Keep track of any keycodes that are mapped to multiple commands, in order
 	// to display a warning to the player.
 	map<int, int> keycodeCount;
@@ -131,7 +132,7 @@ void Command::ReadKeyboard()
 
 
 // Load the keyboard preferences.
-void Command::LoadSettings(const filesystem::path &path)
+void Command::LoadSettings(const filesystem::path &path, bool newDefaults)
 {
 	DataFile file(path);
 
@@ -149,6 +150,8 @@ void Command::LoadSettings(const filesystem::path &path)
 		{
 			Command command = it->second;
 			int keycode = node.Value(1);
+			if(newDefaults)
+				defaultKeycodeForCommand[command] = keycode;
 			keycodeForCommand[command] = keycode;
 			keyName[command] = SDL_GetKeyName(keycode);
 		}
@@ -220,6 +223,17 @@ const string &Command::KeyName() const
 	auto it = keyName.find(*this);
 
 	return (!HasBinding() ? empty : it->second);
+}
+
+
+
+// The the default keymap for this command.
+optional<int> Command::Default() const
+{
+	auto it = defaultKeycodeForCommand.find(*this);
+	if(it != defaultKeycodeForCommand.end())
+		return it->second;
+	return nullopt;
 }
 
 

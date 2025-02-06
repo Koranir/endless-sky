@@ -50,6 +50,8 @@ public:
 public:
 	// Create a texture of the given size that can be used as a render target.
 	RenderBuffer(const Point &dimensions);
+	RenderBuffer(const RenderBuffer &) = delete;
+	RenderBuffer(RenderBuffer &&) = default;
 	virtual ~RenderBuffer();
 
 	// Initialize the shaders used internally.

@@ -273,7 +273,7 @@ void GameData::CheckReferences()
 void GameData::LoadSettings()
 {
 	// Load the key settings.
-	Command::LoadSettings(Files::Resources() / "keys.txt");
+	Command::LoadSettings(Files::Resources() / "keys.txt", true);
 	Command::LoadSettings(Files::Config() / "keys.txt");
 }
 

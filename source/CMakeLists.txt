@@ -60,6 +60,8 @@ target_sources(EndlessSkyLib PRIVATE
 	ConditionSet.h
 	ConditionsStore.cpp
 	ConditionsStore.h
+	ControlSettingsPanel.cpp
+	ControlSettingsPanel.h
 	Conversation.cpp
 	Conversation.h
 	ConversationPanel.cpp
@@ -262,6 +264,8 @@ target_sources(EndlessSkyLib PRIVATE
 	ScrollBar.h
 	ScrollVar.h
 	Set.h
+	SettingsPane.cpp
+	SettingsPane.h
 	Ship.cpp
 	Ship.h
 	ShipEvent.cpp
