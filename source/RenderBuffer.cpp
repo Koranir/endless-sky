@@ -152,6 +152,8 @@ RenderBuffer::RenderTargetGuard::RenderTargetGuard(RenderBuffer &b, int screenWi
 RenderBuffer::RenderBuffer(const Point &dimensions)
 	: size(dimensions)
 {
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, reinterpret_cast<int*>(&lastFramebuffer));
+
 	// Generate a framebuffer.
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -182,7 +184,7 @@ RenderBuffer::RenderBuffer(const Point &dimensions)
 
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, lastFramebuffer);
 
 	// Default to the current viewport size at the time of construction.
 	glGetIntegerv(GL_VIEWPORT, lastViewport);

@@ -17,8 +17,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Dialog.h"
 #include "GameData.h"
+#include "Panel.h"
 #include "Rectangle.h"
 #include "SettingsPane.h"
+#include "TextArea.h"
+#include "text/FontSet.h"
+#include "text/Font.h"
 
 #include <array>
 #include <iostream>
@@ -102,6 +106,38 @@ namespace {
 
 		return sections;
 	}
+
+	class InputCapturePanel : public SettingsPane::UpdateOnDropPanel
+	{
+	public:
+		InputCapturePanel(ControlSettingsPanel::Item *item)
+			: item(item)
+		{
+		}
+
+		bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress) override
+		{
+			item->SetKey(key);
+
+			GetUI()->PopThrough(this);
+
+			return true;
+		}
+
+		void Draw() override
+		{
+			DrawBackdrop();
+			const Font &font = FontSet::Get(18);
+
+			string text = "press new key for '" + item->Name() + "'";
+
+			font.Draw(text, Point(-font.Width(text) / 2., 0), *GameData::Colors().Get("bright"));
+		}
+
+	public:
+		ControlSettingsPanel::Item *item;
+
+	};
 }
 
 
@@ -109,7 +145,6 @@ namespace {
 ControlSettingsPanel::ControlSettingsPanel(const Rectangle &bounds, const optional<Rectangle> &infoBounds)
 	: SettingsPane(Sections(), bounds, infoBounds)
 {
-	cout << Sections().size() << "\n";
 }
 
 
@@ -153,7 +188,7 @@ optional<Color> ControlSettingsPanel::SectionHeader::RowColor()
 
 Color ControlSettingsPanel::SectionHeader::TextColor()
 {
-	return *GameData::Colors().Get("medium");
+	return *GameData::Colors().Get("bright");
 }
 
 
@@ -185,9 +220,9 @@ string ControlSettingsPanel::Item::Value()
 
 
 
-optional<Panel *> ControlSettingsPanel::Item::Clicked()
+optional<SettingsPane::UpdateOnDropPanel *> ControlSettingsPanel::Item::Clicked()
 {
-	return nullopt;
+	return new InputCapturePanel(this);
 }
 
 
@@ -201,21 +236,14 @@ void ControlSettingsPanel::Item::ResetToDefault()
 
 Panel *ControlSettingsPanel::Item::NewInfoUI(UI *parent, const Rectangle &bounds)
 {
-	return new Dialog("eh");
+	auto panel = new TextArea(bounds);
+	panel->SetText(GameData::Tooltip(command.Description()));
+	return panel;
 }
 
 
 
 optional<Color> ControlSettingsPanel::Item::RowColor()
-{
-	if(!command.HasBinding())
-		return {*GameData::Colors().Get("warning no command")};
-	return nullopt;
-}
-
-
-
-optional<Color> ControlSettingsPanel::Item::ValueColor()
 {
 	if(command.HasConflict())
 		return {*GameData::Colors().Get("warning conflict")};
@@ -224,7 +252,23 @@ optional<Color> ControlSettingsPanel::Item::ValueColor()
 
 
 
+optional<Color> ControlSettingsPanel::Item::ValueColor()
+{
+	if(!command.HasBinding())
+		return {*GameData::Colors().Get("warning no command")};
+	return nullopt;
+}
+
+
+
 Color ControlSettingsPanel::Item::TextColor()
 {
 	return *GameData::Colors().Get("medium");
+}
+
+
+
+void ControlSettingsPanel::Item::SetKey(int keycode)
+{
+	Command::SetKey(command, keycode);
 }

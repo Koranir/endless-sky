@@ -107,7 +107,8 @@ namespace {
 		{"alert volume", SoundCategory::ALERT}
 	};
 
-	const Rectangle LEFT_PANEL_BOUNDS(Point(-130, -30), Point(225, 405));
+	const Rectangle LEFT_PANEL_BOUNDS(Point(-130, -30), Point(242, 424));
+	const Rectangle RIGHT_PANEL_BOUNDS(Point(130, -30), Point(242, 424));
 }
 
 
@@ -178,12 +179,12 @@ void PreferencesPanel::Draw()
 
 	if(Plugins::HasChanged())
 		info.SetCondition("show plugins changed");
-	if(CONTROLS_PAGE_COUNT > 1)
-		info.SetCondition("multiple controls pages");
-	if(currentControlsPage > 0)
-		info.SetCondition("show previous controls");
-	if(currentControlsPage + 1 < CONTROLS_PAGE_COUNT)
-		info.SetCondition("show next controls");
+	// if(CONTROLS_PAGE_COUNT > 1)
+	// 	info.SetCondition("multiple controls pages");
+	// if(currentControlsPage > 0)
+	// 	info.SetCondition("show previous controls");
+	// if(currentControlsPage + 1 < CONTROLS_PAGE_COUNT)
+	// 	info.SetCondition("show next controls");
 	if(SETTINGS_PAGE_COUNT > 1)
 		info.SetCondition("multiple settings pages");
 	if(currentSettingsPage > 0)
@@ -492,17 +493,11 @@ void PreferencesPanel::DrawControls()
 {
 	if(!subPanel)
 	{
-		subPanel = new ControlSettingsPanel(LEFT_PANEL_BOUNDS, nullopt);
+		subPanel = new ControlSettingsPanel(LEFT_PANEL_BOUNDS, RIGHT_PANEL_BOUNDS);
 		AddChild(shared_ptr<Panel>(subPanel));
 	}
-	// const Color &back = *GameData::Colors().Get("faint");
-	// const Color &dim = *GameData::Colors().Get("dim");
 	const Color &medium = *GameData::Colors().Get("medium");
 	const Color &bright = *GameData::Colors().Get("bright");
-
-	// // Colors for highlighting.
-	// const Color &warning = *GameData::Colors().Get("warning conflict");
-	// const Color &noCommand = *GameData::Colors().Get("warning no command");
 
 	if(selected != oldSelected)
 		latest = selected;
@@ -511,155 +506,6 @@ void PreferencesPanel::DrawControls()
 
 	oldSelected = selected;
 	oldHover = hover;
-
-
-	// Table table;
-	// table.AddColumn(-115, {230, Alignment::LEFT});
-	// table.AddColumn(115, {230, Alignment::RIGHT});
-	// table.SetUnderline(-120, 120);
-
-	// int firstY = -248;
-	// table.DrawAt(Point(-130, firstY));
-
-	// // About CONTROLS pagination
-	// // * A NONE command means that a string from CATEGORIES should be drawn
-	// //   instead of a command.
-	// // * A '\t' category string indicates that the first column on this page has
-	// //   ended, and the next line should be drawn at the start of the next
-	// //   column.
-	// // * A '\n' category string indicates that this page is complete, no further
-	// //   lines should be drawn on this page.
-	// // * The namespace variable CONTROLS_PAGE_COUNT should be updated to the max
-	// //   page count (count of '\n' characters plus one).
-	// static const string CATEGORIES[] = {
-	// 	"Keyboard Navigation",
-	// 	"Fleet",
-	// 	"\t",
-	// 	"Targeting",
-	// 	"Weapons",
-	// 	"\n",
-	// 	"Interface"
-	// };
-	// const string *category = CATEGORIES;
-	// static const Command COMMANDS[] = {
-	// 	Command::NONE,
-	// 	Command::FORWARD,
-	// 	Command::LEFT,
-	// 	Command::RIGHT,
-	// 	Command::BACK,
-	// 	Command::AFTERBURNER,
-	// 	Command::AUTOSTEER,
-	// 	Command::LAND,
-	// 	Command::JUMP,
-	// 	Command::NONE,
-	// 	Command::DEPLOY,
-	// 	Command::FIGHT,
-	// 	Command::GATHER,
-	// 	Command::HOLD,
-	// 	Command::AMMO,
-	// 	Command::HARVEST,
-	// 	Command::NONE,
-	// 	Command::NONE,
-	// 	Command::NEAREST,
-	// 	Command::TARGET,
-	// 	Command::HAIL,
-	// 	Command::BOARD,
-	// 	Command::NEAREST_ASTEROID,
-	// 	Command::SCAN,
-	// 	Command::NONE,
-	// 	Command::PRIMARY,
-	// 	Command::TURRET_TRACKING,
-	// 	Command::SELECT,
-	// 	Command::SECONDARY,
-	// 	Command::CLOAK,
-	// 	Command::MOUSE_TURNING_HOLD,
-	// 	Command::NONE,
-	// 	Command::NONE,
-	// 	Command::MENU,
-	// 	Command::MAP,
-	// 	Command::INFO,
-	// 	Command::FULLSCREEN,
-	// 	Command::FASTFORWARD,
-	// 	Command::HELP,
-	// 	Command::MESSAGE_LOG
-	// };
-
-	// int page = 0;
-	// for(const Command &command : COMMANDS)
-	// {
-	// 	string categoryString;
-	// 	if(!command)
-	// 	{
-	// 		if(category != end(CATEGORIES))
-	// 			categoryString = *category++;
-	// 		else
-	// 			table.Advance();
-	// 		// Check if this is a page break.
-	// 		if(categoryString == "\n")
-	// 		{
-	// 			++page;
-	// 			continue;
-	// 		}
-	// 	}
-	// 	// Check if this command is on the page being displayed.
-	// 	// If this command isn't on the page being displayed, check if it is on an earlier page.
-	// 	// If it is, continue to the next command.
-	// 	// Otherwise, this command is on a later page,
-	// 	// do not continue as no further commands are to be displayed.
-	// 	if(page < currentControlsPage)
-	// 		continue;
-	// 	else if(page > currentControlsPage)
-	// 		break;
-	// 	if(!command)
-	// 	{
-	// 		// Check if this is a column break.
-	// 		if(categoryString == "\t")
-	// 		{
-	// 			table.DrawAt(Point(130, firstY));
-	// 			continue;
-	// 		}
-	// 		table.DrawGap(10);
-	// 		table.DrawUnderline(medium);
-	// 		table.Draw(categoryString, bright);
-	// 		table.Draw("Key", bright);
-	// 		table.DrawGap(5);
-	// 	}
-	// 	else
-	// 	{
-	// 		int index = zones.size();
-	// 		// Mark conflicts.
-	// 		bool isConflicted = command.HasConflict();
-	// 		bool isEmpty = !command.HasBinding();
-	// 		bool isEditing = (index == editing);
-	// 		if(isConflicted || isEditing || isEmpty)
-	// 		{
-	// 			table.SetHighlight(56, 120);
-	// 			table.DrawHighlight(isEditing ? dim : isEmpty ? noCommand : warning);
-	// 		}
-
-	// 		// Mark the selected row.
-	// 		bool isHovering = (index == hover && !isEditing);
-	// 		if(!isHovering && index == selected)
-	// 		{
-	// 			auto textWidth = FontSet::Get(14).Width(command.Description());
-	// 			table.SetHighlight(-120, textWidth - 110);
-	// 			table.DrawHighlight(back);
-	// 		}
-
-	// 		// Highlight whichever row the mouse hovers over.
-	// 		table.SetHighlight(-120, 120);
-	// 		if(isHovering)
-	// 		{
-	// 			table.DrawHighlight(back);
-	// 			hoverItem = command.Description();
-	// 		}
-
-	// 		zones.emplace_back(table.GetCenterPoint(), table.GetRowSize(), command);
-
-	// 		table.Draw(command.Description(), medium);
-	// 		table.Draw(command.KeyName(), isEditing ? bright : medium);
-	// 	}
-	// }
 
 	Table infoTable;
 	infoTable.AddColumn(125, {150, Alignment::RIGHT});

@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 class Rectangle;
@@ -36,7 +37,18 @@ class Rectangle;
 class SettingsPane : public Panel
 {
 public:
-	// I'd use a std::variant here, but C++ isn't ergonomic enough for that yet.
+	class Section;
+
+	class UpdateOnDropPanel : public Panel
+	{
+	protected:
+		~UpdateOnDropPanel();
+
+	private:
+		Section *parent = nullptr;
+
+		friend class SettingsPane;
+	};
 	class Item
 	{
 	public:
@@ -45,7 +57,7 @@ public:
 		virtual std::string Name() = 0;
 		virtual std::string Value() = 0;
 		// Toggle the item's value, or return another panel to collect more inputs.
-		virtual std::optional<Panel *> Clicked() = 0;
+		virtual std::optional<UpdateOnDropPanel *> Clicked() = 0;
 		virtual void ResetToDefault() = 0;
 
 		// Get a secondary panel for additional information. May or may not be called.
@@ -55,6 +67,7 @@ public:
 		virtual std::optional<Color> ValueColor() = 0;
 		virtual Color TextColor() = 0;
 	};
+
 	class SectionHeader
 	{
 	public:
@@ -70,11 +83,12 @@ public:
 	{
 	public:
 		Section(std::unique_ptr<SectionHeader> &&header, std::vector<std::unique_ptr<Item>> &&items);
-		void Invalidate();
+		void Invalidate(bool scaleChanged = false);
 
-		void Draw(const Rectangle &at);
+		void Draw(const Rectangle &at, SettingsPane &parent, size_t baseIndex);
 
 		std::vector<std::unique_ptr<Item>> &Items();
+		std::optional<size_t> ItemForY(double y);
 		int Height() const;
 
 	private:
@@ -83,8 +97,9 @@ public:
 
 		bool dirty = true;
 
-		std::optional<RenderBuffer> buf;
+		std::optional<RenderBuffer> buf = std::nullopt;
 	};
+	friend class Section;
 
 public:
 	SettingsPane(std::vector<Section> &&sections, const Rectangle &bounds, const std::optional<Rectangle> &infoBounds);
@@ -98,6 +113,16 @@ public:
 	bool Drag(double dx, double dy) override;
 	bool Release(int x, int y) override;
 	bool Scroll(double dx, double dy) override;
+	bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress) override;
+
+protected:
+	std::pair<Section *, size_t> SectionForIndex(size_t idx);
+	std::optional<std::pair<Section *, size_t>> SectionForY(double y);
+
+	void SetInfoPanel(size_t idx);
+	void TriggerItem(size_t idx);
+
+	void EnsureOnScreen(size_t idx, int steps = 5);
 
 protected:
 	std::optional<size_t> mouseOver;
@@ -108,13 +133,17 @@ protected:
 
 	Rectangle bounds;
 	int scale;
+
 	std::optional<Rectangle> infoBounds;
+	std::optional<Panel *> infoPanel;
 
 	bool dragging = false;
+	Point dragSource;
 	std::optional<Point> hoverPoint;
 
 	std::optional<RenderBuffer> buffer;
 
 	ScrollVar<double> scroll;
 	ScrollBar scrollBar;
+
 };

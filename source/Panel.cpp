@@ -146,7 +146,10 @@ void Panel::AddOrRemove()
 {
 	for(auto &panel : childrenToAdd)
 		if(panel)
+		{
+			panel->SetUI(GetUI());
 			children.emplace_back(std::move(panel));
+		}
 	childrenToAdd.clear();
 
 	for(auto *panel : childrenToRemove)

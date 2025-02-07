@@ -58,7 +58,7 @@ public:
 		std::string Name() override;
 		std::string Value() override;
 		// Toggle the item's value, or return another panel to collect more inputs.
-		std::optional<Panel *> Clicked() override;
+		std::optional<SettingsPane::UpdateOnDropPanel *> Clicked() override;
 		void ResetToDefault() override;
 
 		// Get a secondary panel for additional information. May or may not be called.
@@ -67,6 +67,8 @@ public:
 		std::optional<Color> RowColor() override;
 		std::optional<Color> ValueColor() override;
 		Color TextColor() override;
+
+		void SetKey(int keycode);
 
 	private:
 		Command command;
