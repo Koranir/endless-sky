@@ -181,7 +181,7 @@ Point ItemInfoDisplay::Draw(Point point, const vector<string> &labels, const vec
 	Table table;
 	// Use 10-pixel margins on both sides.
 	table.AddColumn(10, {WIDTH - 20});
-	table.AddColumn(WIDTH - 10, {WIDTH - 20, Alignment::RIGHT});
+	table.AddColumn(WIDTH - 10, {WIDTH - 20, Alignment::END});
 	table.SetHighlight(0, WIDTH);
 	table.DrawAt(point);
 

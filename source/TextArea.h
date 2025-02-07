@@ -46,6 +46,7 @@ public:
 	void SetColor(const Color &c);
 	void SetAlignment(Alignment a);
 	void SetTruncate(Truncate t);
+	void SetVerticalAlignment(Alignment a);
 
 	int GetTextHeight(bool trailingBreak = true);
 	int GetLongestLineWidth();
@@ -72,6 +73,7 @@ private:
 	Color color;
 	Point position;
 	Point size;
+	Alignment vertical;
 
 	ScrollVar<double> scroll;
 	bool dragging = false;

@@ -161,8 +161,8 @@ void BoardingPanel::Draw()
 		const Color &color = item.CanTake(*you) ? isSelected ? bright : medium : dim;
 		Point pos(-320., y + fontOff);
 		font.Draw(item.Name(), pos, color);
-		font.Draw({item.Value(), {260, Alignment::RIGHT}}, pos, color);
-		font.Draw({item.Size(), {330, Alignment::RIGHT}}, pos, color);
+		font.Draw({item.Value(), {260, Alignment::END}}, pos, color);
+		font.Draw({item.Size(), {330, Alignment::END}}, pos, color);
 	}
 
 	// Set which buttons are active.

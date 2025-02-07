@@ -120,7 +120,7 @@ void Font::DrawAliased(const DisplayText &text, double x, double y, const Color 
 	{
 		if(layout.align == Alignment::CENTER)
 			x += (layout.width - width) / 2;
-		else if(layout.align == Alignment::RIGHT)
+		else if(layout.align == Alignment::END)
 			x += layout.width - width;
 	}
 	DrawAliased(truncText, x, y, color);
@@ -419,7 +419,7 @@ string Font::TruncateText(const DisplayText &text, int &width) const
 	width = -1;
 	const auto &layout = text.GetLayout();
 	const string &str = text.GetText();
-	if(layout.width < 0 || (layout.align == Alignment::LEFT && layout.truncate == Truncate::NONE))
+	if(layout.width < 0 || (layout.align == Alignment::START && layout.truncate == Truncate::NONE))
 		return str;
 	width = layout.width;
 	switch(layout.truncate)

@@ -340,7 +340,7 @@ void WrappedText::AdjustLine(size_t &lineBegin, int &lineWidth, bool isEnd)
 		for(int i = 0; i < wordCount; ++i)
 			words[lineBegin + i].x += extraSpace * i / (wordCount - 1);
 	}
-	else if(alignment == Alignment::CENTER || alignment == Alignment::RIGHT)
+	else if(alignment == Alignment::CENTER || alignment == Alignment::END)
 	{
 		int shift = (alignment == Alignment::CENTER) ? extraSpace / 2 : extraSpace;
 		for(int i = 0; i < wordCount; ++i)

@@ -216,8 +216,8 @@ void Table::DrawTruncatedPair(const string &left, const Color &leftColor, const 
 	constexpr auto PAD = 5;
 	const auto remainder = max(colWidth - PAD - textWidth, 0);
 
-	auto lhs = Layout(truncateRightColumn ? colWidth : remainder, Alignment::LEFT, strategy);
-	auto rhs = Layout(truncateRightColumn ? remainder : colWidth, Alignment::RIGHT, strategy);
+	auto lhs = Layout(truncateRightColumn ? colWidth : remainder, Alignment::START, strategy);
+	auto rhs = Layout(truncateRightColumn ? remainder : colWidth, Alignment::END, strategy);
 	if(truncateRightColumn)
 		lhs.truncate = Truncate::NONE;
 	else
@@ -311,7 +311,7 @@ void Table::Draw(const string &text, const Layout *special, const Color &color) 
 	if(font && !columns.empty())
 	{
 		const auto &layout = special ? *special : it->layout;
-		const double alignmentOffset = layout.align == Alignment::RIGHT ? -1.
+		const double alignmentOffset = layout.align == Alignment::END ? -1.
 			: layout.align == Alignment::CENTER ? -0.5 : 0.;
 		auto pos = point + Point(it->offset + alignmentOffset * (layout.width >= 0 ? layout.width : font->Width(text)), 0.);
 		font->Draw({text, layout}, pos, color);

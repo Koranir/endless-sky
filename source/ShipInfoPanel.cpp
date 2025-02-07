@@ -361,8 +361,8 @@ void ShipInfoPanel::DrawShipStats(const Rectangle &bounds)
 
 	// Two columns of opposite alignment are used to simulate a single visual column.
 	Table table;
-	table.AddColumn(0, {COLUMN_WIDTH, Alignment::LEFT});
-	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::RIGHT, Truncate::MIDDLE});
+	table.AddColumn(0, {COLUMN_WIDTH, Alignment::START});
+	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::END, Truncate::MIDDLE});
 	table.SetUnderline(0, COLUMN_WIDTH);
 	table.DrawAt(bounds.TopLeft() + Point(10., 8.));
 
@@ -386,8 +386,8 @@ void ShipInfoPanel::DrawOutfits(const Rectangle &bounds, Rectangle &cargoBounds)
 
 	// Two columns of opposite alignment are used to simulate a single visual column.
 	Table table;
-	table.AddColumn(0, {COLUMN_WIDTH, Alignment::LEFT});
-	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::RIGHT});
+	table.AddColumn(0, {COLUMN_WIDTH, Alignment::START});
+	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::END});
 	table.SetUnderline(0, COLUMN_WIDTH);
 	Point start = bounds.TopLeft() + Point(10., 8.);
 	table.DrawAt(start);
@@ -530,7 +530,7 @@ void ShipInfoPanel::DrawWeapons(const Rectangle &bounds)
 		double &y = nextY[isRight][isTurret];
 		double x = centerX + (isRight ? LABEL_DX : -LABEL_DX - LABEL_WIDTH);
 		bool isHover = (index == hoverIndex);
-		layout.align = isRight ? Alignment::LEFT : Alignment::RIGHT;
+		layout.align = isRight ? Alignment::START : Alignment::END;
 		font.Draw({name, layout}, Point(x, y + TEXT_OFF), isHover ? bright : dim);
 		Point zoneCenter(labelCenter[isRight], y + .5 * LINE_HEIGHT);
 		zones.emplace_back(zoneCenter, LINE_SIZE, index);
@@ -587,8 +587,8 @@ void ShipInfoPanel::DrawCargo(const Rectangle &bounds)
 	const bool showPooled = ship.GetPlanet() == player.GetPlanet() && player.Cargo().Used();
 	const CargoHold &cargo = (showPooled ? player.Cargo() : ship.Cargo());
 	Table table;
-	table.AddColumn(0, {COLUMN_WIDTH, Alignment::LEFT});
-	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::RIGHT});
+	table.AddColumn(0, {COLUMN_WIDTH, Alignment::START});
+	table.AddColumn(COLUMN_WIDTH, {COLUMN_WIDTH, Alignment::END});
 	table.SetUnderline(-5, COLUMN_WIDTH + 5);
 	table.DrawAt(bounds.TopLeft() + Point(10., 8.));
 

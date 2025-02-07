@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 class Rectangle;
@@ -58,6 +59,7 @@ public:
 		virtual std::string Value() = 0;
 		// Toggle the item's value, or return another panel to collect more inputs.
 		virtual std::optional<UpdateOnDropPanel *> Clicked() = 0;
+		virtual std::variant<bool, UpdateOnDropPanel *> KeyDown(int keycode) = 0;
 		virtual void ResetToDefault() = 0;
 
 		// Get a secondary panel for additional information. May or may not be called.

@@ -842,7 +842,7 @@ void ShopPanel::DrawShipsSidebar()
 		font.Draw("cargo space:", point, medium);
 
 		string space = Format::Number(player.Cargo().Free()) + " / " + Format::Number(player.Cargo().Size());
-		font.Draw({space, {SIDEBAR_WIDTH - 20, Alignment::RIGHT}}, point, bright);
+		font.Draw({space, {SIDEBAR_WIDTH - 20, Alignment::END}}, point, bright);
 		point.Y() += 20.;
 	}
 	sidebarScroll.SetDisplaySize(Screen::Height() - BUTTON_HEIGHT);
@@ -917,7 +917,7 @@ void ShopPanel::DrawButtons()
 	font.Draw("You have:", creditsPoint, dim);
 
 	const auto credits = Format::CreditString(player.Accounts().Credits());
-	font.Draw({credits, {SIDEBAR_WIDTH - 20, Alignment::RIGHT}}, creditsPoint, bright);
+	font.Draw({credits, {SIDEBAR_WIDTH - 20, Alignment::END}}, creditsPoint, bright);
 
 	const Font &bigFont = FontSet::Get(18);
 	const Color &hover = *GameData::Colors().Get("hover");

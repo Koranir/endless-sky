@@ -129,7 +129,7 @@ PreferencesPanel::PreferencesPanel()
 	// Initialize a centered tooltip.
 	hoverText.SetFont(FontSet::Get(14));
 	hoverText.SetWrapWidth(250);
-	hoverText.SetAlignment(Alignment::LEFT);
+	hoverText.SetAlignment(Alignment::START);
 
 	// Set the initial plugin list and description scroll ranges.
 	const Interface *pluginUi = GameData::Interfaces().Get("plugins");
@@ -179,12 +179,6 @@ void PreferencesPanel::Draw()
 
 	if(Plugins::HasChanged())
 		info.SetCondition("show plugins changed");
-	// if(CONTROLS_PAGE_COUNT > 1)
-	// 	info.SetCondition("multiple controls pages");
-	// if(currentControlsPage > 0)
-	// 	info.SetCondition("show previous controls");
-	// if(currentControlsPage + 1 < CONTROLS_PAGE_COUNT)
-	// 	info.SetCondition("show next controls");
 	if(SETTINGS_PAGE_COUNT > 1)
 		info.SetCondition("multiple settings pages");
 	if(currentSettingsPage > 0)
@@ -200,10 +194,7 @@ void PreferencesPanel::Draw()
 	prefZones.clear();
 	pluginZones.clear();
 	if(page == 'c')
-	{
 		DrawControls();
-		DrawTooltips();
-	}
 	else if(page == 's')
 	{
 		DrawSettings();
@@ -221,13 +212,6 @@ void PreferencesPanel::Draw()
 
 bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
-	if(static_cast<unsigned>(editing) < zones.size())
-	{
-		Command::SetKey(zones[editing].Value(), key);
-		EndEditing();
-		return true;
-	}
-
 	if(key == SDLK_DOWN)
 		HandleDown();
 	else if(key == SDLK_UP)
@@ -258,32 +242,6 @@ bool PreferencesPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comma
 	}
 	else if(key == 'o' && page == 'p')
 		Files::OpenUserPluginFolder();
-	else if((key == 'n' || key == SDLK_PAGEUP)
-		&& ((page == 'c' && currentControlsPage < CONTROLS_PAGE_COUNT - 1)
-		|| (page == 's' && currentSettingsPage < SETTINGS_PAGE_COUNT - 1)))
-	{
-		if(page == 'c')
-			++currentControlsPage;
-		else
-			++currentSettingsPage;
-		selected = 0;
-		selectedItem.clear();
-	}
-	else if((key == 'r' || key == SDLK_PAGEDOWN)
-		&& ((page == 'c' && currentControlsPage > 0) || (page == 's' && currentSettingsPage > 0)))
-	{
-		if(page == 'c')
-			--currentControlsPage;
-		else
-			--currentSettingsPage;
-		selected = 0;
-		selectedItem.clear();
-	}
-	else if((key == 'x' || key == SDLK_DELETE) && (page == 'c'))
-	{
-		if(zones[latest].Value().KeyName() != Command::MENU.KeyName())
-			Command::SetKey(zones[latest].Value(), 0);
-	}
 	else
 		return false;
 
@@ -508,15 +466,15 @@ void PreferencesPanel::DrawControls()
 	oldHover = hover;
 
 	Table infoTable;
-	infoTable.AddColumn(125, {150, Alignment::RIGHT});
+	infoTable.AddColumn(125, {150, Alignment::END});
 	infoTable.SetUnderline(0, 130);
 	infoTable.DrawAt(Point(-400, 32));
 
 	infoTable.DrawUnderline(medium);
 	infoTable.Draw("Additional info", bright);
 	infoTable.DrawGap(5);
-	infoTable.Draw("Press '_x' over controls", medium);
-	infoTable.Draw("to unbind them.", medium);
+	infoTable.Draw("Unbind Control: '_x'", medium);
+	infoTable.Draw("Reset Control: '_r'", medium);
 	infoTable.Draw("Controls can share", medium);
 	infoTable.Draw("the same keybind.", medium);
 }
@@ -531,8 +489,8 @@ void PreferencesPanel::DrawSettings()
 	const Color &bright = *GameData::Colors().Get("bright");
 
 	Table table;
-	table.AddColumn(-115, {230, Alignment::LEFT});
-	table.AddColumn(115, {230, Alignment::RIGHT});
+	table.AddColumn(-115, {230, Alignment::START});
+	table.AddColumn(115, {230, Alignment::END});
 	table.SetUnderline(-120, 120);
 
 	int firstY = -248;

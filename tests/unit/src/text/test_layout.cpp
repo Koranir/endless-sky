@@ -65,7 +65,7 @@ SCENARIO( "Creating a Layout", "[text][layout]" ) {
 		Layout layout;
 		THEN( "It has the right properties" ) {
 			CHECK( layout.width == -1 );
-			CHECK( layout.align == Alignment::LEFT );
+			CHECK( layout.align == Alignment::START );
 			CHECK( layout.truncate == Truncate::NONE );
 		}
 	}

@@ -162,10 +162,10 @@ const PlayerInfoPanel::SortableColumn PlayerInfoPanel::columns[7] = {
 	SortableColumn("ship", 0, 217, {217, Truncate::MIDDLE}, CompareName),
 	SortableColumn("model", 220, 347, {127, Truncate::BACK}, CompareModelName),
 	SortableColumn("system", 350, 487, {137, Truncate::BACK}, CompareSystem),
-	SortableColumn("shields", 550, 493, {57, Alignment::RIGHT, Truncate::BACK}, CompareShields),
-	SortableColumn("hull", 610, 553, {57, Alignment::RIGHT, Truncate::BACK}, CompareHull),
-	SortableColumn("fuel", 670, 613, {57, Alignment::RIGHT, Truncate::BACK}, CompareFuel),
-	SortableColumn("crew", 730, 673, {57, Alignment::RIGHT, Truncate::BACK}, CompareRequiredCrew)
+	SortableColumn("shields", 550, 493, {57, Alignment::END, Truncate::BACK}, CompareShields),
+	SortableColumn("hull", 610, 553, {57, Alignment::END, Truncate::BACK}, CompareHull),
+	SortableColumn("fuel", 670, 613, {57, Alignment::END, Truncate::BACK}, CompareFuel),
+	SortableColumn("crew", 730, 673, {57, Alignment::END, Truncate::BACK}, CompareRequiredCrew)
 };
 
 
@@ -610,8 +610,8 @@ void PlayerInfoPanel::DrawPlayer(const Rectangle &bounds)
 	// Two columns of opposite alignment are used to simulate a single visual column.
 	Table table;
 	const int columnWidth = 230;
-	table.AddColumn(0, {columnWidth, Alignment::LEFT});
-	table.AddColumn(columnWidth, {columnWidth, Alignment::RIGHT});
+	table.AddColumn(0, {columnWidth, Alignment::START});
+	table.AddColumn(columnWidth, {columnWidth, Alignment::END});
 	table.SetUnderline(0, columnWidth);
 	table.DrawAt(bounds.TopLeft() + Point(10., 8.));
 

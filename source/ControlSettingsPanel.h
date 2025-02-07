@@ -59,6 +59,7 @@ public:
 		std::string Value() override;
 		// Toggle the item's value, or return another panel to collect more inputs.
 		std::optional<SettingsPane::UpdateOnDropPanel *> Clicked() override;
+		std::variant<bool, SettingsPane::UpdateOnDropPanel *> KeyDown(int keycode) override;
 		void ResetToDefault() override;
 
 		// Get a secondary panel for additional information. May or may not be called.

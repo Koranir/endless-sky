@@ -23,7 +23,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "TextArea.h"
 #include "text/FontSet.h"
 #include "text/Font.h"
+#include "text/alignment.hpp"
 
+#include <SDL_keycode.h>
 #include <array>
 #include <iostream>
 #include <memory>
@@ -227,6 +229,23 @@ optional<SettingsPane::UpdateOnDropPanel *> ControlSettingsPanel::Item::Clicked(
 
 
 
+variant<bool, SettingsPane::UpdateOnDropPanel *> ControlSettingsPanel::Item::KeyDown(int keycode)
+{
+	if(keycode == 'x' || keycode == SDLK_DELETE)
+	{
+		Command::SetKey(command, 0);
+		return true;
+	}
+	if(keycode == 'r')
+	{
+		ResetToDefault();
+		return true;
+	}
+	return false;
+}
+
+
+
 void ControlSettingsPanel::Item::ResetToDefault()
 {
 	Command::SetKey(command, command.Default().value_or(0));
@@ -238,6 +257,7 @@ Panel *ControlSettingsPanel::Item::NewInfoUI(UI *parent, const Rectangle &bounds
 {
 	auto panel = new TextArea(bounds);
 	panel->SetText(GameData::Tooltip(command.Description()));
+	panel->SetVerticalAlignment(Alignment::CENTER);
 	return panel;
 }
 

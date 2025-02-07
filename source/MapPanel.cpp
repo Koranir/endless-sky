@@ -282,7 +282,7 @@ MapPanel::MapPanel(PlayerInfo &player, int commodity, const System *special, boo
 	// Initialize a centered tooltip.
 	hoverText.SetFont(FontSet::Get(14));
 	hoverText.SetWrapWidth(150);
-	hoverText.SetAlignment(Alignment::LEFT);
+	hoverText.SetAlignment(Alignment::START);
 
 	// Find out how far the player is able to jump. The range of the system
 	// takes priority over the range of the player's flagship.

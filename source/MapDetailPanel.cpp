@@ -830,7 +830,7 @@ void MapDetailPanel::DrawInfo()
 		else
 			price = (canView ? "n/a" : "?");
 
-		const auto alignRight = Layout(140, Alignment::RIGHT, Truncate::BACK);
+		const auto alignRight = Layout(140, Alignment::END, Truncate::BACK);
 		font.Draw({price, alignRight}, uiPoint, color);
 
 		if(isSelected)

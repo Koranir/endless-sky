@@ -133,7 +133,7 @@ void LogbookPanel::Draw()
 	auto pit = player.SpecialLogs().find(selectedName);
 	if(selectedDate && begin != end)
 	{
-		const auto layout = Layout(static_cast<int>(TEXT_WIDTH - 2. * PAD), Alignment::RIGHT);
+		const auto layout = Layout(static_cast<int>(TEXT_WIDTH - 2. * PAD), Alignment::END);
 		for(auto it = begin; it != end; ++it)
 		{
 			string date = it->first.ToString();

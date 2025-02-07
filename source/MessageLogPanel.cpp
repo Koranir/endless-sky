@@ -84,7 +84,7 @@ void MessageLogPanel::Draw()
 
 	// Parameters for drawing messages:
 	WrappedText messageLine(font);
-	messageLine.SetAlignment(Alignment::LEFT);
+	messageLine.SetAlignment(Alignment::START);
 	messageLine.SetWrapWidth(width - 2. * PAD);
 
 	// Draw messages.

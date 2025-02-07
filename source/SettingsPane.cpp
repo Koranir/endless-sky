@@ -33,6 +33,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <optional>
 #include <stdexcept>
 #include <utility>
+#include <variant>
 
 using namespace std;
 
@@ -92,7 +93,6 @@ void SettingsPane::Draw()
 		scroll.IsScrollAtMin() ? 0 : 20,
 		scroll.IsScrollAtMax() ? 0 : 20
 	);
-	// FillShader::Fill(bounds.Center(), bounds.Dimensions(), Color(1.).Transparent(0.25));
 	buffer->Draw(bounds.Center(), bounds.Dimensions());
 
 	const float SCROLLBAR_OFFSET = -3;
@@ -202,7 +202,10 @@ bool SettingsPane::Hover(int x, int y)
 		if(i)
 		{
 			auto [section, offset] = *i;
-			mouseOver.emplace(offset); 
+			mouseOver.emplace(offset);
+			if(focused)
+				SectionForIndex(*focused).first->Invalidate();
+			focused = mouseOver;
 			section->Invalidate();
 		}
 		else
@@ -218,6 +221,10 @@ bool SettingsPane::Hover(int x, int y)
 	}
 	else
 		mouseOver = nullopt;
+
+	if(focused)
+		SectionForIndex(*focused).first->Invalidate();
+	focused = keyboardOver;
 
 	return false;
 }
@@ -285,7 +292,27 @@ bool SettingsPane::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, 
 		if(keyboardOver)
 			TriggerItem(*keyboardOver);
 	}
+	if(focused)
+	{
+		auto [section, idx] = SectionForIndex(*focused);
 
+		auto res = section->Items()[idx]->KeyDown(key);
+		if(holds_alternative<bool>(res))
+		{
+			if(std::get<bool>(res))
+			{
+			section->Invalidate();
+				return true;
+			}
+		}
+		else
+		{
+			auto panel = std::get<UpdateOnDropPanel *>(res);
+
+			(panel)->parent = section;
+			GetUI()->Push(panel);
+		}
+	}
 	return false;
 }
 
@@ -401,8 +428,8 @@ void SettingsPane::Section::Draw(const Rectangle &at, SettingsPane &parent, size
 		const double TEXT_RIGHT = at.Dimensions().X() - 10;
 
 		Table table;
-		table.AddColumn(TEXT_LEFT, Layout(Alignment::LEFT));
-		table.AddColumn(TEXT_RIGHT, Layout(Alignment::RIGHT));
+		table.AddColumn(TEXT_LEFT, Layout(Alignment::START));
+		table.AddColumn(TEXT_RIGHT, Layout(Alignment::END));
 		table.SetUnderline(0, at.Dimensions().X());
 
 		table.DrawAt(Screen::TopLeft());

@@ -15,12 +15,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "TextArea.h"
 
+#include "Rectangle.h"
 #include "text/FontSet.h"
 #include "GameData.h"
 #include "shader/PointerShader.h"
 #include "Preferences.h"
 #include "RenderBuffer.h"
 #include "ScrollBar.h"
+#include "text/alignment.hpp"
 
 
 
@@ -108,6 +110,14 @@ void TextArea::SetTruncate(Truncate t)
 
 
 
+void TextArea::SetVerticalAlignment(Alignment a)
+{
+	vertical = a;
+	Invalidate();
+}
+
+
+
 int TextArea::GetTextHeight(bool trailingBreak)
 {
 	Validate();
@@ -126,10 +136,12 @@ int TextArea::GetLongestLineWidth()
 
 void TextArea::Draw()
 {
-	if(!buffer)
-		buffer = std::make_unique<RenderBuffer>(size);
 
 	Validate();
+
+	if(!buffer)
+		buffer = std::make_unique<RenderBuffer>(Point(size.X(), wrappedText.Height()));
+
 	if(!bufferIsValid || !scroll.IsAnimationDone())
 	{
 		scroll.Step();
@@ -145,7 +157,18 @@ void TextArea::Draw()
 		);
 		bufferIsValid = true;
 	}
-	buffer->Draw(position);
+
+	Point offset;
+	if(!scroll.Scrollable())
+	{
+		auto diff = size.Y() - buffer->Height();
+		if(vertical == Alignment::CENTER)
+			offset = Point(0, diff / 2.);
+		else if(vertical == Alignment::END)
+			offset = Point(0, diff);
+	}
+
+	buffer->Draw(Rectangle(position, size).TopLeft() + buffer->Dimensions() / 2. + offset);
 
 	const Point UP{0, -1};
 	const Point DOWN{0, 1};
