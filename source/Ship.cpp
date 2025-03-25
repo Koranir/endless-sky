@@ -4598,10 +4598,6 @@ bool Ship::DoLandingLogic()
 				return true;
 			}
 
-			SetTargetAsteroid(nullptr);
-			SetTargetFlotsam(nullptr);
-			SetTargetShip(nullptr);
-
 			zoom = 0.f;
 		}
 	}
