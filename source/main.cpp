@@ -59,6 +59,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <mmsystem.h>
 #endif
 
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_sdl2.h>
+
 
 using namespace std;
 
@@ -307,6 +311,13 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 		SDL_Event event;
 		while(SDL_PollEvent(&event))
 		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			ImGuiIO &io = ImGui::GetIO();
+			if(io.WantCaptureMouse && event.type >= SDL_MOUSEMOTION && event.type <= SDL_MOUSEWHEEL)
+				continue;
+			if(io.WantCaptureKeyboard && event.type >= SDL_KEYDOWN && event.type <= SDL_TEXTEDITING_EXT)
+				continue;
+
 			UI &activeUI = (menuPanels.IsEmpty() ? gamePanels : menuPanels);
 
 			// If the mouse moves, reset the cursor movement timeout.
@@ -367,6 +378,11 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 	{
 		while(!menuPanels.IsDone())
 		{
+			ImGui_ImplSDL2_NewFrame();
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui::NewFrame();
+			ImGui::ShowDemoWindow();
+
 			if(toggleTimeout)
 				--toggleTimeout;
 			chrono::steady_clock::time_point start = chrono::steady_clock::now();
@@ -434,6 +450,9 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 				SpriteShader::Draw(SpriteSet::Get("ui/paused"), Screen::TopLeft() + Point(10., 10.));
 			else if(isFastForward)
 				SpriteShader::Draw(SpriteSet::Get("ui/fast forward"), Screen::TopLeft() + Point(10., 10.));
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 			GameWindow::Step();
 

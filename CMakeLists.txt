@@ -74,6 +74,42 @@ if(NOT APPLE)
 	find_package(GLEW REQUIRED)
 endif()
 
+# Dear ImGui doesn't have native cmake support.
+include(FetchContent)
+FetchContent_Declare(
+	imguiSource
+	GIT_REPOSITORY https://github.com/ocornut/imgui.git
+	GIT_TAG f5befd2d29e66809cd1110a152e375a7f1981f06 # 1.91.9b
+	GIT_SHALLOW true
+)
+FetchContent_MakeAvailable(imguiSource)
+FetchContent_GetProperties(imguiSource
+	SOURCE_DIR imguiSourceDir
+)
+
+set(IMGUI_INCLUDE_DIR "${imguiSourceDir}")
+
+add_library(imgui OBJECT)
+target_link_libraries(imgui SDL2::SDL2)
+
+target_include_directories(imgui PUBLIC ${IMGUI_INCLUDE_DIR})
+target_sources(imgui PRIVATE
+	"${imguiSourceDir}/imgui.cpp"
+	"${imguiSourceDir}/imgui_demo.cpp"
+	"${imguiSourceDir}/imgui_draw.cpp"
+	"${imguiSourceDir}/imgui_tables.cpp"
+	"${imguiSourceDir}/imgui_widgets.cpp"
+	"${imguiSourceDir}/backends/imgui_impl_sdl2.cpp"
+	"${imguiSourceDir}/backends/imgui_impl_opengl3.cpp"
+	"${imguiSourceDir}/misc/cpp/imgui_stdlib.cpp"
+)
+
+if(MSVC)
+	target_compile_options(imgui PRIVATE /W0)
+else()
+	target_compile_options(imgui PRIVATE -w)
+endif()
+
 # Only very new versions of OpenAL provide a config package, so try to find it manually.
 find_package(OpenAL CONFIG QUIET)
 if(NOT OpenAL_FOUND)
@@ -240,7 +276,7 @@ else()
 endif()
 
 # Link with the library dependencies.
-target_link_libraries(EndlessSky PRIVATE ExternalLibraries EndlessSkyLib $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>)
+target_link_libraries(EndlessSky PRIVATE ExternalLibraries EndlessSkyLib $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main> imgui)
 
 # Copy the MinGW runtime DLLs if necessary.
 if(MINGW AND WIN32)
