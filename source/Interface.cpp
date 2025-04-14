@@ -213,11 +213,15 @@ const vector<double> &Interface::GetList(const string &name) const
 
 
 void Interface::Debug() {
-	Debug::SectionBegin("elements");
-	for(auto &element : elements) {
-		element->Debug();
+	if(Debug::CollapsableSectionBegin("elements", this))
+	{
+		Debug::IndentBegin(this);
+		for(auto &element : elements) {
+			element->Debug();
+		}
+		Debug::IndentEnd();
 	}
-	Debug::SectionEnd();
+	Debug::CollapsableSectionEnd();
 }
 
 
@@ -439,16 +443,22 @@ void Interface::Element::Place(const Rectangle &bounds, Panel *panel) const
 
 
 void Interface::Element::Debug() {
-	Debug::SectionBegin("from");
-	from.Debug();
-	Debug::SectionEnd();
-	Debug::SectionBegin("to");
-	to.Debug();
-	Debug::SectionEnd();
-	Debug::Value("alignment", &alignment);
-	Debug::Value("padding", &padding);
-	Debug::Value("visible if", &visibleIf);
-	Debug::Value("active if", &activeIf);
+	if(Debug::CollapsableSectionBegin("element", this))
+	{
+		Debug::IndentBegin(this);
+		Debug::SectionBegin("from");
+		from.Debug();
+		Debug::SectionEnd();
+		Debug::SectionBegin("to");
+		to.Debug();
+		Debug::SectionEnd();
+		Debug::Value("alignment", &alignment);
+		Debug::Value("padding", &padding);
+		Debug::Value("visible if", &visibleIf);
+		Debug::Value("active if", &activeIf);
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
 }
 
 
@@ -549,6 +559,35 @@ void Interface::ImageElement::Draw(const Rectangle &rect, const Information &inf
 
 
 
+void Interface::ImageElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("image", this))
+	{
+		Debug::IndentBegin(this);
+		if(!name.empty())
+			Debug::Value("name", &name);
+		else
+		{
+			if(sprite[0])
+				Debug::Value("inactive", &sprite[0]->Name());
+			if(sprite[1])
+				Debug::Value("active", &sprite[1]->Name());
+			if(sprite[2])
+				Debug::Value("hover", &sprite[2]->Name());
+		}
+
+		Debug::Value("outline", &isOutline);
+		Debug::Value("outline colored", &isColored);
+
+		Interface::Element::Debug();
+
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
+}
+
+
+
 const Sprite *Interface::ImageElement::GetSprite(const Information &info, int state) const
 {
 	return name.empty() ? sprite[state] : info.GetSprite(name);
@@ -584,11 +623,11 @@ bool Interface::TextElement::ParseLine(const DataNode &node)
 	if(node.Token(0) == "size" && node.Size() >= 2)
 		fontSize = node.Value(1);
 	else if(node.Token(0) == "color" && node.Size() >= 2)
-		color[Element::ACTIVE] = GameData::Colors().Get(node.Token(1));
+		color[Element::ACTIVE] = *GameData::Colors().Get(node.Token(1));
 	else if(node.Token(0) == "inactive" && node.Size() >= 2)
-		color[Element::INACTIVE] = GameData::Colors().Get(node.Token(1));
+		color[Element::INACTIVE] = *GameData::Colors().Get(node.Token(1));
 	else if(node.Token(0) == "hover" && node.Size() >= 2)
-		color[Element::HOVER] = GameData::Colors().Get(node.Token(1));
+		color[Element::HOVER] = *GameData::Colors().Get(node.Token(1));
 	else if(node.Token(0) == "truncate" && node.Size() >= 2)
 	{
 		if(node.Token(1) == "none")
@@ -620,29 +659,49 @@ void Interface::TextElement::Place(const Rectangle &bounds, Panel *panel) const
 
 
 
+void Interface::TextElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("text", this))
+	{
+		Debug::Value("str", &str);
+		Debug::Value("inactive", &color[0]);
+		Debug::Value("active", &color[1]);
+		Debug::Value("hover", &color[2]);
+		Debug::Value("font size", &fontSize);
+		Debug::Value("button key", &buttonKey);
+		Debug::Value("dynamic", &isDynamic);
+		Debug::Value("truncate", &truncate);
+
+		Interface::Element::Debug();
+	}
+	Debug::CollapsableSectionEnd();
+}
+
+
+
 // Fill in any undefined state colors.
 void Interface::TextElement::FinishLoadingColors()
 {
 	// By default, labels are "medium", strings
 	// are "bright", and button brightness depends on its activation state.
-	if(!color[Element::ACTIVE] && !buttonKey)
-		color[Element::ACTIVE] = GameData::Colors().Get(isDynamic ? "bright" : "medium");
+	if(!color[Element::ACTIVE].IsLoaded() && !buttonKey)
+		color[Element::ACTIVE] = *GameData::Colors().Get(isDynamic ? "bright" : "medium");
 
-	if(!color[Element::ACTIVE])
+	if(!color[Element::ACTIVE].IsLoaded())
 	{
 		// If no color is specified and this is a button, use the default colors.
-		color[Element::ACTIVE] = GameData::Colors().Get("active");
-		if(!color[Element::INACTIVE])
-			color[Element::INACTIVE] = GameData::Colors().Get("inactive");
-		if(!color[Element::HOVER])
-			color[Element::HOVER] = GameData::Colors().Get("hover");
+		color[Element::ACTIVE] = *GameData::Colors().Get("active");
+		if(!color[Element::INACTIVE].IsLoaded())
+			color[Element::INACTIVE] = *GameData::Colors().Get("inactive");
+		if(!color[Element::HOVER].IsLoaded())
+			color[Element::HOVER] = *GameData::Colors().Get("hover");
 	}
 	else
 	{
 		// If a base color was specified, also use it for any unspecified states.
-		if(!color[Element::INACTIVE])
+		if(!color[Element::INACTIVE].IsLoaded())
 			color[Element::INACTIVE] = color[Element::ACTIVE];
-		if(!color[Element::HOVER])
+		if(!color[Element::HOVER].IsLoaded())
 			color[Element::HOVER] = color[Element::ACTIVE];
 	}
 }
@@ -685,11 +744,11 @@ Point Interface::BasicTextElement::NativeDimensions(const Information &info, int
 void Interface::BasicTextElement::Draw(const Rectangle &rect, const Information &info, int state) const
 {
 	// Avoid crashes for malformed interface elements that are not fully loaded.
-	if(!color[state])
+	if(!color[state].IsLoaded())
 		return;
 
 	const auto layout = Layout(static_cast<int>(rect.Width()), truncate);
-	FontSet::Get(fontSize).Draw({GetString(info), layout}, rect.TopLeft(), *color[state]);
+	FontSet::Get(fontSize).Draw({GetString(info), layout}, rect.TopLeft(), color[state]);
 }
 
 
@@ -754,7 +813,21 @@ Point Interface::WrappedTextElement::NativeDimensions(const Information &info, i
 void Interface::WrappedTextElement::Draw(const Rectangle &rect, const Information &info, int state) const
 {
 	// The text has already been wrapped in NativeDimensions called by Element::Draw.
-	text.Draw(rect.TopLeft(), *color[state]);
+	text.Draw(rect.TopLeft(), color[state]);
+}
+
+
+
+void Interface::WrappedTextElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("wrapped text", this))
+	{
+		Debug::IndentBegin(this);
+		Debug::Value("alignment", &alignment);
+		Interface::TextElement::Debug();
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
 }
 
 
@@ -775,8 +848,8 @@ Interface::BarElement::BarElement(const DataNode &node, const Point &globalAncho
 	Load(node, globalAnchor);
 
 	// Fill in a default color if none is specified.
-	if(!fromColor)
-		fromColor = toColor = GameData::Colors().Get("active");
+	if(!fromColor.IsLoaded())
+		fromColor = toColor = *GameData::Colors().Get("active");
 }
 
 
@@ -787,8 +860,8 @@ bool Interface::BarElement::ParseLine(const DataNode &node)
 {
 	if(node.Token(0) == "color" && node.Size() >= 2)
 	{
-		fromColor = GameData::Colors().Get(node.Token(1));
-		toColor = node.Size() >= 3 ? GameData::Colors().Get(node.Token(2)) : fromColor;
+		fromColor = *GameData::Colors().Get(node.Token(1));
+		toColor = node.Size() >= 3 ? *GameData::Colors().Get(node.Token(2)) : fromColor;
 	}
 	else if(node.Token(0) == "size" && node.Size() >= 2)
 		width = node.Value(1);
@@ -816,7 +889,7 @@ void Interface::BarElement::Draw(const Rectangle &rect, const Information &info,
 		segments = 0.;
 
 	// Avoid crashes for malformed interface elements that are not fully loaded.
-	if(!fromColor || !toColor || !width || !value)
+	if(!fromColor.IsLoaded() || !toColor.IsLoaded() || !width || !value)
 		return;
 
 	if(isRing)
@@ -826,7 +899,7 @@ void Interface::BarElement::Draw(const Rectangle &rect, const Information &info,
 
 
 		double fraction = value * spanAngle / 360.;
-		RingShader::Draw(rect.Center(), .5 * rect.Width(), width, fraction, *fromColor, segments, startAngle);
+		RingShader::Draw(rect.Center(), .5 * rect.Width(), width, fraction, fromColor, segments, startAngle);
 	}
 	else
 	{
@@ -848,12 +921,12 @@ void Interface::BarElement::Draw(const Rectangle &rect, const Information &info,
 		double v = 0.;
 		while(v < value)
 		{
-			Color nFromColor = Color::Combine(1 - v, *fromColor, v, *toColor);
+			Color nFromColor = Color::Combine(1 - v, fromColor, v, toColor);
 			Point from = start + v * dimensions;
 			v += filled;
 			double lim = min(v, value);
 			Point to = start + lim * dimensions;
-			Color nToColor = Color::Combine(1 - lim, *fromColor, lim, *toColor);
+			Color nToColor = Color::Combine(1 - lim, fromColor, lim, toColor);
 			v += empty;
 
 			// Rounded lines have a bit of padding, so account for that here.
@@ -869,6 +942,31 @@ void Interface::BarElement::Draw(const Rectangle &rect, const Information &info,
 
 
 
+void Interface::BarElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("bar", this))
+	{
+		Debug::IndentBegin(this);
+
+		Debug::Value("name", &name);
+		Debug::Value("from color", &fromColor);
+		Debug::Value("to color", &toColor);
+
+		Debug::Value("wdith", &width);
+		Debug::Value("reverse", &reversed);
+		Debug::Value("ring", &isRing);
+		Debug::Value("span angle", &spanAngle);
+		Debug::Value("start angle", &startAngle);
+
+		Interface::Element::Debug();
+
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
+}
+
+
+
 // Members of the PointerElement class:
 
 // Constructor.
@@ -877,8 +975,8 @@ Interface::PointerElement::PointerElement(const DataNode &node, const Point &glo
 	Load(node, globalAnchor);
 
 	// Fill in a default color if none is specified.
-	if(!color)
-		color = GameData::Colors().Get("medium");
+	if(!color.IsLoaded())
+		color = *GameData::Colors().Get("medium");
 
 	// Set a default orientation if none is specified.
 	if(!orientation)
@@ -892,7 +990,7 @@ Interface::PointerElement::PointerElement(const DataNode &node, const Point &glo
 bool Interface::PointerElement::ParseLine(const DataNode &node)
 {
 	if(node.Token(0) == "color" && node.Size() >= 2)
-		color = GameData::Colors().Get(node.Token(1));
+		color = *GameData::Colors().Get(node.Token(1));
 	else if(node.Token(0) == "orientation angle" && node.Size() >= 2)
 	{
 		const Angle direction(node.Value(1));
@@ -916,7 +1014,25 @@ void Interface::PointerElement::Draw(const Rectangle &rect, const Information &i
 	const Point center = rect.Center();
 	const float width = rect.Width();
 	const float height = rect.Height();
-	PointerShader::Draw(center, orientation, width, height, 0.f, *color);
+	PointerShader::Draw(center, orientation, width, height, 0.f, color);
+}
+
+
+
+void Interface::PointerElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("pointer", this))
+	{
+		Debug::IndentBegin(this);
+
+		Debug::Value("orientation", &orientation);
+		Debug::Value("color", &color);
+
+		Interface::Element::Debug();
+
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
 }
 
 
@@ -930,8 +1046,8 @@ Interface::LineElement::LineElement(const DataNode &node, const Point &globalAnc
 	Load(node, globalAnchor);
 
 	// Fill in a default color if none is specified.
-	if(!color)
-		color = GameData::Colors().Get("medium");
+	if(!color.IsLoaded())
+		color = *GameData::Colors().Get("medium");
 }
 
 
@@ -941,7 +1057,7 @@ Interface::LineElement::LineElement(const DataNode &node, const Point &globalAnc
 bool Interface::LineElement::ParseLine(const DataNode &node)
 {
 	if(node.Token(0) == "color" && node.Size() >= 2)
-		color = GameData::Colors().Get(node.Token(1));
+		color = *GameData::Colors().Get(node.Token(1));
 	else
 		return false;
 
@@ -956,5 +1072,22 @@ void Interface::LineElement::Draw(const Rectangle &rect, const Information &info
 	// Avoid crashes for malformed interface elements that are not fully loaded.
 	if(!from.Get() && !to.Get())
 		return;
-	FillShader::Fill(rect.Center(), rect.Dimensions(), *color);
+	FillShader::Fill(rect.Center(), rect.Dimensions(), color);
+}
+
+
+
+void Interface::LineElement::Debug()
+{
+	if(Debug::CollapsableSectionBegin("line", this))
+	{
+		Debug::IndentBegin(this);
+
+		Debug::Value("color", &color);
+
+		Interface::Element::Debug();
+
+		Debug::IndentEnd();
+	}
+	Debug::CollapsableSectionEnd();
 }

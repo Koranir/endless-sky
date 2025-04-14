@@ -1,11 +1,14 @@
 // Dear ImGui uses old-style casts in its headers for some inline functions,
 // disable warnings for those.
 // INFO: If your compiler gives a warning for this, add an exception here.
-#include "Rectangle.h"
-#include <limits>
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 #include "Debug.h"
+
+#include "text/Truncate.h"
+#include "Rectangle.h"
+#include "Color.h"
+#include <limits>
 
 #include <imgui.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -104,10 +107,38 @@ void Debug::SectionBegin(const string &s)
 
 
 
-
 void Debug::SectionEnd()
 {
 	ImGui::EndGroup();
+}
+
+
+
+bool Debug::CollapsableSectionBegin(const string &s, void *id)
+{
+	ImGui::PushID(id);
+	return ImGui::CollapsingHeader(s.c_str());
+}
+
+
+
+void Debug::CollapsableSectionEnd()
+{
+	ImGui::PopID();
+}
+
+
+
+void Debug::IndentBegin(void *id)
+{
+	ImGui::TreePush(id);
+}
+
+
+
+void Debug::IndentEnd()
+{
+	ImGui::TreePop();
 }
 
 
@@ -120,14 +151,25 @@ void Debug::Value(const string &s, double *value)
 	ImGui::PopID();
 }
 
+
+template<>
+void Debug::Value(const string &s, int *value)
+{
+	ImGui::PushID(value);
+	ImGui::DragInt(s.c_str(), value);
+	ImGui::PopID();
+}
+
 template<>
 void Debug::Value(const std::string &s, Point *value)
 {
 	ImGui::PushID(value);
 	ImGui::Text("%s", s.c_str());
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2);
 	Value("x", &value->X());
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2);
 	Value("y", &value->Y());
 	ImGui::PopID();
 }
@@ -148,5 +190,61 @@ void Debug::Value(const std::string &s, string *value)
 {
 	ImGui::PushID(value);
 	ImGui::InputText(s.c_str(), value);
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const std::string &s, const string *value)
+{
+	ImGui::PushID(value);
+	ImGui::LabelText(s.c_str(), "%s", value->c_str());
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, bool *value)
+{
+	ImGui::PushID(value);
+	ImGui::Checkbox(s.c_str(), value);
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, char *value)
+{
+	ImGui::PushID(value);
+	ImGui::InputText(s.c_str(), value, 1);
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, Truncate *value)
+{
+	ImGui::PushID(value);
+	ImGui::Combo(s.c_str(), reinterpret_cast<int *>(value), "None\0Front\0Middle\0Back");
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, Color *value)
+{
+	ImGui::PushID(value);
+	ImGui::ColorEdit4(s.c_str(), const_cast<float *>(value->Get()));
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, const Color *value)
+{
+	ImGui::PushID(value);
+	ImGui::ColorEdit4(s.c_str(), const_cast<float *>(value->Get()), ImGuiColorEditFlags_NoInputs);
+	ImGui::PopID();
+}
+
+template<>
+void Debug::Value(const string &s, float *value)
+{
+	ImGui::PushID(value);
+	ImGui::DragFloat(s.c_str(), value);
 	ImGui::PopID();
 }

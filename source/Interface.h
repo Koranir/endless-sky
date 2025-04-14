@@ -140,7 +140,7 @@ private:
 		virtual Point NativeDimensions(const Information &info, int state) const override;
 		// Draw this element in the given rectangle.
 		virtual void Draw(const Rectangle &rect, const Information &info, int state) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 	private:
 		const Sprite *GetSprite(const Information &info, int state) const;
@@ -169,7 +169,7 @@ private:
 		// Add any click handlers needed for this element. This will only be
 		// called if the element is visible and active.
 		virtual void Place(const Rectangle &bounds, Panel *panel) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 		// Fill in any undefined state colors.
 		void FinishLoadingColors();
@@ -180,7 +180,7 @@ private:
 		// The string may either be a name of a dynamic string, or static text.
 		std::string str;
 		// Color for inactive, active, and hover states.
-		const Color *color[3] = {nullptr, nullptr, nullptr};
+		Color color[3];
 		int fontSize = 14;
 		char buttonKey = '\0';
 		bool isDynamic = false;
@@ -214,7 +214,7 @@ private:
 		virtual Point NativeDimensions(const Information &info, int state) const override;
 		// Draw this element in the given rectangle.
 		virtual void Draw(const Rectangle &rect, const Information &info, int state) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 	private:
 		mutable WrappedText text;
@@ -232,12 +232,12 @@ private:
 		virtual bool ParseLine(const DataNode &node) override;
 		// Draw this element in the given rectangle.
 		virtual void Draw(const Rectangle &rect, const Information &info, int state) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 	private:
 		std::string name;
-		const Color *fromColor = nullptr;
-		const Color *toColor = nullptr;
+		Color fromColor;
+		Color toColor;
 		float width = 2.f;
 		bool reversed = false;
 		bool isRing = false;
@@ -257,10 +257,10 @@ private:
 		virtual bool ParseLine(const DataNode &node) override;
 		// Draw this element in the given rectangle.
 		virtual void Draw(const Rectangle &rect, const Information &info, int state) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 	private:
-		const Color *color = nullptr;
+		Color color;
 		Point orientation;
 	};
 
@@ -276,10 +276,10 @@ private:
 		virtual bool ParseLine(const DataNode &node) override;
 		// Draw this element in the given rectangle.
 		virtual void Draw(const Rectangle &rect, const Information &info, int state) const override;
-		// virtual void Debug() const override;
+		virtual void Debug() override;
 
 	private:
-		const Color *color = nullptr;
+		Color color;
 	};
 
 

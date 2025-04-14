@@ -16,22 +16,11 @@ public:
 	static void Log(const std::string &s);
 
 	static void SectionBegin(const std::string &s);
+	static bool CollapsableSectionBegin(const std::string &s, void *id);
+	static void IndentBegin(void *id);
 	template<typename ...T>
 	static void Value(const std::string &s, T *...value);
 	static void SectionEnd();
+	static void CollapsableSectionEnd();
+	static void IndentEnd();
 };
-
-// template<>
-// void Debug::Value(const std::string &s, double *value);
-
-// class Point;
-// template<>
-// void Debug::Value(const std::string &s, Point *value);
-
-// class Rectangle;
-// template<>
-// void Debug::Value(const std::string &s, Rectangle *value);
-
-// class AnchoredPoint;
-// template<>
-// void Debug::Value(const std::string &s, AnchoredPoint *value);
