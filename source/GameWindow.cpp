@@ -15,15 +15,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "GameWindow.h"
 
+#include "Debug.h"
 #include "Files.h"
 #include "image/ImageBuffer.h"
 #include "image/ImageFileData.h"
 #include "Logger.h"
 #include "Screen.h"
 
-#include <imgui.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_sdl2.h>
 #include "opengl.h"
 #include <SDL2/SDL.h>
 
@@ -255,16 +253,7 @@ bool GameWindow::Init(bool headless)
 	SetIcon();
 #endif
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	ImGuiIO &io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.IniFilename = nullptr;
-	io.LogFilename = nullptr;
-
-	ImGui_ImplSDL2_InitForOpenGL(mainWindow, context);
-	ImGui_ImplOpenGL3_Init();
+	Debug::Init(mainWindow, context);
 
 	return true;
 }
@@ -274,9 +263,7 @@ bool GameWindow::Init(bool headless)
 // Clean up the SDL context, window, and shut down SDL.
 void GameWindow::Quit()
 {
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
+	Debug::Destroy();
 
 	// Make sure the cursor is visible.
 	SDL_ShowCursor(true);

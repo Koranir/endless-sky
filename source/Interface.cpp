@@ -17,6 +17,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Angle.h"
 #include "DataNode.h"
+#include "Debug.h"
 #include "text/DisplayText.h"
 #include "shader/FillShader.h"
 #include "text/Font.h"
@@ -156,6 +157,7 @@ void Interface::Draw(const Information &info, Panel *panel) const
 {
 	for(const Element *element : elements)
 		element->Draw(info, panel);
+	const_cast<Interface *>(this)->Debug();
 }
 
 
@@ -210,6 +212,16 @@ const vector<double> &Interface::GetList(const string &name) const
 
 
 
+void Interface::Debug() {
+	Debug::SectionBegin("elements");
+	for(auto &element : elements) {
+		element->Debug();
+	}
+	Debug::SectionEnd();
+}
+
+
+
 // Members of the AnchoredPoint class:
 
 // Get the point's location, given the current screen dimensions.
@@ -232,6 +244,13 @@ void Interface::AnchoredPoint::Set(const Point &position, const Point &anchor)
 {
 	this->position = position;
 	this->anchor = anchor;
+}
+
+
+
+void Interface::AnchoredPoint::Debug() {
+	Debug::Value("anchor", &anchor);
+	Debug::Value("position", &position);
 }
 
 
@@ -415,6 +434,21 @@ void Interface::Element::Draw(const Rectangle &rect, const Information &info, in
 // called if the element is visible and active.
 void Interface::Element::Place(const Rectangle &bounds, Panel *panel) const
 {
+}
+
+
+
+void Interface::Element::Debug() {
+	Debug::SectionBegin("from");
+	from.Debug();
+	Debug::SectionEnd();
+	Debug::SectionBegin("to");
+	to.Debug();
+	Debug::SectionEnd();
+	Debug::Value("alignment", &alignment);
+	Debug::Value("padding", &padding);
+	Debug::Value("visible if", &visibleIf);
+	Debug::Value("active if", &activeIf);
 }
 
 

@@ -71,4 +71,6 @@ public:
 private:
 	Point center;
 	Point dimensions;
+
+	friend class Debug;
 };

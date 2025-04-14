@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "Debug.h"
 #include "audio/Audio.h"
 #include "Command.h"
 #include "Conversation.h"
@@ -59,9 +60,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <mmsystem.h>
 #endif
 
-#include <imgui.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_sdl2.h>
 
 
 using namespace std;
@@ -103,6 +101,7 @@ int main(int argc, char *argv[])
 		if(errorMessage.substr(0, PARSING_PREFIX.length()) != PARSING_PREFIX)
 			hasErrors = true;
 		Files::LogErrorToFile(errorMessage);
+		Debug::Log(errorMessage);
 	});
 
 	for(const char *const *it = argv + 1; *it; ++it)
@@ -311,11 +310,7 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 		SDL_Event event;
 		while(SDL_PollEvent(&event))
 		{
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			ImGuiIO &io = ImGui::GetIO();
-			if(io.WantCaptureMouse && event.type >= SDL_MOUSEMOTION && event.type <= SDL_MOUSEWHEEL)
-				continue;
-			if(io.WantCaptureKeyboard && event.type >= SDL_KEYDOWN && event.type <= SDL_TEXTEDITING_EXT)
+			if(Debug::HandleEvent(&event))
 				continue;
 
 			UI &activeUI = (menuPanels.IsEmpty() ? gamePanels : menuPanels);
@@ -378,10 +373,7 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 	{
 		while(!menuPanels.IsDone())
 		{
-			ImGui_ImplSDL2_NewFrame();
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui::NewFrame();
-			ImGui::ShowDemoWindow();
+			Debug::StartFrame();
 
 			if(toggleTimeout)
 				--toggleTimeout;
@@ -435,7 +427,10 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 				{
 					skipFrame = (skipFrame + 1) % 3;
 					if(skipFrame)
+					{
+						Debug::EndFrame(true);
 						continue;
+					}
 				}
 			}
 
@@ -451,8 +446,7 @@ void GameLoop(PlayerInfo &player, TaskQueue &queue, const Conversation &conversa
 			else if(isFastForward)
 				SpriteShader::Draw(SpriteSet::Get("ui/fast forward"), Screen::TopLeft() + Point(10., 10.));
 
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			Debug::EndFrame(false);
 
 			GameWindow::Step();
 
