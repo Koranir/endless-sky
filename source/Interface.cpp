@@ -213,7 +213,7 @@ const vector<double> &Interface::GetList(const string &name) const
 
 
 void Interface::Debug() {
-	if(Debug::CollapsableSectionBegin("elements", this))
+	if(Debug::CollapsableSectionBegin("interface", this))
 	{
 		Debug::IndentBegin(this);
 		for(auto &element : elements) {

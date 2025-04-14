@@ -166,10 +166,10 @@ void Debug::Value(const std::string &s, Point *value)
 	ImGui::PushID(value);
 	ImGui::Text("%s", s.c_str());
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2);
+	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2.5);
 	Value("x", &value->X());
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2);
+	ImGui::SetNextItemWidth(ImGui::CalcItemWidth() / 2.5);
 	Value("y", &value->Y());
 	ImGui::PopID();
 }
