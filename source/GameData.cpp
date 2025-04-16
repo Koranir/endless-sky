@@ -15,6 +15,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "GameData.h"
 
+#include "FrameTimer.h"
 #include "audio/Audio.h"
 #include "shader/BatchShader.h"
 #include "CategoryList.h"
@@ -38,6 +39,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "image/ImageSet.h"
 #include "Interface.h"
 #include "shader/LineShader.h"
+#include "Logger.h"
 #include "image/MaskManager.h"
 #include "Minable.h"
 #include "Mission.h"
@@ -281,6 +283,8 @@ void GameData::LoadSettings()
 
 void GameData::LoadShaders()
 {
+	FrameTimer loadTime;
+
 	FontSet::Add(Files::Images() / "font/ubuntu14r.png", 14);
 	FontSet::Add(Files::Images() / "font/ubuntu18r.png", 18);
 
@@ -295,6 +299,8 @@ void GameData::LoadShaders()
 	RenderBuffer::Init();
 
 	background.Init(16384, 4096);
+
+	Logger::LogError("Loaded shaders in " + to_string(loadTime.Time()) + " seconds.");
 }
 
 

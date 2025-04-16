@@ -25,8 +25,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL2/SDL.h>
 
 #include <cstring>
+#include <functional>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 using namespace std;
 
@@ -38,6 +40,9 @@ namespace {
 	int drawWidth = 0;
 	int drawHeight = 0;
 	bool supportsAdaptiveVSync = false;
+
+	size_t openglCacheHash = -1;
+	bool canCacheShaders = false;
 
 	// Logs SDL errors and returns true if found
 	bool checkSDLerror()
@@ -51,6 +56,28 @@ namespace {
 		}
 
 		return false;
+	}
+
+	void CalculateCacheHash()
+	{
+		const char *versionString = reinterpret_cast<const char *>(glGetString(GL_VERSION));
+		if(versionString[0] - '0' >= 4 && versionString[2] - '0' >= 1)
+			canCacheShaders = true;
+		else
+			return Logger::LogError("OpenGL Version <4.1, unable to cache shaders.");
+
+		auto HashCombine = [](const char *toHash)
+		{
+			// From `boost::hash`
+			auto hasher = std::hash<string_view>();
+			openglCacheHash ^= hasher(toHash) + 0x9e3779b9 + (openglCacheHash << 6) + (openglCacheHash >> 2);
+		};
+		HashCombine(reinterpret_cast<const char *>(glGetString(GL_VENDOR)));
+		HashCombine(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+		HashCombine(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+		HashCombine(versionString);
+
+		Files::CreateFolder(filesystem::path(Files::Config()).append("shadercache"));
 	}
 }
 
@@ -68,6 +95,16 @@ string GameWindow::SDLVersions()
 		return to_string(v.major) + "." + to_string(v.minor) + "." + to_string(v.patch);
 	};
 	return "Compiled against SDL v" + toString(built) + "\nUsing SDL v" + toString(linked);
+}
+
+
+
+size_t GameWindow::OpenGLCacheHash()
+{
+	if(!canCacheShaders)
+		return 0;
+
+	return openglCacheHash;
 }
 
 
@@ -227,6 +264,8 @@ bool GameWindow::Init(bool headless)
 		ExitWithError(out.str());
 		return false;
 	}
+
+	CalculateCacheHash();
 
 	// OpenGL settings
 	glClearColor(0.f, 0.f, 0.0f, 1.f);

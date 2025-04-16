@@ -16,46 +16,126 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "Shader.h"
 
 #include "../Logger.h"
+#include "../GameWindow.h"
+#include "../Files.h"
 
 #include <cctype>
 #include <cstring>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 using namespace std;
 
+namespace {
+	const int CACHE_VERSION = 1;
+
+	extern "C" {
+		struct ShaderCacheInfo {
+			int version;
+			GLenum format;
+		};
+	}
+
+	pair<filesystem::path, optional<string>> GetCachedShader(const char *vertex, const char *fragment) {
+		auto hasher = std::hash<string_view>();
+		auto hash = hasher(vertex);
+		hash ^= hasher(fragment) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+		hash ^= GameWindow::OpenGLCacheHash() + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+
+		filesystem::path configDir = Files::Config();
+		auto path = configDir.append("shadercache").append(to_string(hash));
+
+		string cached = Files::Read(path);
+		return make_pair(path, cached.empty() ? nullopt : optional(cached));
+	}
+}
+
 
 
 Shader::Shader(const char *vertex, const char *fragment)
 {
-	GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
-	GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
-
 	program = glCreateProgram();
 	if(!program)
 		throw runtime_error("Creating OpenGL shader program failed.");
 
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
+	auto [cachePath, shaderCache] = GetCachedShader(vertex, fragment);
 
-	glLinkProgram(program);
+	bool manualCompile = true;
 
-	glDetachShader(program, vertexShader);
-	glDetachShader(program, fragmentShader);
-
-	GLint status;
-	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if(status == GL_FALSE)
+	if(shaderCache.has_value())
 	{
-		GLint maxLength = 0;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-		vector<GLchar> infoLog(maxLength);
-		glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
-		string error(infoLog.data());
-		Logger::LogError(error);
+		Logger::LogError("Loading cached shader at '" + cachePath.string() + "'");
+		auto info = reinterpret_cast<ShaderCacheInfo *>(shaderCache.value().data());
+		if(info->version != CACHE_VERSION)
+		{
+				Logger::LogError("Cached shader had invalid version.");
+			Files::Delete(cachePath);
+			shaderCache = nullopt;
+		}
+		else
+		{
+			glProgramBinary(program, info->format, shaderCache->data() + sizeof(ShaderCacheInfo), shaderCache->length() - sizeof(ShaderCacheInfo));
 
-		throw runtime_error("Linking OpenGL shader program failed.");
+			GLint status;
+			glGetProgramiv(program, GL_LINK_STATUS, &status);
+			if(status == GL_FALSE)
+			{
+				GLint maxLength = 0;
+				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+				vector<GLchar> infoLog(maxLength);
+				glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
+				string error(infoLog.data());
+				Logger::LogError("Failed to load cached shader.");
+				Logger::LogError(error);
+			}
+			else
+				manualCompile = false;
+		}
+	}
+
+	if(manualCompile)
+	{
+		GLuint vertexShader = Compile(vertex, GL_VERTEX_SHADER);
+		GLuint fragmentShader = Compile(fragment, GL_FRAGMENT_SHADER);
+
+		glAttachShader(program, vertexShader);
+		glAttachShader(program, fragmentShader);
+
+		glLinkProgram(program);
+
+		glDetachShader(program, vertexShader);
+		glDetachShader(program, fragmentShader);
+
+		GLint status;
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
+		if(status == GL_FALSE)
+		{
+			GLint maxLength = 0;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+			vector<GLchar> infoLog(maxLength);
+			glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
+			string error(infoLog.data());
+			Logger::LogError(error);
+
+			throw runtime_error("Linking OpenGL shader program failed.");
+		}
+	}
+
+	if(GameWindow::OpenGLCacheHash() && !shaderCache.has_value())
+	{
+		int len;
+		glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &len);
+
+		string binary;
+		binary.resize(len + sizeof(ShaderCacheInfo));
+		ShaderCacheInfo *info = reinterpret_cast<ShaderCacheInfo *>(binary.data());
+		info->version = CACHE_VERSION;
+		glGetProgramBinary(program, len, nullptr, &info->format, binary.data() + sizeof(ShaderCacheInfo));
+
+		Files::Write(cachePath, binary);
+		Logger::LogError("Cached shader.");
 	}
 }
 

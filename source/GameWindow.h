@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 class GameWindow {
 public:
 	static std::string SDLVersions();
+	static size_t OpenGLCacheHash();
 	static bool Init(bool headless);
 	static void Quit();
 
