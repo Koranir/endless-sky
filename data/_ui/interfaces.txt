@@ -260,9 +260,9 @@ interface "menu background"
 
 interface "main menu"
 	# Background animation:
-	value "x speed" -.5
-	value "y speed" .1
-	value "y amplitude" 2.
+	value "x speed" 0.0
+	value "y speed" 0.0
+	value "y amplitude" 0.13
 
 	# Credits:
 	sprite "_menu/side panel"
