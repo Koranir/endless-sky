@@ -40,11 +40,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "UI.h"
 
 #include "opengl.h"
+#include "ui/Core.h"
+#include "ui/Renderer.h"
+#include "ui/Widget.h"
+#include "ui/widgets/Container.h"
+#include "ui/widgets/Widgets.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <stdexcept>
+#include <string>
 
 using namespace std;
 
@@ -177,6 +182,33 @@ void MenuPanel::Draw()
 	GameData::Interfaces().Get("menu background")->Draw(info, this);
 	mainMenuUi->Draw(info, this);
 	GameData::Interfaces().Get("menu player info")->Draw(info, this);
+
+	// ui::widget::Container widget = ui::widget::Container::New(
+	// 	ui::widget::Space::Fill()
+	// )
+	// 	.Padding({10, 10, 10, 10})
+	// 	.AlignX(ui::Alignment::CENTER)
+	// 	.AlignY(ui::Alignment::END)
+	// 	.Style(ui::widget::Container::DefaultStyle{
+	// 		.background = Color(1.0),
+	// 		.text = Color(0.0),
+	// 		.border = ui::Border{},
+	// 		.shadow = ui::Shadow{},
+	// 	});
+
+	using namespace ui;
+	using namespace ui::widget;
+
+	Element elem = make_element(Column(
+		Container(Container(Space::Fill())
+			.Style(ContainerStyle::Default{.background = Color(1.0)})
+		).Padding(10.0),
+		Container(Space::Fill())
+			.Style(ContainerStyle::Default{.background = Color(0.5)})
+	));
+
+	ui::Renderer renderer;
+	renderer.Draw(*elem, ui::Rect<float>{0.0, 100.0, 100.0, 0.0});
 
 	if(!credits.empty())
 		DrawCredits();

@@ -434,6 +434,20 @@ target_sources(EndlessSkyLib PRIVATE
 	text/Utf8.h
 	text/WrappedText.cpp
 	text/WrappedText.h
+	ui/Context.cpp
+	ui/Context.h
+	ui/Core.h
+	ui/Renderer.cpp
+	ui/Renderer.h
+	ui/Widget.cpp
+	ui/Widget.h
+	ui/widgets/Widgets.h
+	ui/widgets/Container.cpp
+	ui/widgets/Container.h
+	ui/widgets/Column.cpp
+	ui/widgets/Column.h
+	ui/widgets/Space.cpp
+	ui/widgets/Space.h
 )
 
 if(WIN32)
