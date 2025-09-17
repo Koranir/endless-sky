@@ -13,40 +13,49 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "Space.h"
 
 namespace ui {
 namespace widget {
 
-Space::Space(Size<Length> size) : size(size) {}
+template<typename Message>
+Space<Message>::Space(Size<Length> size) : size(size) {}
 
-Space Space::Horizontal(Length horizontal, Length vertical) {
+template<typename Message>
+Space<Message> Space<Message>::Horizontal(Length horizontal, Length vertical) {
 	return Space(Size{
 		horizontal,
 		vertical
 	});
 }
-Space Space::Vertical(Length vertical, Length horizontal) {
+template<typename Message>
+Space<Message> Space<Message>::Vertical(Length vertical, Length horizontal) {
 	return Space(Size{
 		horizontal,
 		vertical
 	});
 }
-Space Space::Fill(int fill) {
+template<typename Message>
+Space<Message> Space<Message>::Fill(int fill) {
 	return Space(Size<Length>{
 		{.fill = fill},
 		{.fill = fill}
 	});
 }
 
-Size<Length> Space::BoundSize() {
+template<typename Message>
+Size<Length> Space<Message>::BoundSize() {
 	return size;
 }
 
-void Space::Draw(
-	Renderer &renderer,
+template<typename Message>
+void Space<Message>::Draw(
+	UiEngine<Message> &engine,
 	const DrawContext &drawContext,
 	Rect<float> bounds,
+	Rect<float> viewport,
 	const Cursor &cursor
 ) {}
 

@@ -20,7 +20,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 namespace ui {
 namespace widget {
 
-class Space : public Widget {
+template<typename Message>
+class Space : public Widget<Message> {
 public:
 	Space(Size<Length> size);
 
@@ -30,9 +31,10 @@ public:
 
 	virtual Size<Length> BoundSize() override;
 	virtual void Draw(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		const DrawContext &drawContext,
 		Rect<float> bounds,
+		Rect<float> viewport,
 		const Cursor &cursor
 	) override;
 
@@ -43,3 +45,5 @@ private:
 
 }
 }
+
+#include "Space.cpp"

@@ -17,7 +17,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Panel.h"
 
+#include "ui/Engine.h"
+
 #include <string>
+#include <variant>
 #include <vector>
 
 class Interface;
@@ -42,6 +45,7 @@ protected:
 	// Only override the ones you need; the default action is to return false.
 	virtual bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress) override;
 	virtual bool Click(int x, int y, MouseButton button, int clicks) override;
+	virtual bool Hover(int x, int y) override;
 
 
 private:
@@ -51,6 +55,7 @@ private:
 private:
 	PlayerInfo &player;
 	UI &gamePanels;
+	ui::UiEngine<std::monostate> uiEngine;
 
 	const Interface *mainMenuUi;
 

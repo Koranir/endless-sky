@@ -41,7 +41,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "opengl.h"
 #include "ui/Core.h"
-#include "ui/Renderer.h"
+#include "ui/Engine.h"
 #include "ui/Widget.h"
 #include "ui/widgets/Container.h"
 #include "ui/widgets/Widgets.h"
@@ -50,6 +50,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <cassert>
 #include <cmath>
 #include <string>
+#include <variant>
 
 using namespace std;
 
@@ -110,6 +111,24 @@ MenuPanel::MenuPanel(PlayerInfo &player, UI &gamePanels)
 
 	// When the player is in the menu, pause the game sounds.
 	Audio::Pause();
+
+	{
+		using namespace ui::widget;
+		uiEngine.SetWidget(make_element<monostate>(Column<monostate>(
+			Container<monostate>(Container<monostate>(Space<std::monostate>::Fill())
+				.Style(ContainerStyle::Default{.background = Color(1.0)})
+			).Padding(10.0),
+			Container<monostate>(Space<std::monostate>::Fill())
+				.Style(ContainerStyle::Default{.background = Color(0.5)})
+		)));
+		uiEngine.SetBounds(ui::Rect<float>{
+			.left = 0,
+			.right = 100.0,
+			.top = 100.0,
+			.bottom = 0,
+		});
+	}
+
 }
 
 
@@ -183,32 +202,12 @@ void MenuPanel::Draw()
 	mainMenuUi->Draw(info, this);
 	GameData::Interfaces().Get("menu player info")->Draw(info, this);
 
-	// ui::widget::Container widget = ui::widget::Container::New(
-	// 	ui::widget::Space::Fill()
-	// )
-	// 	.Padding({10, 10, 10, 10})
-	// 	.AlignX(ui::Alignment::CENTER)
-	// 	.AlignY(ui::Alignment::END)
-	// 	.Style(ui::widget::Container::DefaultStyle{
-	// 		.background = Color(1.0),
-	// 		.text = Color(0.0),
-	// 		.border = ui::Border{},
-	// 		.shadow = ui::Shadow{},
-	// 	});
-
-	using namespace ui;
-	using namespace ui::widget;
-
-	Element elem = make_element(Column(
-		Container(Container(Space::Fill())
-			.Style(ContainerStyle::Default{.background = Color(1.0)})
-		).Padding(10.0),
-		Container(Space::Fill())
-			.Style(ContainerStyle::Default{.background = Color(0.5)})
-	));
-
-	ui::Renderer renderer;
-	renderer.Draw(*elem, ui::Rect<float>{0.0, 100.0, 100.0, 0.0});
+	uiEngine.Draw(ui::Rect<float>{
+		.left = std::numeric_limits<float>::lowest(),
+		.right = std::numeric_limits<float>::max(),
+		.top = std::numeric_limits<float>::max(),
+		.bottom = std::numeric_limits<float>::lowest(),
+	});
 
 	if(!credits.empty())
 		DrawCredits();
@@ -257,6 +256,13 @@ bool MenuPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 
 bool MenuPanel::Click(int x, int y, MouseButton button, int clicks)
 {
+	uiEngine.SetCursor(ui::Cursor {
+		.position = ui::Vector<float> {
+			.x = static_cast<float>(x),
+			.y = static_cast<float>(y),
+		}
+	});
+
 	if(button != MouseButton::LEFT)
 		return false;
 
@@ -267,6 +273,19 @@ bool MenuPanel::Click(int x, int y, MouseButton button, int clicks)
 		return true;
 	}
 
+	return false;
+}
+
+
+
+bool MenuPanel::Hover(int x, int y)
+{
+	uiEngine.SetCursor(ui::Cursor {
+		.position = ui::Vector<float> {
+			.x = static_cast<float>(x),
+			.y = static_cast<float>(y),
+		}
+	});
 	return false;
 }
 

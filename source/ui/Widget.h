@@ -17,18 +17,20 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "Core.h"
 
+#include "Event.h"
+
 #include <memory>
 #include <type_traits>
 #include <vector>
 
+class Clipboard;
 
 namespace ui {
 
-class Message;
-class Renderer;
-class Event;
-class Clipboard;
+template<typename Message>
+class UiEngine;
 
+template<typename Message>
 class Widget {
 public:
 	struct Response {
@@ -63,11 +65,11 @@ public:
 public:
 	virtual Size<Length> BoundSize() = 0;
 	virtual void Layout(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		Size<float> limits
 	);
 	virtual Response Update(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		const Event &event,
 		Rect<float> bounds,
 		const Cursor &cursor,
@@ -75,23 +77,28 @@ public:
 		std::vector<Message> &messages
 	);
 	virtual void Draw(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		const DrawContext &drawContext,
 		Rect<float> bounds,
+		Rect<float> viewport,
 		const Cursor &cursor
 	) = 0;
 	virtual MouseInteraction Interaction(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		Rect<float> bounds,
 		const Cursor &cursor
 	);
 
 };
 
-using Element = std::unique_ptr<Widget>;
-Element make_element(auto &&widget) {
+template<typename Message>
+using Element = std::unique_ptr<Widget<Message>>;
+template<typename Message>
+Element<Message> make_element(auto &&widget) {
 	return std::make_unique<std::remove_reference_t<decltype(widget)>>(std::move(widget));
 }
 
 
 }
+
+#include "Widget.cpp"

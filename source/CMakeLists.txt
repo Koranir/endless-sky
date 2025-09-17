@@ -437,8 +437,8 @@ target_sources(EndlessSkyLib PRIVATE
 	ui/Context.cpp
 	ui/Context.h
 	ui/Core.h
-	ui/Renderer.cpp
-	ui/Renderer.h
+	ui/Engine.cpp
+	ui/Engine.h
 	ui/Widget.cpp
 	ui/Widget.h
 	ui/widgets/Widgets.h

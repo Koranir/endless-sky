@@ -13,18 +13,22 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "Widget.h"
 #include "Core.h"
 
 namespace ui {
 
-void Widget::Layout(
-	Renderer &renderer,
+template<typename Message>
+void Widget<Message>::Layout(
+	UiEngine<Message> &engine,
 	Size<float> bounds
 ) {}
 
-Widget::Response Widget::Update(
-	Renderer &renderer,
+template<typename Message>
+Widget<Message>::Response Widget<Message>::Update(
+	UiEngine<Message> &engine,
 	const Event &event,
 	Rect<float> bounds,
 	const Cursor &cursor,
@@ -36,8 +40,9 @@ Widget::Response Widget::Update(
 	};
 }
 
-Widget::MouseInteraction Widget::Interaction(
-	Renderer &renderer,
+template<typename Message>
+Widget<Message>::MouseInteraction Widget<Message>::Interaction(
+	UiEngine<Message> &engine,
 	Rect<float> bounds,
 	const Cursor &cursor
 ) {

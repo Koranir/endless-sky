@@ -23,22 +23,23 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 namespace ui {
 namespace widget {
 
-class ColumnWidget : public Widget {
+template<typename Message>
+class ColumnWidget : public Widget<Message> {
 public:
 	ColumnWidget() noexcept;
 
 	template<typename... Widgets>
 	ColumnWidget(Widgets&&... widgets) {
-		(Add(make_element(widgets)),...);
+		(Add(make_element<Message>(widgets)),...);
 	}
 
 	virtual Size<Length> BoundSize() override;
 	virtual void Layout(
-		Renderer &renderer,
+		UiEngine<Message> &renderer,
 		Size<float> limits
 	) override;
-	virtual Response Update(
-		Renderer &renderer,
+	virtual Widget<Message>::Response Update(
+		UiEngine<Message> &renderer,
 		const Event &event,
 		Rect<float> bounds,
 		const Cursor &cursor,
@@ -46,33 +47,36 @@ public:
 		std::vector<Message> &messages
 	) override;
 	virtual void Draw(
-		Renderer &renderer,
+		UiEngine<Message> &renderer,
 		const DrawContext &drawContext,
 		Rect<float> bounds,
+		Rect<float> viewport,
 		const Cursor &cursor
 	) override;
-	virtual MouseInteraction Interaction(
-		Renderer &renderer,
+	virtual Widget<Message>::MouseInteraction Interaction(
+		UiEngine<Message> &renderer,
 		Rect<float> bounds,
 		const Cursor &cursor
 	) override;
 
 public:
-	ColumnWidget &&Add(Element element);
+	ColumnWidget &&Add(Element<Message> element);
 
 private:
 	// Element, allocated length pairs.
-	std::vector<std::pair<Element, float>> children;
+	std::vector<std::pair<Element<Message>, float>> children;
 	Size<Length> size;
 
 };
 
-template<typename... Widgets>
-ColumnWidget Column(Widgets&&... widgets) {
-	ColumnWidget ret;
-	(ret.Add(make_element(widgets)),...);
+template<typename Message, typename... Widgets>
+ColumnWidget<Message> Column(Widgets&&... widgets) {
+	ColumnWidget<Message> ret;
+	(ret.Add(make_element<Message>(widgets)),...);
 	return ret;
 }
 
 }
 }
+
+#include "Column.cpp"

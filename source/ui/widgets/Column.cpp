@@ -13,6 +13,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "Column.h"
 
 #include <algorithm>
@@ -22,9 +24,11 @@ using namespace ui::widget;
 
 
 
-ColumnWidget::ColumnWidget() noexcept : size(Size<Length>::Splat({})) {}
+template<typename Message>
+ColumnWidget<Message>::ColumnWidget() noexcept : size(Size<Length>::Splat({})) {}
 
-Size<Length> ColumnWidget::BoundSize()
+template<typename Message>
+Size<Length> ColumnWidget<Message>::BoundSize()
 {
 	Size<Length> nSize = size;
 	for (const auto &elem : children) {
@@ -35,8 +39,9 @@ Size<Length> ColumnWidget::BoundSize()
 	return nSize;
 }
 
-void ColumnWidget::Layout(
-	Renderer &renderer,
+template<typename Message>
+void ColumnWidget<Message>::Layout(
+	UiEngine<Message> &renderer,
 	Size<float> limits
 )
 {
@@ -67,8 +72,9 @@ void ColumnWidget::Layout(
 	}
 }
 
-Widget::Response ColumnWidget::Update(
- Renderer &renderer,
+template<typename Message>
+Widget<Message>::Response ColumnWidget<Message>::Update(
+ UiEngine<Message> &renderer,
  const Event &event,
  Rect<float> bounds,
  const Cursor &cursor,
@@ -96,10 +102,12 @@ Widget::Response ColumnWidget::Update(
 	return { .eventCaptured = false };
 }
 
-void ColumnWidget::Draw(
-	Renderer &renderer,
+template<typename Message>
+void ColumnWidget<Message>::Draw(
+	UiEngine<Message> &engine,
 	const DrawContext &drawContext,
 	Rect<float> bounds,
+	Rect<float> viewport,
 	const Cursor &cursor
 )
 {
@@ -112,12 +120,13 @@ void ColumnWidget::Draw(
 		};
 		bounds.top -= allocated;
 
-		elem->Draw(renderer, drawContext, elemBounds, cursor);
+		elem->Draw(engine, drawContext, elemBounds, viewport, cursor);
 	}
 }
 
-Widget::MouseInteraction ColumnWidget::Interaction(
- Renderer &renderer,
+template<typename Message>
+Widget<Message>::MouseInteraction ColumnWidget<Message>::Interaction(
+ UiEngine<Message> &renderer,
  Rect<float> bounds,
  const Cursor &cursor
 )
@@ -136,10 +145,11 @@ Widget::MouseInteraction ColumnWidget::Interaction(
 		}
 	}
 
-	return Widget::MouseInteraction::IDLE;
+	return Widget<Message>::MouseInteraction::IDLE;
 }
 
-ColumnWidget &&ColumnWidget::Add(Element element)
+template<typename Message>
+ColumnWidget<Message> &&ColumnWidget<Message>::Add(Element<Message> element)
 {
 	children.emplace_back(std::move(element), 0);
 	return std::move(*this);

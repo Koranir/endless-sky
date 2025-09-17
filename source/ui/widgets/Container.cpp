@@ -13,6 +13,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "Container.h"
 
 #include "../Widget.h"
@@ -26,7 +28,8 @@ using namespace std;
 namespace ui {
 namespace widget {
 
-ContainerWidget &&ContainerWidget::Width(Length width)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Width(Length width)
 {
 	this->width = width;
 	return std::move(*this);
@@ -34,7 +37,8 @@ ContainerWidget &&ContainerWidget::Width(Length width)
 
 
 
-ContainerWidget &&ContainerWidget::Height(Length height)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Height(Length height)
 {
 	this->height = height;
 	return std::move(*this);
@@ -42,7 +46,8 @@ ContainerWidget &&ContainerWidget::Height(Length height)
 
 
 
-ContainerWidget &&ContainerWidget::Padding(ui::Padding padding)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Padding(ui::Padding padding)
 {
 	this->padding = padding;
 	return std::move(*this);
@@ -50,7 +55,8 @@ ContainerWidget &&ContainerWidget::Padding(ui::Padding padding)
 
 
 
-ContainerWidget &&ContainerWidget::AlignX(Alignment horizontal)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::AlignX(Alignment horizontal)
 {
 	this->horizontal = horizontal;
 	return std::move(*this);
@@ -58,7 +64,8 @@ ContainerWidget &&ContainerWidget::AlignX(Alignment horizontal)
 
 
 
-ContainerWidget &&ContainerWidget::AlignY(Alignment vertical)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::AlignY(Alignment vertical)
 {
 	this->vertical = vertical;
 	return std::move(*this);
@@ -66,7 +73,8 @@ ContainerWidget &&ContainerWidget::AlignY(Alignment vertical)
 
 
 
-ContainerWidget &&ContainerWidget::Center()
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Center()
 {
 	this->horizontal = Alignment::CENTER;
 	this->vertical = Alignment::CENTER;
@@ -75,7 +83,8 @@ ContainerWidget &&ContainerWidget::Center()
 
 
 
-ContainerWidget &&ContainerWidget::Style(ContainerStyle::Default style)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Style(ContainerStyle::Default style)
 {
 	this->style = style;
 	return std::move(*this);
@@ -83,7 +92,8 @@ ContainerWidget &&ContainerWidget::Style(ContainerStyle::Default style)
 
 
 
-ContainerWidget &&ContainerWidget::Style(ContainerStyle::None style)
+template<typename Message>
+ContainerWidget<Message> &&ContainerWidget<Message>::Style(ContainerStyle::None style)
 {
 	this->style = style;
 	return std::move(*this);
@@ -91,7 +101,8 @@ ContainerWidget &&ContainerWidget::Style(ContainerStyle::None style)
 
 
 
-Size<Length> ContainerWidget::BoundSize()
+template<typename Message>
+Size<Length> ContainerWidget<Message>::BoundSize()
 {
 	Size child = widget->BoundSize();
 	Length nWidth = width.value_or(child.width);
@@ -106,10 +117,12 @@ Size<Length> ContainerWidget::BoundSize()
 
 
 
-void ContainerWidget::Draw(
-	Renderer &renderer,
+template<typename Message>
+void ContainerWidget<Message>::Draw(
+	UiEngine<Message> &engine,
 	const DrawContext &drawContext,
 	Rect<float> bounds,
+	Rect<float> viewport,
 	const Cursor &cursor
 )
 {
@@ -120,25 +133,33 @@ void ContainerWidget::Draw(
 			ContainerStyle::Default s = style;
 			context.textColor = s.text.value_or(context.textColor);
 			if (s.background) {
-				FillShader::Fill(
-					Rectangle::WithCorners(Point(bounds.left, bounds.bottom), Point(bounds.right, bounds.top)),
-					*s.background
-				);
+				std::optional<Rect<float>> intersection = bounds.Union(viewport);
+				if (intersection) {
+					FillShader::Fill(
+						Rectangle::WithCorners(
+							Point(intersection->left, intersection->bottom),
+							Point(intersection->right, intersection->top)
+						),
+						*s.background
+					);
+
+				}
 			}
 		}
 	}, style);
 
-	widget->Draw(renderer, drawContext, bounds.Padded(padding), cursor);
+	widget->Draw(engine, drawContext, bounds.Padded(padding), viewport, cursor);
 }
 
 
 
-void ContainerWidget::Layout(
-	Renderer &renderer,
+template<typename Message>
+void ContainerWidget<Message>::Layout(
+	UiEngine<Message> &engine,
 	Size<float> limits
 )
 {
-	widget->Layout(renderer, Size<float>{
+	widget->Layout(engine, Size<float>{
 		limits.width - (padding.left + padding.right),
 		limits.height - (padding.top + padding.bottom)
 	});
@@ -146,8 +167,9 @@ void ContainerWidget::Layout(
 
 
 
-Widget::Response ContainerWidget::Update(
-	Renderer &renderer,
+template<typename Message>
+Widget<Message>::Response ContainerWidget<Message>::Update(
+	UiEngine<Message> &engine,
 	const Event &event,
 	Rect<float> bounds,
 	const Cursor &cursor,
@@ -155,18 +177,19 @@ Widget::Response ContainerWidget::Update(
 	std::vector<Message> &messages
 )
 {
-	return widget->Update(renderer, event, bounds.Padded(padding), cursor, clipboard, messages);
+	return widget->Update(engine, event, bounds.Padded(padding), cursor, clipboard, messages);
 }
 
 
 
-Widget::MouseInteraction ContainerWidget::Interaction(
-	Renderer &renderer,
+template<typename Message>
+Widget<Message>::MouseInteraction ContainerWidget<Message>::Interaction(
+	UiEngine<Message> &engine,
 	Rect<float> bounds,
 	const Cursor &cursor
 )
 {
-	return widget->Interaction(renderer, bounds.Padded(padding), cursor);
+	return widget->Interaction(engine, bounds.Padded(padding), cursor);
 }
 
 

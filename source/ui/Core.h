@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "../Color.h"
 
 #include <limits>
+#include <optional>
 
 namespace ui {
 	enum class Alignment {
@@ -90,12 +91,31 @@ namespace ui {
 		T top;
 		T bottom;
 
+		bool operator==(const Rect &other) const noexcept = default;
+
 		Rect<T> Padded(Padding pad_by) {
 			return Rect {
 				.left = left + pad_by.left,
 				.right = right - pad_by.right,
 				.top = top - pad_by.top,
 				.bottom = bottom + pad_by.bottom
+			};
+		}
+
+		constexpr bool Intersects(const Rect &other) const noexcept {
+			return !(left >= other.right || right <= other.left || top <= other.bottom || bottom >= other.top);
+		}
+
+		std::optional<Rect<T>> Union(const Rect &other) const noexcept {
+			if (!Intersects(other)) {
+				return std::nullopt;
+			}
+
+			return Rect {
+				.left = std::max(left, other.left),
+				.right = std::min(right, other.right),
+				.top = std::min(top, other.top),
+				.bottom = std::max(bottom, other.bottom)
 			};
 		}
 

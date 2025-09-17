@@ -19,7 +19,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "../../Color.h"
 
-#include <concepts>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -41,11 +40,12 @@ namespace ContainerStyle {
 	struct None {};
 }
 
-class ContainerWidget : public Widget {
+template<typename Message>
+class ContainerWidget : public Widget<Message> {
 public:
 
 public:
-	ContainerWidget(std::unique_ptr<Widget> &&widget) : widget(std::move(widget)) {}
+	ContainerWidget(Element<Message> &&widget) : widget(std::move(widget)) {}
 
 	ContainerWidget &&Width(Length width);
 	ContainerWidget &&Height(Length height);
@@ -58,11 +58,11 @@ public:
 
 	virtual Size<Length> BoundSize() override;
 	virtual void Layout(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		Size<float> limits
 	) override;
-	virtual Response Update(
-		Renderer &renderer,
+	virtual Widget<Message>::Response Update(
+		UiEngine<Message> &engine,
 		const Event &event,
 		Rect<float> bounds,
 		const Cursor &cursor,
@@ -70,19 +70,20 @@ public:
 		std::vector<Message> &messages
 	) override;
 	virtual void Draw(
-		Renderer &renderer,
+		UiEngine<Message> &engine,
 		const DrawContext &drawContext,
 		Rect<float> bounds,
+		Rect<float> viewport,
 		const Cursor &cursor
 	) override;
-	virtual MouseInteraction Interaction(
-		Renderer &renderer,
+	virtual Widget<Message>::MouseInteraction Interaction(
+		UiEngine<Message> &engine,
 		Rect<float> bounds,
 		const Cursor &cursor
 	) override;
 
 private:
-	std::unique_ptr<Widget> widget;
+	Element<Message> widget;
 	std::optional<Length> width;
 	std::optional<Length> height;
 	ui::Padding padding;
@@ -92,9 +93,12 @@ private:
 
 };
 
-static ContainerWidget Container(std::derived_from<Widget> auto &&widget) {
-	return ContainerWidget(std::make_unique<std::remove_cvref_t<decltype(widget)>>(std::move(widget)));
+template<typename Message>
+static ContainerWidget<Message> Container(std::derived_from<Widget<Message>> auto &&widget) {
+	return ContainerWidget(make_element<Message>(widget));
 }
 
 }
 }
+
+#include "Container.cpp"
